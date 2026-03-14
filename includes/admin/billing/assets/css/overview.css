@@ -1,0 +1,290 @@
+/* Billing Overview */
+.contai-billing-overview {
+    display: flex;
+    flex-direction: column;
+    gap: var(--contai-spacing-lg);
+}
+
+/* Hero Balance Card */
+.contai-billing-hero {
+    background: #fff;
+    border: 1px solid var(--contai-neutral-300);
+    border-radius: var(--contai-radius-lg);
+    box-shadow: var(--contai-shadow-md);
+    padding: var(--contai-spacing-xl) var(--contai-spacing-xl);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--contai-spacing-xl);
+    border-left: 4px solid var(--contai-primary);
+}
+
+.contai-billing-hero-content {
+    display: flex;
+    align-items: center;
+    gap: var(--contai-spacing-lg);
+}
+
+.contai-billing-hero-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, var(--contai-primary-light), var(--contai-info-bg));
+    flex-shrink: 0;
+}
+
+.contai-billing-hero-icon .dashicons {
+    font-size: 26px;
+    width: 26px;
+    height: 26px;
+    color: var(--contai-primary);
+}
+
+.contai-billing-hero-label {
+    margin: 0 0 4px 0;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--contai-neutral-500);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.contai-billing-hero-amount {
+    margin: 0;
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+}
+
+.contai-billing-hero-number {
+    font-size: 36px;
+    font-weight: 700;
+    color: var(--contai-neutral-700);
+    line-height: 1;
+    letter-spacing: -0.5px;
+}
+
+.contai-billing-hero-currency {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--contai-neutral-500);
+}
+
+.contai-billing-hero-actions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--contai-spacing-xs);
+    flex-shrink: 0;
+}
+
+.contai-billing-topup-btn,
+.contai-billing-history-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+.contai-billing-topup-btn .dashicons,
+.contai-billing-history-link .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+}
+
+/* Details Section */
+.contai-billing-details {
+    background: #fff;
+    border: 1px solid var(--contai-neutral-300);
+    border-radius: var(--contai-radius-lg);
+    box-shadow: var(--contai-shadow-sm);
+    overflow: hidden;
+}
+
+.contai-billing-detail-row {
+    display: flex;
+    align-items: center;
+    gap: var(--contai-spacing-md);
+    padding: var(--contai-spacing-md) var(--contai-spacing-lg);
+}
+
+.contai-billing-detail-row + .contai-billing-detail-row {
+    border-top: 1px solid var(--contai-neutral-200);
+}
+
+.contai-billing-detail-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: var(--contai-radius-md);
+    background: var(--contai-neutral-100);
+    flex-shrink: 0;
+}
+
+.contai-billing-detail-icon .dashicons {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    color: var(--contai-neutral-500);
+}
+
+.contai-billing-detail-info {
+    display: flex;
+    align-items: center;
+    gap: var(--contai-spacing-md);
+    min-width: 0;
+}
+
+.contai-billing-detail-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--contai-neutral-500);
+    white-space: nowrap;
+    min-width: 120px;
+}
+
+.contai-billing-detail-value {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--contai-neutral-700);
+}
+
+code.contai-billing-detail-value {
+    font-family: var(--contai-font-mono);
+    font-size: 12px;
+    font-weight: 500;
+    background: var(--contai-neutral-100);
+    padding: 3px 8px;
+    border-radius: var(--contai-radius-sm);
+    border: 1px solid var(--contai-neutral-200);
+    word-break: break-all;
+}
+
+/* Modal */
+.contai-billing-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 100000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.contai-billing-modal {
+    background: #fff;
+    border-radius: var(--contai-radius-lg);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+    width: 100%;
+    max-width: 480px;
+    margin: var(--contai-spacing-lg);
+}
+
+.contai-billing-modal-header {
+    padding: var(--contai-spacing-lg);
+    border-bottom: 1px solid var(--contai-neutral-300);
+}
+
+.contai-billing-modal-header h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--contai-neutral-700);
+    display: flex;
+    align-items: center;
+    gap: var(--contai-spacing-xs);
+}
+
+.contai-billing-modal-header h3 .dashicons {
+    color: var(--contai-primary);
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+}
+
+.contai-billing-modal-body {
+    padding: var(--contai-spacing-lg);
+}
+
+.contai-billing-modal-body .contai-form-group {
+    margin-bottom: 0;
+}
+
+.contai-billing-modal-body .contai-input {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.contai-billing-modal-footer {
+    padding: var(--contai-spacing-md) var(--contai-spacing-lg);
+    border-top: 1px solid var(--contai-neutral-300);
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--contai-spacing-sm);
+    background: var(--contai-neutral-50);
+    border-radius: 0 0 var(--contai-radius-lg) var(--contai-radius-lg);
+}
+
+.contai-billing-modal-footer .button {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.contai-billing-modal-footer .button .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .contai-billing-hero {
+        flex-direction: column;
+        align-items: stretch;
+        padding: var(--contai-spacing-lg);
+    }
+
+    .contai-billing-hero-content {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .contai-billing-hero-number {
+        font-size: 28px;
+    }
+
+    .contai-billing-hero-actions {
+        flex-direction: column;
+    }
+
+    .contai-billing-hero-actions .button {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .contai-billing-detail-info {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 2px;
+    }
+
+    .contai-billing-modal {
+        margin: var(--contai-spacing-md);
+    }
+
+    .contai-billing-modal-footer {
+        flex-direction: column;
+    }
+
+    .contai-billing-modal-footer .button {
+        width: 100%;
+        justify-content: center;
+    }
+}

@@ -1,0 +1,243 @@
+.toc-container {
+    margin: 2em 0;
+    padding: 1.5em;
+    border: 1px solid #e1e1e1;
+    border-radius: 4px;
+    background: #f9f9f9;
+    font-size: 95%;
+    line-height: 1.6;
+}
+
+.toc-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1em;
+    padding-bottom: 0.5em;
+    border-bottom: 2px solid #e1e1e1;
+}
+
+.toc-title {
+    margin: 0;
+    font-size: 1.2em;
+    font-weight: 600;
+    color: #333;
+}
+
+.toc-toggle {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.5em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.3s ease;
+}
+
+.toc-toggle:hover {
+    opacity: 0.7;
+}
+
+.toc-toggle-icon {
+    width: 0;
+    height: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 8px solid #666;
+    transition: transform 0.3s ease;
+}
+
+.toc-toggle[aria-expanded="false"] .toc-toggle-icon {
+    transform: rotate(-90deg);
+}
+
+.toc-content {
+    overflow: hidden;
+    transition: max-height 0.3s ease, opacity 0.3s ease;
+    max-height: 5000px;
+    opacity: 1;
+}
+
+.toc-content.toc-hidden {
+    max-height: 0;
+    opacity: 0;
+    margin: 0;
+}
+
+.toc-list {
+    margin: 0;
+    padding-left: 0;
+    list-style: none;
+}
+
+.toc-numbered .toc-list {
+    counter-reset: toc-counter;
+}
+
+.toc-numbered .toc-item::before {
+    counter-increment: toc-counter;
+    content: counters(toc-counter, ".") ". ";
+    margin-right: 0.5em;
+    color: #666;
+}
+
+.toc-bulleted .toc-list .toc-item::before {
+    content: "â€¢ ";
+    margin-right: 0.5em;
+    color: #666;
+}
+
+.toc-hierarchical .toc-list .toc-list {
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+    padding-left: 1.5em;
+}
+
+.toc-flat .toc-list .toc-list {
+    padding-left: 0;
+}
+
+.toc-item {
+    margin: 0.5em 0;
+}
+
+.toc-link {
+    color: #0073aa;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.toc-link:hover {
+    color: #005177;
+    text-decoration: underline;
+}
+
+.toc-anchor {
+    display: block;
+    position: relative;
+    top: -80px;
+    visibility: hidden;
+}
+
+/* Grey Theme */
+.toc-theme-grey {
+    background: #f9f9f9;
+    border-color: #e1e1e1;
+}
+
+.toc-theme-grey .toc-header {
+    border-bottom-color: #e1e1e1;
+}
+
+.toc-theme-grey .toc-title {
+    color: #333;
+}
+
+/* Light Blue Theme */
+.toc-theme-light-blue {
+    background: #e8f4f8;
+    border-color: #b3d9e6;
+}
+
+.toc-theme-light-blue .toc-header {
+    border-bottom-color: #b3d9e6;
+}
+
+.toc-theme-light-blue .toc-title {
+    color: #0c5460;
+}
+
+.toc-theme-light-blue .toc-link {
+    color: #0c5460;
+}
+
+.toc-theme-light-blue .toc-link:hover {
+    color: #062a30;
+}
+
+/* White Theme */
+.toc-theme-white {
+    background: #ffffff;
+    border-color: #ddd;
+}
+
+.toc-theme-white .toc-header {
+    border-bottom-color: #ddd;
+}
+
+.toc-theme-white .toc-title {
+    color: #333;
+}
+
+/* Black Theme */
+.toc-theme-black {
+    background: #1e1e1e;
+    border-color: #444;
+    color: #e0e0e0;
+}
+
+.toc-theme-black .toc-header {
+    border-bottom-color: #444;
+}
+
+.toc-theme-black .toc-title {
+    color: #fff;
+}
+
+.toc-theme-black .toc-link {
+    color: #60a5fa;
+}
+
+.toc-theme-black .toc-link:hover {
+    color: #93c5fd;
+}
+
+.toc-theme-black .toc-item::before {
+    color: #888;
+}
+
+.toc-theme-black .toc-toggle-icon {
+    border-top-color: #e0e0e0;
+}
+
+/* Transparent Theme */
+.toc-theme-transparent {
+    background: transparent;
+    border-color: rgba(0, 0, 0, 0.1);
+}
+
+.toc-theme-transparent .toc-header {
+    border-bottom-color: rgba(0, 0, 0, 0.1);
+}
+
+.toc-theme-transparent .toc-title {
+    color: #333;
+}
+
+@media (max-width: 768px) {
+    .toc-container {
+        font-size: 90%;
+        padding: 1em;
+    }
+
+    .toc-title {
+        font-size: 1.1em;
+    }
+
+    .toc-hierarchical .toc-list .toc-list {
+        padding-left: 1em;
+    }
+}
+
+@media print {
+    .toc-toggle {
+        display: none;
+    }
+
+    .toc-content {
+        display: block !important;
+        max-height: none !important;
+        opacity: 1 !important;
+    }
+}

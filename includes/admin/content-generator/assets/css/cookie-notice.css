@@ -1,0 +1,134 @@
+/**
+ * Cookie consent banner styles for Content AI.
+ *
+ * @package ContentAI
+ */
+
+#cookie-notice,
+#cookie-notice .cn-button:not(.cn-button-custom) {
+    font-family: var(--contai-font-sans);
+    font-weight: 400;
+    font-size: 13px;
+    text-align: center;
+}
+
+#cookie-notice {
+    position: fixed;
+    min-width: 100%;
+    z-index: 100000;
+    left: 0;
+    letter-spacing: 0;
+    line-height: 20px;
+}
+
+#cookie-notice,
+#cookie-notice * {
+    box-sizing: border-box;
+}
+
+#cookie-notice.cn-animated {
+    animation-duration: .5s !important;
+    animation-fill-mode: both;
+}
+
+#cookie-notice .cookie-notice-container {
+    display: block;
+    padding: 15px 30px;
+    text-align: center;
+    width: 100%;
+    z-index: 2;
+}
+
+#cookie-notice.cookie-notice-hidden .cookie-notice-container {
+    display: none;
+}
+
+.cn-position-bottom {
+    bottom: 0;
+}
+
+.cn-close-icon {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    margin-top: -10px;
+    width: 15px;
+    height: 15px;
+    opacity: .5;
+    padding: 10px;
+    cursor: pointer;
+}
+
+.cn-close-icon:hover {
+    opacity: 1;
+}
+
+.cn-close-icon:after,
+.cn-close-icon:before {
+    position: absolute;
+    content: ' ';
+    height: 15px;
+    width: 2px;
+    top: 3px;
+    background-color: grey;
+}
+
+.cn-close-icon:before {
+    transform: rotate(45deg);
+}
+
+.cn-close-icon:after {
+    transform: rotate(-45deg);
+}
+
+#cookie-notice .cn-button {
+    margin-left: 10px;
+    display: inline-block;
+    cursor: pointer;
+}
+
+#cookie-notice .cn-button:not(.cn-button-custom) {
+    letter-spacing: .25px;
+    text-transform: none;
+    cursor: pointer;
+    white-space: nowrap;
+    outline: 0;
+    border: none;
+    border-radius: 3px;
+    padding: 8.5px 10px;
+    line-height: 1;
+}
+
+.cn-text-container {
+    margin: 0 0 6px;
+}
+
+.cn-buttons-container,
+.cn-text-container {
+    display: inline-block;
+}
+
+#cookie-notice.cookie-notice-visible.cn-effect-slide {
+    animation-name: slideInUp;
+}
+
+@keyframes slideInUp {
+    from {
+        transform: translate3d(0, 100%, 0);
+        visibility: visible;
+    }
+    to {
+        transform: translate3d(0, 0, 0);
+    }
+}
+
+@media (max-width: 900px) {
+    .cookie-notice-container #cn-notice-buttons,
+    .cookie-notice-container #cn-notice-text {
+        display: block;
+    }
+
+    #cookie-notice .cn-button {
+        margin: 5px 5px 0;
+    }
+}

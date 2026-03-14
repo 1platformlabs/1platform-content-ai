@@ -1,0 +1,287 @@
+/* Core Layout */
+.contai-settings-wrap {
+    max-width: 1200px;
+    background: #fff;
+    border: 1px solid var(--contai-neutral-300);
+    border-radius: var(--contai-radius-sm);
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: var(--contai-shadow-xs);
+    font-family: var(--contai-font-sans);
+}
+
+.contai-settings-wrap h1 {
+    margin-bottom: 30px;
+    font-size: 32px;
+    font-weight: 600;
+    color: var(--contai-neutral-700);
+    letter-spacing: -0.5px;
+}
+
+/* Panels */
+.contai-settings-panel {
+    background: #fff;
+    border: 1px solid var(--contai-neutral-300);
+    border-radius: var(--contai-radius-sm);
+    margin-bottom: 30px;
+    box-shadow: var(--contai-shadow-xs);
+    overflow: hidden;
+}
+
+.contai-panel-header {
+    background: var(--contai-neutral-50);
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--contai-neutral-200);
+}
+
+.contai-panel-title-group {
+    margin: 0;
+}
+
+.contai-panel-title {
+    margin: 0 0 8px 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--contai-neutral-700);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.contai-icon {
+    font-size: 20px;
+    display: inline-flex;
+    color: var(--contai-primary);
+}
+
+.contai-panel-description {
+    margin: 0;
+    color: var(--contai-neutral-500);
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+/* Form Grid */
+.contai-form-grid {
+    padding: 20px;
+    display: grid;
+    gap: 20px;
+}
+
+.contai-grid-2 {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.contai-form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.contai-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    margin-bottom: 8px;
+    color: var(--contai-neutral-700);
+}
+
+.contai-input,
+.contai-select {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--contai-neutral-400);
+    border-radius: var(--contai-radius-sm);
+    font-size: 13px;
+    font-family: inherit;
+    color: var(--contai-neutral-700);
+    background: #ffffff;
+    transition: border-color var(--contai-duration-fast) ease;
+}
+
+.contai-input::placeholder {
+    color: var(--contai-neutral-500);
+}
+
+.contai-input:focus,
+.contai-select:focus {
+    outline: none;
+    border-color: var(--contai-primary);
+    box-shadow: 0 0 0 1px var(--contai-primary);
+}
+
+.contai-help-text {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    margin: 8px 0 0 0;
+    color: var(--contai-neutral-500);
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+/* Info Box */
+.contai-info-box {
+    display: flex;
+    gap: 16px;
+    padding: 20px;
+    background: var(--contai-info-bg);
+    border-left: 4px solid var(--contai-primary);
+    border-radius: var(--contai-radius-sm);
+    margin: 24px 0;
+}
+
+.contai-info-icon {
+    font-size: 32px;
+    width: 32px;
+    height: 32px;
+    color: var(--contai-primary);
+    flex-shrink: 0;
+}
+
+.contai-info-box p {
+    margin: 0;
+    color: var(--contai-neutral-700);
+    font-size: 13px;
+}
+
+/* Buttons Container */
+.contai-button-group {
+    display: flex;
+    gap: 12px;
+    padding: 20px 24px;
+    flex-wrap: wrap;
+    border-top: 1px solid var(--contai-neutral-200);
+    background: var(--contai-neutral-50);
+}
+
+.contai-button-group .button,
+.contai-button-group button[type="submit"],
+.contai-button-group input[type="submit"] {
+    padding: 12px 24px;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: var(--contai-radius-sm);
+    border: none;
+    cursor: pointer;
+    transition: all var(--contai-duration-fast) ease;
+    text-transform: none;
+    letter-spacing: 0;
+    line-height: 1;
+    height: auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+/* Primary Button */
+.contai-button-group .button-primary,
+.contai-button-group input[type="submit"].button-primary,
+.contai-button-group button.button-primary {
+    background: var(--contai-primary);
+    border-color: var(--contai-primary);
+    color: #fff;
+}
+
+.contai-button-group .button-primary:hover,
+.contai-button-group input[type="submit"].button-primary:hover,
+.contai-button-group button.button-primary:hover {
+    background: var(--contai-primary-dark);
+    border-color: var(--contai-primary-dark);
+    color: #fff;
+}
+
+.contai-button-group .button-primary:active,
+.contai-button-group input[type="submit"].button-primary:active,
+.contai-button-group button.button-primary:active {
+    background: var(--contai-primary-darker);
+    border-color: var(--contai-primary-darker);
+    color: #fff;
+}
+
+/* Secondary Button */
+.contai-button-group .button-secondary,
+.contai-button-group input[type="submit"].button-secondary,
+.contai-button-group button.button-secondary {
+    background: #ffffff;
+    color: var(--contai-primary);
+    border: 2px solid var(--contai-primary);
+}
+
+.contai-button-group .button-secondary:hover,
+.contai-button-group input[type="submit"].button-secondary:hover,
+.contai-button-group button.button-secondary:hover {
+    background: var(--contai-info-bg);
+    border-color: var(--contai-primary-dark);
+    color: var(--contai-primary-dark);
+}
+
+.contai-button-group .button-secondary:active,
+.contai-button-group input[type="submit"].button-secondary:active,
+.contai-button-group button.button-secondary:active {
+    background: #e3f0fc;
+    border-color: var(--contai-primary-darker);
+    color: var(--contai-primary-darker);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .contai-settings-wrap {
+        margin-left: -20px;
+        margin-right: -20px;
+    }
+
+    .contai-settings-wrap h1 {
+        font-size: 24px;
+        margin-bottom: 20px;
+    }
+
+    .contai-settings-panel {
+        border-left: none;
+        border-right: none;
+        border-radius: 0;
+        margin-bottom: 20px;
+    }
+
+    .contai-panel-header {
+        padding: 16px;
+    }
+
+    .contai-panel-title {
+        font-size: 16px;
+    }
+
+    .contai-form-grid {
+        padding: 16px;
+        gap: 16px;
+    }
+
+    .contai-grid-2 {
+        grid-template-columns: 1fr;
+    }
+
+    .contai-input,
+    .contai-select {
+        font-size: 16px;
+        padding: 12px;
+    }
+
+    .contai-button-group {
+        flex-direction: column;
+        padding: 16px;
+    }
+
+    .contai-button-group .button,
+    .contai-button-group button[type="submit"],
+    .contai-button-group input[type="submit"] {
+        width: 100%;
+        padding: 12px 20px;
+    }
+
+    .contai-info-box {
+        margin: 16px;
+        font-size: 12px;
+    }
+}

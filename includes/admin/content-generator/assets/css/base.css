@@ -1,0 +1,726 @@
+/* ============================================================
+   1Platform Content AI — Design System Tokens (Light Mode)
+   Maps --contai-* variables to 1Platform Design System values.
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+    /* ── Accent ── */
+    --contai-primary: #2563eb;
+    --contai-primary-dark: #1d4ed8;
+    --contai-primary-darker: #1e40af;
+    --contai-primary-light: #3b82f6;
+    --contai-primary-lighter: #60a5fa;
+    --contai-primary-glow: rgba(37, 99, 235, 0.08);
+    --contai-primary-border: #bfdbfe;
+
+    /* ── Semantic ── */
+    --contai-success: #059669;
+    --contai-success-bg: #f0fdf4;
+    --contai-success-border: #bbf7d0;
+    --contai-success-text: #166534;
+    --contai-error: #dc2626;
+    --contai-error-bg: #fef2f2;
+    --contai-error-border: #fecaca;
+    --contai-error-text: #991b1b;
+    --contai-warning: #d97706;
+    --contai-warning-bg: #fffbeb;
+    --contai-warning-border: #fde68a;
+    --contai-warning-text: #92400e;
+    --contai-info: #2563eb;
+    --contai-info-bg: #eff6ff;
+    --contai-info-border: #bfdbfe;
+    --contai-info-text: #1e40af;
+
+    /* ── Neutrals ── */
+    --contai-neutral-50: #f8fafc;
+    --contai-neutral-100: #f1f5f9;
+    --contai-neutral-200: #e2e8f0;
+    --contai-neutral-300: #cbd5e1;
+    --contai-neutral-400: #94a3b8;
+    --contai-neutral-500: #64748b;
+    --contai-neutral-600: #475569;
+    --contai-neutral-700: #0f172a;
+
+    /* ── Spacing ── */
+    --contai-spacing-xs: 8px;
+    --contai-spacing-sm: 12px;
+    --contai-spacing-md: 16px;
+    --contai-spacing-lg: 24px;
+    --contai-spacing-xl: 32px;
+
+    /* ── Border Radius ── */
+    --contai-radius-sm: 6px;
+    --contai-radius-md: 8px;
+    --contai-radius-lg: 12px;
+    --contai-radius-pill: 9999px;
+
+    /* ── Shadows ── */
+    --contai-shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
+    --contai-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
+    --contai-shadow-md: 0 4px 16px rgba(37, 99, 235, 0.06);
+    --contai-shadow-lg: 0 8px 24px rgba(37, 99, 235, 0.06);
+    --contai-shadow-glow: 0 0 20px rgba(37, 99, 235, 0.1);
+
+    /* ── Typography ── */
+    --contai-font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --contai-font-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', Consolas, monospace;
+
+    /* ── Animation ── */
+    --contai-ease: cubic-bezier(0.16, 1, 0.3, 1);
+    --contai-duration-fast: 200ms;
+    --contai-duration-normal: 300ms;
+}
+
+/* ============================================================
+   LAYOUT
+   ============================================================ */
+
+.contai-layout {
+    display: flex;
+    min-height: 100vh;
+    background: var(--contai-neutral-100);
+    font-family: var(--contai-font-sans);
+}
+
+/* ============================================================
+   SIDEBAR
+   ============================================================ */
+
+.contai-sidebar {
+    width: 272px;
+    background: #ffffff;
+    border-right: 1px solid var(--contai-neutral-200);
+    flex-shrink: 0;
+    position: sticky;
+    top: 32px;
+    height: calc(100vh - 32px);
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.contai-sidebar-header {
+    padding: var(--contai-spacing-lg) var(--contai-spacing-lg) var(--contai-spacing-md);
+    border-bottom: 1px solid var(--contai-neutral-200);
+}
+
+.contai-sidebar-logo {
+    display: flex;
+    align-items: center;
+    gap: var(--contai-spacing-sm);
+}
+
+.contai-sidebar-logo .dashicons {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    font-size: 18px;
+    color: var(--contai-primary);
+    background: var(--contai-primary-glow);
+    border-radius: var(--contai-radius-md);
+    flex-shrink: 0;
+}
+
+.contai-sidebar-logo h2 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--contai-neutral-700);
+    letter-spacing: -0.02em;
+}
+
+.contai-sidebar-nav {
+    padding: var(--contai-spacing-sm) 0;
+    flex: 1;
+}
+
+.contai-sidebar-menu {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.contai-sidebar-item {
+    margin: 2px var(--contai-spacing-sm);
+}
+
+.contai-sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: var(--contai-spacing-sm);
+    padding: 10px var(--contai-spacing-sm);
+    color: var(--contai-neutral-500);
+    text-decoration: none;
+    border-radius: var(--contai-radius-md);
+    transition:
+        background var(--contai-duration-fast) ease,
+        color var(--contai-duration-fast) ease;
+    position: relative;
+}
+
+.contai-sidebar-link:hover {
+    background: var(--contai-neutral-50);
+    color: var(--contai-neutral-700);
+}
+
+.contai-sidebar-link .dashicons {
+    color: var(--contai-neutral-400);
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    transition: color var(--contai-duration-fast) ease;
+}
+
+.contai-sidebar-link:hover .dashicons {
+    color: var(--contai-neutral-600);
+}
+
+.contai-sidebar-label {
+    flex: 1;
+    font-size: 13.5px;
+    font-weight: 500;
+}
+
+.contai-sidebar-badge {
+    background: var(--contai-neutral-100);
+    color: var(--contai-neutral-500);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: var(--contai-radius-pill);
+    min-width: 20px;
+    text-align: center;
+    line-height: 1.4;
+}
+
+/* ── Active State ── */
+.contai-sidebar-item.active .contai-sidebar-link {
+    background: var(--contai-primary-glow);
+    color: var(--contai-primary);
+}
+
+.contai-sidebar-item.active .contai-sidebar-link .dashicons {
+    color: var(--contai-primary);
+}
+
+.contai-sidebar-item.active .contai-sidebar-badge {
+    background: var(--contai-primary);
+    color: #fff;
+}
+
+/* ============================================================
+   MAIN CONTENT
+   ============================================================ */
+
+.contai-main-content {
+    flex: 1;
+    padding: var(--contai-spacing-xl);
+    max-width: 1200px;
+    min-width: 0;
+}
+
+/* ============================================================
+   PAGE HEADER
+   ============================================================ */
+
+.contai-page-header {
+    margin-bottom: var(--contai-spacing-xl);
+    padding-bottom: var(--contai-spacing-lg);
+    border-bottom: 1px solid var(--contai-neutral-200);
+}
+
+.contai-page-header h1 {
+    margin: 0 0 var(--contai-spacing-xs) 0;
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--contai-neutral-700);
+    display: flex;
+    align-items: center;
+    gap: var(--contai-spacing-sm);
+    letter-spacing: -0.03em;
+    line-height: 1.2;
+}
+
+.contai-page-header h1 .dashicons {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+    color: var(--contai-primary);
+    background: var(--contai-primary-glow);
+    border-radius: var(--contai-radius-md);
+    flex-shrink: 0;
+}
+
+.contai-page-subtitle {
+    margin: 0;
+    color: var(--contai-neutral-500);
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+/* ============================================================
+   SETTINGS PANEL / CARD
+   ============================================================ */
+
+.contai-settings-panel {
+    background: #fff;
+    border: 1px solid var(--contai-neutral-200);
+    border-radius: var(--contai-radius-lg);
+    margin-bottom: var(--contai-spacing-xl);
+    box-shadow: var(--contai-shadow-xs);
+    overflow: hidden;
+    transition:
+        box-shadow var(--contai-duration-normal) ease,
+        border-color var(--contai-duration-fast) ease;
+}
+
+.contai-settings-panel:hover {
+    border-color: var(--contai-neutral-300);
+    box-shadow: var(--contai-shadow-sm);
+}
+
+.contai-panel-header {
+    background: var(--contai-neutral-50);
+    padding: 20px var(--contai-spacing-lg);
+    border-bottom: 1px solid var(--contai-neutral-200);
+}
+
+.contai-panel-title-group {
+    margin: 0;
+}
+
+.contai-panel-title {
+    margin: 0 0 6px 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--contai-neutral-700);
+    display: flex;
+    align-items: center;
+    gap: var(--contai-spacing-sm);
+    letter-spacing: -0.02em;
+}
+
+.contai-panel-title .dashicons {
+    color: var(--contai-primary);
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+}
+
+.contai-panel-description {
+    margin: 0;
+    color: var(--contai-neutral-500);
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.contai-panel-body {
+    padding: var(--contai-spacing-lg);
+}
+
+/* ============================================================
+   FORMS
+   ============================================================ */
+
+.contai-form-grid {
+    display: grid;
+    gap: var(--contai-spacing-lg);
+    margin-bottom: var(--contai-spacing-lg);
+}
+
+.contai-grid-2 {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+.contai-form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.contai-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    font-size: 13.5px;
+    margin-bottom: 8px;
+    color: var(--contai-neutral-700);
+}
+
+.contai-label .dashicons {
+    color: var(--contai-primary);
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+}
+
+.contai-input,
+.contai-select,
+.contai-textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--contai-neutral-300);
+    border-radius: var(--contai-radius-md);
+    font-family: var(--contai-font-sans);
+    font-size: 13.5px;
+    line-height: 1.5;
+    color: var(--contai-neutral-700);
+    background: #fff;
+    transition:
+        border-color var(--contai-duration-fast) ease,
+        box-shadow var(--contai-duration-fast) ease;
+}
+
+.contai-input::placeholder,
+.contai-textarea::placeholder {
+    color: var(--contai-neutral-400);
+}
+
+.contai-input:focus,
+.contai-select:focus,
+.contai-textarea:focus {
+    outline: none;
+    border-color: var(--contai-primary);
+    box-shadow: 0 0 0 3px var(--contai-primary-glow);
+}
+
+.contai-help-text {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    margin: 6px 0 0 0;
+    color: var(--contai-neutral-500);
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.contai-help-text .dashicons {
+    color: var(--contai-primary-lighter);
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+    margin-top: 1px;
+}
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+
+.contai-button-group {
+    padding-top: var(--contai-spacing-lg);
+    border-top: 1px solid var(--contai-neutral-200);
+    margin-top: var(--contai-spacing-lg);
+}
+
+.contai-button-action,
+.button {
+    padding: 10px 20px;
+    font-family: var(--contai-font-sans);
+    font-size: 13.5px;
+    font-weight: 600;
+    border-radius: var(--contai-radius-md);
+    cursor: pointer;
+    transition:
+        background var(--contai-duration-fast) ease,
+        border-color var(--contai-duration-fast) ease,
+        box-shadow var(--contai-duration-fast) ease,
+        transform 150ms ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    line-height: 1.4;
+}
+
+.contai-button-action .dashicons,
+.button .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+}
+
+.button-primary {
+    background: var(--contai-primary);
+    border: 1px solid var(--contai-primary);
+    color: #fff;
+    box-shadow: var(--contai-shadow-xs);
+}
+
+.button-primary:hover {
+    background: var(--contai-primary-dark);
+    border-color: var(--contai-primary-dark);
+    color: #fff;
+    box-shadow: var(--contai-shadow-md);
+    transform: translateY(-1px);
+}
+
+.button-primary:active {
+    background: var(--contai-primary-darker);
+    transform: scale(0.98);
+    box-shadow: var(--contai-shadow-xs);
+}
+
+.button-secondary {
+    background: #fff;
+    border: 1px solid var(--contai-neutral-300);
+    color: var(--contai-neutral-600);
+}
+
+.button-secondary:hover {
+    background: var(--contai-neutral-50);
+    border-color: var(--contai-neutral-400);
+    color: var(--contai-neutral-700);
+}
+
+/* ============================================================
+   NOTICES / ALERTS
+   ============================================================ */
+
+.contai-notice {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px var(--contai-spacing-md);
+    margin: var(--contai-spacing-md) 0;
+    border: 1px solid var(--contai-info-border);
+    border-left: 3px solid var(--contai-info);
+    background: var(--contai-info-bg);
+    border-radius: 0 var(--contai-radius-md) var(--contai-radius-md) 0;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--contai-info-text);
+}
+
+.contai-notice .dashicons {
+    color: var(--contai-info);
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    margin-top: 1px;
+    flex-shrink: 0;
+}
+
+.contai-notice p {
+    margin: 0;
+}
+
+.contai-notice-success {
+    border-color: var(--contai-success-border);
+    border-left-color: var(--contai-success);
+    background: var(--contai-success-bg);
+    color: var(--contai-success-text);
+}
+
+.contai-notice-success .dashicons {
+    color: var(--contai-success);
+}
+
+.contai-notice-error {
+    border-color: var(--contai-error-border);
+    border-left-color: var(--contai-error);
+    background: var(--contai-error-bg);
+    color: var(--contai-error-text);
+}
+
+.contai-notice-error .dashicons {
+    color: var(--contai-error);
+}
+
+.contai-notice-warning {
+    border-color: var(--contai-warning-border);
+    border-left-color: var(--contai-warning);
+    background: var(--contai-warning-bg);
+    color: var(--contai-warning-text);
+}
+
+.contai-notice-warning .dashicons {
+    color: var(--contai-warning);
+}
+
+.contai-notice-info {
+    border-color: var(--contai-info-border);
+    border-left-color: var(--contai-info);
+    background: var(--contai-info-bg);
+    color: var(--contai-info-text);
+}
+
+.contai-notice-info .dashicons {
+    color: var(--contai-info);
+}
+
+/* ============================================================
+   BADGE
+   ============================================================ */
+
+.contai-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: var(--contai-radius-pill);
+    line-height: 1.4;
+    white-space: nowrap;
+}
+
+.contai-badge-info {
+    background: var(--contai-info-bg);
+    color: var(--contai-info-text);
+    border: 1px solid var(--contai-info-border);
+}
+
+.contai-badge-success {
+    background: var(--contai-success-bg);
+    color: var(--contai-success-text);
+    border: 1px solid var(--contai-success-border);
+}
+
+.contai-badge-warning {
+    background: var(--contai-warning-bg);
+    color: var(--contai-warning-text);
+    border: 1px solid var(--contai-warning-border);
+}
+
+.contai-badge-danger {
+    background: var(--contai-error-bg);
+    color: var(--contai-error-text);
+    border: 1px solid var(--contai-error-border);
+}
+
+/* ============================================================
+   SPINNER
+   ============================================================ */
+
+.contai-spinner {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid var(--contai-neutral-200);
+    border-top: 2px solid var(--contai-primary);
+    border-radius: 50%;
+    animation: contai-spin 1s linear infinite;
+    margin-right: 8px;
+    vertical-align: middle;
+}
+
+@keyframes contai-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* ============================================================
+   STAT CARD
+   ============================================================ */
+
+.contai-stat-card {
+    background: #fff;
+    border: 1px solid var(--contai-neutral-200);
+    border-radius: var(--contai-radius-lg);
+    padding: 20px;
+    transition:
+        border-color var(--contai-duration-fast) ease,
+        box-shadow var(--contai-duration-fast) ease;
+}
+
+.contai-stat-card:hover {
+    border-color: var(--contai-primary-border);
+    box-shadow: var(--contai-shadow-md);
+}
+
+.contai-stat-value {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--contai-neutral-700);
+    letter-spacing: -0.03em;
+    line-height: 1;
+    margin-bottom: 4px;
+}
+
+.contai-stat-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--contai-neutral-500);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* ============================================================
+   SCROLLBAR
+   ============================================================ */
+
+.contai-sidebar::-webkit-scrollbar {
+    width: 4px;
+}
+
+.contai-sidebar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.contai-sidebar::-webkit-scrollbar-thumb {
+    background: var(--contai-neutral-300);
+    border-radius: 2px;
+}
+
+.contai-sidebar::-webkit-scrollbar-thumb:hover {
+    background: var(--contai-neutral-400);
+}
+
+/* ============================================================
+   SR ONLY
+   ============================================================ */
+
+.contai-sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+
+@media (max-width: 768px) {
+    .contai-layout {
+        flex-direction: column;
+    }
+
+    .contai-sidebar {
+        width: 100%;
+        height: auto;
+        position: static;
+        border-right: none;
+        border-bottom: 1px solid var(--contai-neutral-200);
+    }
+
+    .contai-sidebar-nav {
+        max-height: 200px;
+        overflow-y: auto;
+    }
+
+    .contai-main-content {
+        padding: var(--contai-spacing-lg);
+    }
+
+    .contai-grid-2 {
+        grid-template-columns: 1fr;
+    }
+
+    .contai-page-header h1 {
+        font-size: 22px;
+    }
+}

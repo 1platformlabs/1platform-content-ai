@@ -1,0 +1,205 @@
+<?php
+
+if (!defined('ABSPATH')) exit;
+
+require_once __DIR__ . '/../api/OnePlatformClient.php';
+require_once __DIR__ . '/../api/OnePlatformEndpoints.php';
+require_once __DIR__ . '/../config/Config.php';
+require_once __DIR__ . '/../../providers/UserProvider.php';
+require_once __DIR__ . '/../../providers/WebsiteProvider.php';
+
+class ContaiPublisuitesService
+{
+    private const OPTION_PUBLISUITES_CONFIG = 'contai_publisuites_config';
+
+    private ContaiOnePlatformClient $client;
+    private ContaiConfig $config;
+    private ContaiUserProvider $userProvider;
+    private ContaiWebsiteProvider $websiteProvider;
+
+    public function __construct(
+        ?ContaiOnePlatformClient $client = null,
+        ?ContaiUserProvider $userProvider = null,
+        ?ContaiWebsiteProvider $websiteProvider = null
+    ) {
+        $this->config = ContaiConfig::getInstance();
+        $this->client = $client ?? ContaiOnePlatformClient::create($this->config);
+        $this->userProvider = $userProvider ?? new ContaiUserProvider();
+        $this->websiteProvider = $websiteProvider ?? new ContaiWebsiteProvider();
+    }
+
+    public function getPublisuitesConfig(): ?array
+    {
+        $config = get_option(self::OPTION_PUBLISUITES_CONFIG, null);
+
+        if (!$config) {
+            return null;
+        }
+
+        return is_array($config) ? $config : json_decode($config, true);
+    }
+
+    public function savePublisuitesConfig(array $data): bool
+    {
+        $config = [
+            'userId' => $data['user_id'] ?? $this->userProvider->getUserId() ?? '',
+            'websiteId' => $data['website_id'] ?? $this->websiteProvider->getWebsiteId() ?? '',
+            'publisuitesId' => $data['publisuites_id'] ?? '',
+            'status' => $data['status'] ?? 'pending_verification',
+            'verificationFileName' => $data['verification_file_name'] ?? '',
+            'verificationFileContent' => $data['verification_file_content'] ?? '',
+            'verified' => $data['verified'] ?? false,
+            'verifiedAt' => $data['verified_at'] ?? null,
+            'message' => $data['message'] ?? '',
+        ];
+
+        return update_option(self::OPTION_PUBLISUITES_CONFIG, $config);
+    }
+
+    public function deletePublisuitesConfig(): bool
+    {
+        return delete_option(self::OPTION_PUBLISUITES_CONFIG);
+    }
+
+    public function getSiteUrl(): string
+    {
+        return $this->websiteProvider->getSiteUrl();
+    }
+
+    public function connectWebsite(): ContaiOnePlatformResponse
+    {
+        $websiteId = $this->websiteProvider->getWebsiteId();
+
+        if (!$websiteId) {
+            $result = $this->websiteProvider->ensureWebsiteExists();
+            if (!$result['success']) {
+                return new ContaiOnePlatformResponse(false, null, $result['message'] ?? 'Could not register website. Please try again later.', 400);
+            }
+            $websiteId = $this->websiteProvider->getWebsiteId();
+        }
+
+        $endpoint = ContaiOnePlatformEndpoints::websitePublisuites($websiteId);
+
+        return $this->client->post($endpoint, ['action' => 'add']);
+    }
+
+    public function verifyWebsite(): ContaiOnePlatformResponse
+    {
+        $websiteId = $this->websiteProvider->getWebsiteId();
+        $config = $this->getPublisuitesConfig();
+
+        if (!$websiteId) {
+            return new ContaiOnePlatformResponse(false, null, 'Website not configured', 400);
+        }
+
+        if (!$config || empty($config['publisuitesId'])) {
+            return new ContaiOnePlatformResponse(false, null, 'Publisuites not connected', 400);
+        }
+
+        $endpoint = ContaiOnePlatformEndpoints::websitePublisuites($websiteId);
+
+        return $this->client->post($endpoint, ['action' => 'verify']);
+    }
+
+    public function createVerificationFile(): array
+    {
+        $config = $this->getPublisuitesConfig();
+
+        if (!$config) {
+            return [
+                'success' => false,
+                'message' => 'Publisuites configuration not found',
+            ];
+        }
+
+        $fileName = basename($config['verificationFileName'] ?? '');
+        $fileContent = $config['verificationFileContent'] ?? '';
+
+        if (empty($fileName)) {
+            return [
+                'success' => false,
+                'message' => 'Verification file information not available',
+            ];
+        }
+
+        $rootPath = ABSPATH . $fileName;
+
+        global $wp_filesystem;
+        if ( ! function_exists( 'WP_Filesystem' ) ) {
+            require_once ABSPATH . 'wp-admin/includes/file.php';
+        }
+        WP_Filesystem();
+
+        $result = $wp_filesystem ? $wp_filesystem->put_contents($rootPath, $fileContent, FS_CHMOD_FILE) : false;
+
+        if ($result === false) {
+            return [
+                'success' => false,
+                'message' => 'Failed to create verification file. Check file permissions.',
+            ];
+        }
+
+        return [
+            'success' => true,
+            'message' => 'Verification file created successfully',
+            'file_path' => $rootPath,
+        ];
+    }
+
+    public function verificationFileExists(): bool
+    {
+        $config = $this->getPublisuitesConfig();
+
+        if (!$config || empty($config['verificationFileName'])) {
+            return false;
+        }
+
+        return file_exists(ABSPATH . $config['verificationFileName']);
+    }
+
+    public function initializeStatus(): array
+    {
+        $config = $this->getPublisuitesConfig();
+
+        if ($config) {
+            return [
+                'status' => 'configured',
+                'config' => $config,
+            ];
+        }
+
+        $websiteId = $this->websiteProvider->getWebsiteId();
+        if (!$websiteId) {
+            $result = $this->websiteProvider->ensureWebsiteExists();
+            if (!$result['success']) {
+                return [
+                    'status' => 'website_required',
+                    'config' => null,
+                    'message' => $result['message'] ?? 'Could not register website. Please try again later.',
+                ];
+            }
+            $websiteId = $this->websiteProvider->getWebsiteId();
+        }
+
+        return [
+            'status' => 'not_connected',
+            'config' => null,
+        ];
+    }
+
+    public function isVerified(?array $config = null): bool
+    {
+        $config = $config ?? $this->getPublisuitesConfig();
+
+        if (!$config) {
+            return false;
+        }
+
+        return ($config['verified'] ?? false) === true;
+    }
+
+    public function isPendingVerification(?array $config = null): bool
+    {
+        return !$this->isVerified($config);
+    }
+}

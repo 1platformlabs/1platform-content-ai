@@ -1,0 +1,37 @@
+CLAUDE.md
+.claude
+.agents
+.github
+
+# macOS
+.DS_Store
+**/.DS_Store
+
+# IDE
+.idea/
+.vscode/
+*.code-workspace
+
+# Development documentation
+includes/services/USAGE_EXAMPLES.md
+includes/services/USAGE_EXAMPLES_V2.md
+
+# Dependencies
+node_modules/
+vendor/
+composer.lock
+composer.phar
+package-lock.json
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+
+# OS
+Thumbs.db
+.php-version
+skills-lock.json

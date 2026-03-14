@@ -1,0 +1,249 @@
+<?php
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+require_once __DIR__ . '/../../services/category-api/CategoryAPIService.php';
+
+function contai_render_full_site_generator_form() {
+	// Fetch categories for the select field
+	$category_service = new ContaiCategoryAPIService();
+	$categories = $category_service->getActiveCategories();
+	$saved_category = get_option( 'contai_site_category', '' );
+
+	?>
+	<form method="post" class="contai-site-generator-form">
+		<?php wp_nonce_field( 'contai_site_generator_nonce', 'contai_site_generator_nonce' ); ?>
+		<input type="hidden" name="contai_start_site_generation" value="1">
+
+		<!-- Step 1: Site & Business Configuration -->
+		<div class="contai-wizard-section">
+			<div class="contai-section-header">
+				<div class="contai-step-indicator">
+					<span class="contai-step-number">1</span>
+				</div>
+				<div class="contai-section-title-group">
+					<h2 class="contai-section-title"><?php esc_html_e( 'Site & Business Configuration', '1platform-content-ai' ); ?></h2>
+					<p class="contai-section-description"><?php esc_html_e( 'Define your website identity, target audience, and legal information.', '1platform-content-ai' ); ?></p>
+				</div>
+			</div>
+			<div class="contai-section-body">
+				<div class="contai-form-grid contai-grid-3">
+					<div class="contai-form-group">
+						<label for="contai_site_topic" class="contai-label">
+							<?php esc_html_e( 'Site Topic', '1platform-content-ai' ); ?>
+							<span class="contai-required">*</span>
+						</label>
+						<input type="text" id="contai_site_topic" name="contai_site_topic" class="contai-input" placeholder="e.g., Technology News" autocomplete="off" required>
+					</div>
+
+					<div class="contai-form-group">
+						<label for="contai_wordpress_theme" class="contai-label">
+							<?php esc_html_e( 'WordPress Theme', '1platform-content-ai' ); ?>
+							<span class="contai-required">*</span>
+						</label>
+						<select id="contai_wordpress_theme" name="contai_wordpress_theme" class="contai-select" autocomplete="off" required>
+							<option value="blogfull" selected>Blogfull</option>
+							<option value="newsmatic">Newsmatic</option>
+						</select>
+					</div>
+
+					<div class="contai-form-group">
+						<label for="contai_site_language" class="contai-label">
+							<?php esc_html_e( 'Language', '1platform-content-ai' ); ?>
+							<span class="contai-required">*</span>
+						</label>
+						<select id="contai_site_language" name="contai_site_language" class="contai-select" autocomplete="language" required data-category-select="#contai_site_category">
+							<option value="english" selected><?php esc_html_e( 'English', '1platform-content-ai' ); ?></option>
+							<option value="spanish"><?php esc_html_e( 'Spanish', '1platform-content-ai' ); ?></option>
+						</select>
+					</div>
+
+					<div class="contai-form-group">
+						<label for="contai_site_category" class="contai-label">
+							<?php esc_html_e( 'Category', '1platform-content-ai' ); ?>
+							<span class="contai-required">*</span>
+						</label>
+						<select id="contai_site_category" name="contai_site_category" class="contai-select" autocomplete="off" required data-lang-select="#contai_site_language">
+							<?php if ( empty( $categories ) ) : ?>
+								<option value=""><?php esc_html_e( 'No categories available', '1platform-content-ai' ); ?></option>
+							<?php else : ?>
+								<option value=""><?php esc_html_e( 'Select a category', '1platform-content-ai' ); ?></option>
+								<?php foreach ( $categories as $category ) : ?>
+									<?php
+									$category_id = esc_attr( $category['id'] ?? '' );
+									$title_en = esc_html( $category['title']['en'] ?? 'Unnamed Category' );
+									$title_es = esc_html( $category['title']['es'] ?? $title_en );
+									$is_selected = ( $saved_category === $category_id );
+									?>
+									<option value="<?php echo esc_attr( $category_id ); ?>"<?php selected( $is_selected ); ?> data-title-en="<?php echo esc_attr( $title_en ); ?>" data-title-es="<?php echo esc_attr( $title_es ); ?>">
+										<?php echo esc_html( $title_en ); ?>
+									</option>
+								<?php endforeach; ?>
+							<?php endif; ?>
+						</select>
+					</div>
+
+					<div class="contai-form-group">
+						<label for="contai_target_country" class="contai-label">
+							<?php esc_html_e( 'Target Country', '1platform-content-ai' ); ?>
+							<span class="contai-required">*</span>
+						</label>
+						<select id="contai_target_country" name="contai_target_country" class="contai-select" autocomplete="country" required>
+							<option value="us" selected><?php esc_html_e( 'United States', '1platform-content-ai' ); ?></option>
+							<option value="es"><?php esc_html_e( 'Spain', '1platform-content-ai' ); ?></option>
+						</select>
+					</div>
+
+					<div class="contai-form-group">
+						<label for="contai_adsense_publisher" class="contai-label">
+							<?php esc_html_e( 'AdSense Publisher ID', '1platform-content-ai' ); ?>
+							<span class="contai-required">*</span>
+						</label>
+						<input type="text" id="contai_adsense_publisher" name="contai_adsense_publisher" class="contai-input" placeholder="pub-1234567890123456" autocomplete="off" spellcheck="false" required>
+					</div>
+				</div>
+
+				<div class="contai-form-divider"></div>
+
+				<div class="contai-form-grid contai-grid-3">
+					<div class="contai-form-group">
+						<label for="contai_legal_owner" class="contai-label">
+							<?php esc_html_e( 'Business Owner', '1platform-content-ai' ); ?>
+							<span class="contai-required">*</span>
+						</label>
+						<input type="text" id="contai_legal_owner" name="contai_legal_owner" class="contai-input" autocomplete="name" required>
+					</div>
+
+					<div class="contai-form-group">
+						<label for="contai_legal_email" class="contai-label">
+							<?php esc_html_e( 'Contact Email', '1platform-content-ai' ); ?>
+							<span class="contai-required">*</span>
+						</label>
+						<input type="email" id="contai_legal_email" name="contai_legal_email" class="contai-input" autocomplete="email" spellcheck="false" required>
+					</div>
+
+					<div class="contai-form-group">
+						<label for="contai_legal_activity" class="contai-label">
+							<?php esc_html_e( 'Business Activity', '1platform-content-ai' ); ?>
+							<span class="contai-required">*</span>
+						</label>
+						<input type="text" id="contai_legal_activity" name="contai_legal_activity" class="contai-input" autocomplete="organization-title" required>
+					</div>
+
+					<div class="contai-form-group contai-span-full">
+						<label for="contai_legal_address" class="contai-label">
+							<?php esc_html_e( 'Business Address', '1platform-content-ai' ); ?>
+							<span class="contai-required">*</span>
+						</label>
+						<input type="text" id="contai_legal_address" name="contai_legal_address" class="contai-input" autocomplete="street-address" required>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Step 2: Content Generation Settings -->
+		<div class="contai-wizard-section">
+			<div class="contai-section-header">
+				<div class="contai-step-indicator">
+					<span class="contai-step-number">2</span>
+				</div>
+				<div class="contai-section-title-group">
+					<h2 class="contai-section-title"><?php esc_html_e( 'Content Generation', '1platform-content-ai' ); ?></h2>
+					<p class="contai-section-description"><?php esc_html_e( 'Configure how AI generates your website content, keywords, and images.', '1platform-content-ai' ); ?></p>
+				</div>
+			</div>
+			<div class="contai-section-body">
+				<div class="contai-form-grid contai-grid-3">
+					<div class="contai-form-group contai-span-full">
+						<label for="contai_source_url" class="contai-label">
+							<?php esc_html_e( 'Competitor Website (for keyword extraction)', '1platform-content-ai' ); ?>
+							<span class="contai-required">*</span>
+						</label>
+						<input type="url" id="contai_source_url" name="contai_source_url" class="contai-input" placeholder="https://example.com" autocomplete="url" spellcheck="false" required>
+						<span class="contai-help-text"><?php esc_html_e( 'We\'ll analyze this site to extract relevant keywords for your content.', '1platform-content-ai' ); ?></span>
+					</div>
+
+					<div class="contai-form-group">
+						<label for="contai_num_posts" class="contai-label">
+							<?php esc_html_e( 'Number of Posts', '1platform-content-ai' ); ?>
+							<span class="contai-required">*</span>
+						</label>
+						<input type="number" id="contai_num_posts" name="contai_num_posts" class="contai-input" value="100" min="1" max="1000" autocomplete="off" required>
+					</div>
+
+					<div class="contai-form-group">
+						<label for="contai_comments_per_post" class="contai-label">
+							<?php esc_html_e( 'Comments per Post', '1platform-content-ai' ); ?>
+							<span class="contai-required">*</span>
+						</label>
+						<input type="number" id="contai_comments_per_post" name="contai_comments_per_post" class="contai-input" value="1" min="1" max="10" autocomplete="off" required>
+					</div>
+
+					<div class="contai-form-group">
+						<label for="contai_image_provider" class="contai-label">
+							<?php esc_html_e( 'Image Provider', '1platform-content-ai' ); ?>
+							<span class="contai-required">*</span>
+						</label>
+						<select id="contai_image_provider" name="contai_image_provider" class="contai-select" autocomplete="off" required>
+							<option value="pexels" selected>Pexels</option>
+							<option value="pixabay">Pixabay</option>
+						</select>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Submit Section -->
+		<div class="contai-wizard-section contai-wizard-submit">
+			<div class="contai-section-body">
+				<div class="contai-notice contai-notice-info">
+					<span class="dashicons dashicons-clock"></span>
+					<div>
+						<strong><?php esc_html_e( 'Background Process', '1platform-content-ai' ); ?></strong>
+						<p><?php esc_html_e( 'This process runs in the background and may take several hours depending on the number of posts. You can safely close this page and check back later.', '1platform-content-ai' ); ?></p>
+					</div>
+				</div>
+
+				<div class="contai-submit-area">
+					<button type="submit" id="contai_submit_btn" class="contai-btn contai-btn-primary contai-btn-lg">
+						<span class="dashicons dashicons-controls-play"></span>
+						<?php esc_html_e( 'Start Site Generation', '1platform-content-ai' ); ?>
+					</button>
+				</div>
+			</div>
+		</div>
+	</form>
+
+	<?php
+	$js_dir = plugin_dir_path( dirname( __DIR__ ) ) . 'admin/assets/js/';
+	$js_url = plugin_dir_url( dirname( __DIR__ ) ) . 'admin/assets/js/';
+
+	wp_enqueue_script(
+		'tai-category-sync',
+		$js_url . 'tai-category-sync.js',
+		array(),
+		filemtime( $js_dir . 'tai-category-sync.js' ),
+		true
+	);
+
+	wp_enqueue_script(
+		'tai-site-generator-form',
+		$js_url . 'tai-site-generator-form.js',
+		array(),
+		filemtime( $js_dir . 'tai-site-generator-form.js' ),
+		true
+	);
+
+	wp_localize_script(
+		'tai-site-generator-form',
+		'contaiSiteGenI18n',
+		array(
+			'unsavedWarning' => esc_html__( 'You have unsaved changes. Are you sure you want to leave?', '1platform-content-ai' ),
+			'starting'       => esc_html__( 'Starting...', '1platform-content-ai' ),
+		)
+	);
+	?>
+	<?php
+}

@@ -1,0 +1,39 @@
+# Development files
+.agents
+.claude
+.github
+.gitignore
+.distignore
+CLAUDE.md
+
+# IDE
+.idea
+.vscode
+*.code-workspace
+
+# macOS
+.DS_Store
+
+# Documentation (dev only)
+includes/services/USAGE_EXAMPLES.md
+includes/services/USAGE_EXAMPLES_V2.md
+
+# Dependencies
+node_modules
+vendor
+composer.json
+composer.lock
+package.json
+package-lock.json
+
+# Testing
+tests
+phpunit.xml
+phpunit.xml.dist
+
+# Environment
+.env
+.env.*
+
+# Logs
+*.log

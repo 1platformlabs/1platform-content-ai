@@ -1,0 +1,385 @@
+<?php
+
+if (!defined('ABSPATH')) exit;
+
+require_once __DIR__ . '/../../services/user-profile/UserProfileService.php';
+require_once __DIR__ . '/../../services/api/OnePlatformAuthService.php';
+require_once __DIR__ . '/../../providers/WebsiteProvider.php';
+require_once __DIR__ . '/components/ActivateLicenseSection.php';
+require_once __DIR__ . '/components/UserProfileSection.php';
+require_once __DIR__ . '/components/BetaVipNotice.php';
+
+class WPContentAILicensePanel
+{
+    private const NONCE_ACTION = 'contai_license_action';
+    private const NONCE_FIELD = 'contai_license_nonce';
+
+    private ContaiUserProfileService $service;
+    private ?string $message = null;
+    private string $messageType = 'success';
+
+    public function __construct()
+    {
+        $this->service = new ContaiUserProfileService();
+    }
+
+    public function handleFormSubmissionEarly(): void
+    {
+        $this->handleFormSubmission();
+    }
+
+    public function render(): void
+    {
+        $this->enqueueStyles();
+
+        // Check for success messages after redirect
+        // phpcs:disable WordPress.Security.NonceVerification.Recommended -- Display-only read of GET params after redirect.
+        if ( isset( $_GET['license_activated'] ) && sanitize_key( wp_unslash( $_GET['license_activated'] ) ) === '1' ) {
+            $message = __('License activated successfully.', '1platform-content-ai');
+            $this->messageType = 'success';
+
+            if (isset($_GET['website_setup'])) {
+                $websiteAction = sanitize_text_field(wp_unslash($_GET['website_setup']));
+
+                switch ($websiteAction) {
+                    case 'created':
+                        $message .= ' ' . __('Website registered with Content AI.', '1platform-content-ai');
+                        break;
+                    case 'linked':
+                        $message .= ' ' . __('Existing website linked.', '1platform-content-ai');
+                        break;
+                    case 'already_configured':
+                        $message .= ' ' . __('Website already configured.', '1platform-content-ai');
+                        break;
+                }
+            }
+
+            if ( isset( $_GET['website_setup_error'] ) && sanitize_key( wp_unslash( $_GET['website_setup_error'] ) ) === '1' ) {
+                $message .= ' ' . __('Website setup could not be completed automatically. You can set it up later from Search Console.', '1platform-content-ai');
+                $this->messageType = 'warning';
+            }
+
+            $this->message = $message;
+        }
+
+        if ( isset( $_GET['license_deactivated'] ) && sanitize_key( wp_unslash( $_GET['license_deactivated'] ) ) === '1' ) {
+            $this->message = __('License deactivated successfully', '1platform-content-ai');
+            $this->messageType = 'success';
+        }
+
+        if ( isset( $_GET['website_deleted'] ) && sanitize_key( wp_unslash( $_GET['website_deleted'] ) ) === '1' ) {
+            $this->message = __('Website deleted successfully from Content AI servers', '1platform-content-ai');
+            $this->messageType = 'success';
+        }
+
+        if ( isset( $_GET['website_delete_error'] ) && sanitize_key( wp_unslash( $_GET['website_delete_error'] ) ) === '1' ) {
+            $this->message = __('Failed to delete website. Please try again.', '1platform-content-ai');
+            $this->messageType = 'error';
+        }
+        // phpcs:enable WordPress.Security.NonceVerification.Recommended
+
+        $status = $this->service->initializeUserProfile();
+
+        if ($this->message) {
+            $this->renderMessage();
+        }
+
+        if ($status['status'] === 'no_license') {
+            ContaiBetaVipNotice::render();
+            $section = new ContaiActivateLicenseSection(self::NONCE_ACTION, self::NONCE_FIELD);
+            $section->render();
+            return;
+        }
+
+        if ($status['status'] === 'error') {
+            $this->renderError($status['message'] ?? 'Unknown error');
+            return;
+        }
+
+        if ($status['status'] === 'active' && $status['profile']) {
+            $connected = $this->validateConnectionStatus();
+            $websiteProvider = new ContaiWebsiteProvider();
+            $websiteConfig = $websiteProvider->getWebsiteConfig();
+            $section = new ContaiUserProfileSection(
+                $status['profile'],
+                self::NONCE_ACTION,
+                self::NONCE_FIELD,
+                $websiteConfig,
+                $connected
+            );
+            $section->render();
+            return;
+        }
+
+        ContaiBetaVipNotice::render();
+        $section = new ContaiActivateLicenseSection(self::NONCE_ACTION, self::NONCE_FIELD);
+        $section->render();
+    }
+
+    private function handleFormSubmission(): void
+    {
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce is verified below via wp_verify_nonce().
+        if (!isset($_POST[self::NONCE_FIELD])) {
+            return;
+        }
+
+        if (!wp_verify_nonce(sanitize_text_field(wp_unslash($_POST[self::NONCE_FIELD])), self::NONCE_ACTION)) {
+            return;
+        }
+
+        if (!current_user_can('manage_options')) {
+            return;
+        }
+
+        // phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce verified above via wp_verify_nonce().
+        if (isset($_POST['contai_activate_license'])) {
+            $this->handleActivateLicense();
+        }
+
+        if (isset($_POST['contai_deactivate_license'])) {
+            $this->handleDeactivateLicense();
+        }
+
+        if (isset($_POST['contai_refresh_profile'])) {
+            $this->handleRefreshProfile();
+        }
+
+        if (isset($_POST['contai_refresh_tokens'])) {
+            $this->handleRefreshTokens();
+        }
+
+        if (isset($_POST['contai_delete_website'])) {
+            $this->handleDeleteWebsite();
+            $this->handleDeactivateLicense();
+        }
+        // phpcs:enable WordPress.Security.NonceVerification.Missing
+    }
+
+    private function handleActivateLicense(): void
+    {
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in handleFormSubmission() via wp_verify_nonce().
+        $apiKey = isset($_POST['contai_api_key']) ? sanitize_text_field(wp_unslash($_POST['contai_api_key'])) : '';
+
+        if (empty($apiKey)) {
+            $this->message = __('API key is required', '1platform-content-ai');
+            $this->messageType = 'error';
+            return;
+        }
+
+        // Step 1: Save API key and clear stale user token from any previous key
+        $this->service->saveApiKey($apiKey);
+        $authService = ContaiOnePlatformAuthService::create();
+        $authService->clearUserToken();
+
+        // Step 2: Authenticate with new API key
+        $result = $this->service->refreshUserProfile();
+
+        if (!$result['success']) {
+            $this->service->deleteApiKey();
+            $this->message = $result['message'] ?? __('Failed to validate API key', '1platform-content-ai');
+            $this->messageType = 'error';
+            return;
+        }
+
+        // Step 3: Ensure website exists (search or create)
+        $websiteProvider = new ContaiWebsiteProvider();
+        $websiteResult = $websiteProvider->ensureWebsiteExists();
+
+        $redirect_url = admin_url('admin.php?page=contai-licenses');
+        $args = ['license_activated' => '1'];
+
+        if ($websiteResult['success']) {
+            $args['website_setup'] = sanitize_key($websiteResult['action']);
+        } else {
+            $args['website_setup_error'] = '1';
+        }
+
+        wp_safe_redirect(add_query_arg($args, $redirect_url));
+        exit;
+    }
+
+    private function handleDeactivateLicense(): void
+    {
+        $this->service->deleteApiKey();
+
+        // Clear authentication token
+        $authService = ContaiOnePlatformAuthService::create();
+        $authService->clearToken();
+
+        // Redirect to refresh the page and hide API Keys section
+        $redirect_url = admin_url('admin.php?page=contai-licenses');
+        wp_safe_redirect(add_query_arg(['license_deactivated' => '1'], $redirect_url));
+        exit;
+    }
+
+    private function handleDeleteWebsite(): void
+    {
+        $websiteProvider = new ContaiWebsiteProvider();
+        $websiteConfig = $websiteProvider->getWebsiteConfig();
+        $redirect_url = admin_url('admin.php?page=contai-licenses');
+
+        if (!$websiteConfig || empty($websiteConfig['websiteId'])) {
+            wp_safe_redirect(add_query_arg(['website_delete_error' => '1'], $redirect_url));
+            exit;
+        }
+
+        $response = $websiteProvider->deleteWebsite();
+
+        if (!$response->isSuccess()) {
+            wp_safe_redirect(add_query_arg(['website_delete_error' => '1'], $redirect_url));
+            exit;
+        }
+
+        $websiteProvider->deleteWebsiteConfig();
+    }
+
+    private function handleRefreshProfile(): void
+    {
+        $result = $this->service->refreshUserProfile();
+
+        if (!$result['success']) {
+            $this->message = $result['message'] ?? __('Failed to refresh profile', '1platform-content-ai');
+            $this->messageType = 'error';
+            return;
+        }
+
+        $this->message = __('Profile refreshed successfully', '1platform-content-ai');
+        $this->messageType = 'success';
+    }
+
+    /**
+     * Force-refresh both app and user tokens, then validate with a profile fetch.
+     *
+     * cURL equivalent flow (import to Postman):
+     * # Step 1: Get fresh app token
+     * curl -X POST https://api.1platform.pro/api/v1/auth/token \
+     *   -H "Content-Type: application/json" \
+     *   -d '{"apiKey": "<APP_API_KEY>"}'
+     *
+     * # Step 2: Get fresh user token
+     * curl -X POST https://api.1platform.pro/api/v1/users/token \
+     *   -H "Content-Type: application/json" \
+     *   -H "Authorization: Bearer <FRESH_APP_TOKEN>" \
+     *   -d '{"apiKey": "<USER_API_KEY>"}'
+     *
+     * # Step 3: Validate with profile request
+     * curl -X GET https://api.1platform.pro/api/v1/users/profile \
+     *   -H "Content-Type: application/json" \
+     *   -H "Authorization: Bearer <FRESH_APP_TOKEN>" \
+     *   -H "x-user-token: <FRESH_USER_TOKEN>"
+     */
+    private function handleRefreshTokens(): void
+    {
+        $authService = ContaiOnePlatformAuthService::create();
+        $result = $authService->forceRefreshAllTokens();
+
+        if (!$result['success']) {
+            $this->message = $result['message'] ?? __('Failed to refresh tokens', '1platform-content-ai');
+            $this->messageType = 'error';
+            return;
+        }
+
+        $profileResult = $this->service->refreshUserProfile();
+
+        if (!$profileResult['success']) {
+            $this->message = __('Tokens refreshed, but profile validation failed: ', '1platform-content-ai') . ($profileResult['message'] ?? '');
+            $this->messageType = 'warning';
+            return;
+        }
+
+        $this->message = __('Tokens refreshed and connection verified successfully', '1platform-content-ai');
+        $this->messageType = 'success';
+    }
+
+    /**
+     * Validate connection by making a real API call (GET /users/profile).
+     *
+     * The ContaiOnePlatformClient auto-refreshes expired tokens on 401,
+     * so this call also triggers token renewal if needed.
+     */
+    private function validateConnectionStatus(): bool
+    {
+        $response = $this->service->fetchUserProfile();
+
+        if ($response->isSuccess()) {
+            $data = $response->getData();
+            if ($data) {
+                $this->service->saveUserProfile($data);
+            }
+            return true;
+        }
+
+        return false;
+    }
+
+    private function renderMessage(): void
+    {
+        $classMap = [
+            'success' => 'notice-success',
+            'error'   => 'notice-error',
+            'warning' => 'notice-warning',
+        ];
+        $class = $classMap[$this->messageType] ?? 'notice-info';
+        ?>
+        <div class="notice <?php echo esc_attr($class); ?> is-dismissible">
+            <p><?php echo esc_html($this->message); ?></p>
+        </div>
+        <?php
+    }
+
+    private function renderError(string $message): void
+    {
+        ?>
+        <div class="contai-settings-panel contai-license-panel">
+            <div class="contai-panel-header">
+                <div class="contai-panel-title-group">
+                    <h2 class="contai-panel-title">
+                        <span class="dashicons dashicons-superhero-alt"></span>
+                        <?php esc_html_e('Content AI License', '1platform-content-ai'); ?>
+                    </h2>
+                </div>
+            </div>
+
+            <div class="contai-panel-body">
+                <div class="contai-info-box contai-info-box-error">
+                    <div class="contai-info-box-icon">
+                        <span class="dashicons dashicons-warning"></span>
+                    </div>
+                    <div class="contai-info-box-content">
+                        <p><strong><?php esc_html_e('Connection Error', '1platform-content-ai'); ?></strong></p>
+                        <p><?php echo esc_html($message); ?></p>
+                    </div>
+                </div>
+
+                <form method="post" class="contai-license-form">
+                    <?php wp_nonce_field(self::NONCE_ACTION, self::NONCE_FIELD); ?>
+                    <div class="contai-form-actions">
+                        <button type="submit" name="contai_refresh_profile" class="button button-primary">
+                            <span class="dashicons dashicons-update"></span>
+                            <?php esc_html_e('Retry Connection', '1platform-content-ai'); ?>
+                        </button>
+                        <button type="submit" name="contai_deactivate_license" class="button button-secondary"
+                                onclick="return confirm('<?php echo esc_js(__('Are you sure you want to remove the license?', '1platform-content-ai')); ?>');">
+                            <span class="dashicons dashicons-dismiss"></span>
+                            <?php esc_html_e('Remove License', '1platform-content-ai'); ?>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <?php
+    }
+
+    private function enqueueStyles(): void
+    {
+        $cssFile = __DIR__ . '/assets/css/license.css';
+        $cssUrl = plugins_url('assets/css/license.css', __FILE__);
+
+        wp_enqueue_style(
+            'contai-license',
+            $cssUrl,
+            array('contai-admin-licenses'),
+            file_exists($cssFile) ? filemtime($cssFile) : '1.0.0'
+        );
+    }
+}

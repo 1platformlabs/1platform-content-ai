@@ -1,0 +1,509 @@
+/* Job Monitor Styles */
+
+.contai-job-monitor {
+    --color-primary: var(--contai-primary);
+    --color-success: var(--contai-success);
+    --color-warning: var(--contai-warning);
+    --color-danger: var(--contai-error);
+    --color-info: var(--contai-primary-light);
+    --color-gray-50: var(--contai-neutral-50);
+    --color-gray-100: var(--contai-neutral-100);
+    --color-gray-200: var(--contai-neutral-200);
+    --color-gray-300: var(--contai-neutral-300);
+    --color-gray-600: var(--contai-neutral-600);
+    --color-gray-700: var(--contai-neutral-700);
+    --color-gray-900: var(--contai-neutral-700);
+    --shadow-sm: var(--contai-shadow-sm);
+    --shadow-md: var(--contai-shadow-md);
+    --shadow-lg: var(--contai-shadow-lg);
+    --radius-sm: var(--contai-radius-sm);
+    --radius-md: var(--contai-radius-md);
+    --radius-lg: var(--contai-radius-lg);
+}
+
+/* Header */
+.contai-monitor-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.contai-monitor-header h1 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--color-gray-900);
+}
+
+.contai-refresh-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.contai-auto-refresh-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: var(--color-gray-700);
+}
+
+.contai-last-updated {
+    font-size: 13px;
+    color: var(--color-gray-600);
+}
+
+/* Stats Grid */
+.contai-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.contai-stat-card {
+    background: white;
+    padding: 20px;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    border-left: 4px solid var(--color-primary);
+    transition: transform var(--contai-duration-fast), box-shadow var(--contai-duration-fast);
+}
+
+.contai-stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.contai-stat-card.stat-pending {
+    border-left-color: var(--color-info);
+}
+
+.contai-stat-card.stat-processing {
+    border-left-color: var(--color-warning);
+}
+
+.contai-stat-card.stat-done {
+    border-left-color: var(--color-success);
+}
+
+.contai-stat-card.stat-failed {
+    border-left-color: var(--color-danger);
+}
+
+.contai-stat-value {
+    font-size: 32px;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 8px;
+}
+
+.contai-stat-card.stat-pending .contai-stat-value {
+    color: var(--color-info);
+}
+
+.contai-stat-card.stat-processing .contai-stat-value {
+    color: var(--color-warning);
+}
+
+.contai-stat-card.stat-done .contai-stat-value {
+    color: var(--color-success);
+}
+
+.contai-stat-card.stat-failed .contai-stat-value {
+    color: var(--color-danger);
+}
+
+.contai-stat-label {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--color-gray-600);
+}
+
+.contai-stat-sublabel {
+    font-size: 11px;
+    color: var(--color-gray-600);
+    margin-top: 4px;
+}
+
+/* Progress Bar */
+.contai-progress-bar {
+    width: 100%;
+    height: 6px;
+    background: var(--color-gray-200);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: 8px;
+}
+
+.contai-progress-fill {
+    height: 100%;
+    background: var(--color-warning);
+    transition: width 0.3s ease;
+}
+
+/* Section */
+.contai-section {
+    background: white;
+    padding: 24px;
+    margin-bottom: 24px;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+}
+
+.contai-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.contai-section-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--color-gray-900);
+    margin: 0;
+}
+
+.contai-section-actions {
+    display: flex;
+    gap: 8px;
+}
+
+/* Tabs */
+.contai-tabs {
+    border-bottom: 2px solid var(--color-gray-200);
+    margin-bottom: 20px;
+}
+
+.contai-tab-list {
+    display: flex;
+    gap: 4px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.contai-tab {
+    padding: 12px 20px;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--color-gray-600);
+    transition: all var(--contai-duration-fast);
+}
+
+.contai-tab:hover {
+    color: var(--color-gray-900);
+    background: var(--color-gray-50);
+}
+
+.contai-tab.active {
+    color: var(--color-primary);
+    border-bottom-color: var(--color-primary);
+}
+
+.contai-tab-badge {
+    display: inline-block;
+    margin-left: 8px;
+    padding: 2px 8px;
+    font-size: 11px;
+    font-weight: 600;
+    background: var(--color-gray-200);
+    color: var(--color-gray-700);
+    border-radius: 10px;
+}
+
+.contai-tab.active .contai-tab-badge {
+    background: var(--color-primary);
+    color: white;
+}
+
+/* Table */
+.contai-jobs-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.contai-jobs-table thead {
+    background: var(--color-gray-50);
+}
+
+.contai-jobs-table th {
+    padding: 12px 16px;
+    text-align: left;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--color-gray-700);
+    border-bottom: 2px solid var(--color-gray-200);
+}
+
+.contai-jobs-table td {
+    padding: 12px 16px;
+    font-size: 14px;
+    color: var(--color-gray-900);
+    border-bottom: 1px solid var(--color-gray-200);
+    vertical-align: middle;
+}
+
+.contai-jobs-table tbody tr:hover {
+    background: var(--color-gray-50);
+}
+
+.contai-jobs-table tbody tr.stuck {
+    background: var(--contai-warning-bg);
+}
+
+.contai-jobs-table tbody tr.stuck:hover {
+    background: var(--contai-warning-border);
+}
+
+/* Badges */
+.contai-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: var(--radius-sm);
+    white-space: nowrap;
+}
+
+.contai-badge-info {
+    background: var(--contai-info-bg);
+    color: var(--contai-info-text);
+}
+
+.contai-badge-warning {
+    background: var(--contai-warning-bg);
+    color: var(--contai-warning-text);
+}
+
+.contai-badge-success {
+    background: var(--contai-success-bg);
+    color: var(--contai-success-text);
+}
+
+.contai-badge-danger {
+    background: var(--contai-error-bg);
+    color: var(--contai-error-text);
+}
+
+.contai-badge-default {
+    background: var(--color-gray-200);
+    color: var(--color-gray-700);
+}
+
+/* Alert */
+.contai-alert {
+    padding: 12px 16px;
+    border-radius: var(--radius-md);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.contai-alert-info {
+    background: var(--contai-info-bg);
+    border-left: 4px solid var(--color-info);
+    color: var(--contai-info-text);
+}
+
+.contai-alert-warning {
+    background: var(--contai-warning-bg);
+    border-left: 4px solid var(--color-warning);
+    color: var(--contai-warning-text);
+}
+
+.contai-alert-success {
+    background: var(--contai-success-bg);
+    border-left: 4px solid var(--color-success);
+    color: var(--contai-success-text);
+}
+
+.contai-alert-danger {
+    background: var(--contai-error-bg);
+    border-left: 4px solid var(--color-danger);
+    color: var(--contai-error-text);
+}
+
+/* Empty State */
+.contai-empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--color-gray-600);
+}
+
+.contai-empty-state-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+    opacity: 0.5;
+}
+
+.contai-empty-state-text {
+    font-size: 16px;
+    font-weight: 500;
+}
+
+/* Job Details */
+.contai-job-details {
+    font-size: 13px;
+    color: var(--color-gray-600);
+    line-height: 1.6;
+}
+
+.contai-job-id {
+    font-family: var(--contai-font-mono);
+    font-weight: 600;
+    color: var(--color-gray-900);
+}
+
+.contai-job-type {
+    font-weight: 500;
+    color: var(--color-primary);
+}
+
+.contai-job-error {
+    padding: 8px 12px;
+    background: var(--contai-error-bg);
+    border-left: 3px solid var(--color-danger);
+    font-size: 12px;
+    color: var(--contai-error-text);
+    border-radius: var(--radius-sm);
+    margin-top: 4px;
+}
+
+/* Metrics */
+.contai-metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 16px;
+    margin-top: 16px;
+}
+
+.contai-metric-card {
+    padding: 16px;
+    background: var(--color-gray-50);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-gray-200);
+}
+
+.contai-metric-label {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--color-gray-600);
+    margin-bottom: 8px;
+}
+
+.contai-metric-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--color-gray-900);
+}
+
+.contai-metric-unit {
+    font-size: 14px;
+    color: var(--color-gray-600);
+    margin-left: 4px;
+}
+
+/* Loading State */
+.contai-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    color: var(--color-gray-600);
+}
+
+.contai-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid var(--color-gray-300);
+    border-top-color: var(--color-primary);
+    border-radius: 50%;
+    animation: contai-spin 0.8s linear infinite;
+    margin-right: 12px;
+}
+
+@keyframes contai-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .contai-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .contai-monitor-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .contai-section {
+        padding: 16px;
+    }
+
+    .contai-jobs-table {
+        font-size: 12px;
+    }
+
+    .contai-jobs-table th,
+    .contai-jobs-table td {
+        padding: 8px;
+    }
+
+    .contai-tab-list {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+@media (max-width: 480px) {
+    .contai-stats-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Accessibility */
+.contai-sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
+
+/* Print Styles */
+@media print {
+    .contai-refresh-controls,
+    .contai-section-actions,
+    .button {
+        display: none !important;
+    }
+
+    .contai-section {
+        box-shadow: none;
+        border: 1px solid var(--color-gray-300);
+    }
+}

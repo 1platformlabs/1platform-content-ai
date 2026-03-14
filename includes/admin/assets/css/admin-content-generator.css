@@ -1,0 +1,670 @@
+/**
+ * Content Generator Admin Page Styles
+ *
+ * 1Platform Design System — Light Mode
+ * Uses --contai-* tokens from base.css
+ *
+ * @package 1Platform Content AI
+ * @since 2.4.0
+ */
+
+/* ============================================================================
+   MAIN WRAPPER & PAGE STRUCTURE
+   ============================================================================ */
+
+.contai-settings-wrap.contai-content-generator {
+    max-width: 1200px;
+    background: #fff;
+    border: 1px solid var(--contai-neutral-200);
+    border-radius: var(--contai-radius-lg);
+    padding: var(--contai-spacing-xl);
+    margin-bottom: var(--contai-spacing-lg);
+    box-shadow: var(--contai-shadow-xs);
+    font-family: var(--contai-font-sans);
+}
+
+.contai-page-header {
+    margin-bottom: var(--contai-spacing-xl);
+    border-bottom: 1px solid var(--contai-neutral-200);
+    padding-bottom: var(--contai-spacing-lg);
+}
+
+.contai-content-generator h1 {
+    margin: 0 0 var(--contai-spacing-xs) 0;
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--contai-neutral-700);
+    display: flex;
+    align-items: center;
+    gap: var(--contai-spacing-sm);
+    letter-spacing: -0.03em;
+    line-height: 1.2;
+}
+
+.contai-content-generator h1 .dashicons {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+    color: var(--contai-primary);
+    background: var(--contai-primary-glow);
+    border-radius: var(--contai-radius-md);
+    flex-shrink: 0;
+}
+
+.contai-page-subtitle {
+    margin: 0;
+    color: var(--contai-neutral-500);
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+/* ============================================================================
+   PANEL STYLING
+   ============================================================================ */
+
+.contai-settings-panel {
+    background: #fff;
+    border: 1px solid var(--contai-neutral-200);
+    border-radius: var(--contai-radius-lg);
+    margin-bottom: var(--contai-spacing-xl);
+    box-shadow: var(--contai-shadow-xs);
+    overflow: hidden;
+    transition:
+        box-shadow var(--contai-duration-normal) ease,
+        border-color var(--contai-duration-fast) ease;
+}
+
+.contai-settings-panel:hover {
+    border-color: var(--contai-neutral-300);
+    box-shadow: var(--contai-shadow-sm);
+}
+
+.contai-panel-header {
+    background: var(--contai-neutral-50);
+    padding: 20px var(--contai-spacing-lg);
+    border-bottom: 1px solid var(--contai-neutral-200);
+}
+
+.contai-panel-title-group {
+    margin: 0;
+}
+
+.contai-panel-title {
+    margin: 0 0 6px 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--contai-neutral-700);
+    display: flex;
+    align-items: center;
+    gap: var(--contai-spacing-sm);
+    letter-spacing: -0.02em;
+}
+
+.contai-panel-title .dashicons {
+    color: var(--contai-primary);
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+}
+
+.contai-panel-description {
+    margin: 0;
+    color: var(--contai-neutral-500);
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.contai-panel-body {
+    padding: var(--contai-spacing-lg);
+}
+
+/* Panel Variants */
+.contai-panel-keyword-extractor,
+.contai-panel-post-generator,
+.contai-panel-maintenance {
+    border-left: 3px solid var(--contai-primary);
+}
+
+.contai-panel-results {
+    border-left: 3px solid var(--contai-warning);
+    background: var(--contai-warning-bg);
+}
+
+.contai-panel-results.contai-panel-success {
+    border-left-color: var(--contai-success);
+    background: var(--contai-success-bg);
+}
+
+/* ============================================================================
+   FORM ELEMENTS
+   ============================================================================ */
+
+.contai-form-grid {
+    display: grid;
+    gap: var(--contai-spacing-lg);
+    margin-bottom: var(--contai-spacing-lg);
+}
+
+.contai-grid-2 {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+.contai-form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.contai-form-group h3 {
+    margin: 0 0 var(--contai-spacing-md) 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--contai-neutral-700);
+    letter-spacing: -0.01em;
+}
+
+.contai-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    font-size: 13.5px;
+    margin-bottom: 8px;
+    color: var(--contai-neutral-700);
+    cursor: pointer;
+}
+
+.contai-label .dashicons {
+    color: var(--contai-primary);
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+}
+
+.contai-input,
+.contai-select,
+.contai-textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--contai-neutral-300);
+    border-radius: var(--contai-radius-md);
+    font-family: var(--contai-font-sans);
+    font-size: 13.5px;
+    line-height: 1.5;
+    color: var(--contai-neutral-700);
+    background: #ffffff;
+    transition:
+        border-color var(--contai-duration-fast) ease,
+        box-shadow var(--contai-duration-fast) ease;
+    box-sizing: border-box;
+}
+
+.contai-input::placeholder,
+.contai-textarea::placeholder {
+    color: var(--contai-neutral-400);
+}
+
+.contai-input:focus,
+.contai-select:focus,
+.contai-textarea:focus {
+    outline: none;
+    border-color: var(--contai-primary);
+    box-shadow: 0 0 0 3px var(--contai-primary-glow);
+}
+
+.contai-textarea {
+    resize: vertical;
+    min-height: 120px;
+}
+
+.contai-textarea-large {
+    min-height: 200px;
+}
+
+.contai-help-text {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    margin: 6px 0 0 0;
+    color: var(--contai-neutral-500);
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.contai-help-text .dashicons {
+    color: var(--contai-primary-lighter);
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+.contai-help-text code {
+    background: var(--contai-info-bg);
+    padding: 2px 6px;
+    border-radius: var(--contai-radius-sm);
+    font-size: 11px;
+    font-family: var(--contai-font-mono);
+    color: var(--contai-info-text);
+    border: 1px solid var(--contai-info-border);
+}
+
+/* ============================================================================
+   BUTTON STYLES
+   ============================================================================ */
+
+.contai-button-group {
+    padding-top: var(--contai-spacing-lg);
+    border-top: 1px solid var(--contai-neutral-200);
+    margin-top: var(--contai-spacing-lg);
+}
+
+.contai-button-action,
+.button,
+button[type="submit"],
+input[type="submit"] {
+    height: auto;
+    padding: 10px 20px;
+    font-family: var(--contai-font-sans);
+    font-size: 13.5px;
+    font-weight: 600;
+    border-radius: var(--contai-radius-md);
+    cursor: pointer;
+    transition:
+        background var(--contai-duration-fast) ease,
+        border-color var(--contai-duration-fast) ease,
+        box-shadow var(--contai-duration-fast) ease,
+        transform 150ms ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border: none;
+    text-decoration: none;
+    line-height: 1.4;
+}
+
+.contai-button-action .dashicons,
+.button .dashicons,
+button .dashicons,
+input .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+}
+
+.button-primary,
+input[type="submit"].button-primary,
+button.button-primary,
+.contai-button-action.button-primary {
+    background: var(--contai-primary);
+    border: 1px solid var(--contai-primary);
+    color: #fff;
+    box-shadow: var(--contai-shadow-xs);
+}
+
+.button-primary:hover,
+input[type="submit"].button-primary:hover,
+button.button-primary:hover,
+.contai-button-action.button-primary:hover {
+    background: var(--contai-primary-dark);
+    border-color: var(--contai-primary-dark);
+    color: #fff;
+    box-shadow: var(--contai-shadow-md);
+    transform: translateY(-1px);
+}
+
+.button-primary:active,
+input[type="submit"].button-primary:active,
+button.button-primary:active,
+.contai-button-action.button-primary:active {
+    background: var(--contai-primary-darker);
+    border-color: var(--contai-primary-darker);
+    transform: scale(0.98);
+    box-shadow: var(--contai-shadow-xs);
+}
+
+.button-secondary {
+    background: #fff;
+    border: 1px solid var(--contai-neutral-300);
+    color: var(--contai-neutral-600);
+}
+
+.button-secondary:hover {
+    background: var(--contai-neutral-50);
+    border-color: var(--contai-neutral-400);
+    color: var(--contai-neutral-700);
+}
+
+/* ============================================================================
+   MAINTENANCE GRID LAYOUT
+   ============================================================================ */
+
+.contai-maintenance-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--contai-spacing-lg);
+    margin-bottom: var(--contai-spacing-lg);
+}
+
+.contai-maintenance-item {
+    background: var(--contai-neutral-50);
+    padding: 20px;
+    border-radius: var(--contai-radius-lg);
+    border: 1px solid var(--contai-neutral-200);
+    transition:
+        border-color var(--contai-duration-fast) ease,
+        box-shadow var(--contai-duration-fast) ease;
+}
+
+.contai-maintenance-item:hover {
+    border-color: var(--contai-primary-border);
+    box-shadow: var(--contai-shadow-md);
+}
+
+.contai-maintenance-header {
+    margin-bottom: var(--contai-spacing-md);
+}
+
+.contai-maintenance-header h3 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--contai-neutral-700);
+    letter-spacing: -0.01em;
+}
+
+.contai-maintenance-form {
+    margin-top: var(--contai-spacing-md);
+}
+
+/* ============================================================================
+   NOTICE STYLES
+   ============================================================================ */
+
+.contai-notice {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px var(--contai-spacing-md);
+    margin: var(--contai-spacing-md) 0;
+    border: 1px solid var(--contai-info-border);
+    border-left: 3px solid var(--contai-info);
+    background: var(--contai-info-bg);
+    border-radius: 0 var(--contai-radius-md) var(--contai-radius-md) 0;
+    color: var(--contai-info-text);
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.contai-notice .dashicons {
+    color: var(--contai-info);
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    margin-top: 1px;
+    flex-shrink: 0;
+}
+
+.contai-notice p {
+    margin: 0;
+}
+
+.contai-notice-success {
+    border-color: var(--contai-success-border);
+    border-left-color: var(--contai-success);
+    background: var(--contai-success-bg);
+    color: var(--contai-success-text);
+}
+
+.contai-notice-success .dashicons {
+    color: var(--contai-success);
+}
+
+.contai-notice-error {
+    border-color: var(--contai-error-border);
+    border-left-color: var(--contai-error);
+    background: var(--contai-error-bg);
+    color: var(--contai-error-text);
+}
+
+.contai-notice-error .dashicons {
+    color: var(--contai-error);
+}
+
+.contai-notice-warning {
+    border-color: var(--contai-warning-border);
+    border-left-color: var(--contai-warning);
+    background: var(--contai-warning-bg);
+    color: var(--contai-warning-text);
+}
+
+.contai-notice-warning .dashicons {
+    color: var(--contai-warning);
+}
+
+.contai-notice-info {
+    border-color: var(--contai-info-border);
+    border-left-color: var(--contai-info);
+    background: var(--contai-info-bg);
+    color: var(--contai-info-text);
+}
+
+.contai-notice-info .dashicons {
+    color: var(--contai-info);
+}
+
+/* ============================================================================
+   TABLE STYLES
+   ============================================================================ */
+
+.contai-keywords-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: var(--contai-spacing-md) 0;
+    border: 1px solid var(--contai-neutral-200);
+    border-radius: var(--contai-radius-lg);
+    overflow: hidden;
+    box-shadow: var(--contai-shadow-xs);
+}
+
+.contai-keywords-table thead {
+    background: var(--contai-neutral-50);
+    border-bottom: 1px solid var(--contai-neutral-200);
+}
+
+.contai-keywords-table th {
+    padding: 12px var(--contai-spacing-md);
+    text-align: left;
+    font-weight: 600;
+    color: var(--contai-neutral-500);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.contai-keywords-table tbody tr {
+    border-bottom: 1px solid var(--contai-neutral-200);
+    transition: background-color 150ms ease;
+}
+
+.contai-keywords-table tbody tr:last-child {
+    border-bottom: none;
+}
+
+.contai-keywords-table tbody tr:hover {
+    background-color: var(--contai-primary-glow);
+}
+
+.contai-keywords-table td {
+    padding: 12px var(--contai-spacing-md);
+    color: var(--contai-neutral-600);
+    font-size: 13px;
+    line-height: 1.5;
+    word-break: break-word;
+}
+
+/* ============================================================================
+   CODE BLOCK STYLES
+   ============================================================================ */
+
+.contai-code-block {
+    background: var(--contai-neutral-700);
+    border: 1px solid var(--contai-neutral-600);
+    padding: var(--contai-spacing-md);
+    border-radius: var(--contai-radius-lg);
+    overflow-x: auto;
+    max-height: 400px;
+    font-family: var(--contai-font-mono);
+    font-size: 12.5px;
+    line-height: 1.6;
+    color: #e2e8f0;
+    white-space: pre;
+}
+
+/* ============================================================================
+   RESULTS DISPLAY
+   ============================================================================ */
+
+.contai-results-container {
+    margin-top: var(--contai-spacing-md);
+}
+
+.contai-response-details {
+    margin-top: var(--contai-spacing-md);
+    cursor: pointer;
+}
+
+.contai-response-summary {
+    padding: 12px var(--contai-spacing-md);
+    background: var(--contai-neutral-50);
+    border: 1px solid var(--contai-neutral-200);
+    border-radius: var(--contai-radius-md);
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--contai-neutral-700);
+    user-select: none;
+    transition:
+        background var(--contai-duration-fast) ease,
+        border-color var(--contai-duration-fast) ease;
+}
+
+.contai-response-summary:hover {
+    background: var(--contai-neutral-100);
+    border-color: var(--contai-neutral-300);
+}
+
+.contai-response-summary::marker {
+    color: var(--contai-primary);
+}
+
+/* ============================================================================
+   LOADING SPINNER
+   ============================================================================ */
+
+.contai-spinner {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid var(--contai-neutral-200);
+    border-top: 2px solid var(--contai-primary);
+    border-radius: 50%;
+    animation: contai-spin 1s linear infinite;
+    margin-right: 8px;
+    vertical-align: middle;
+}
+
+@keyframes contai-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.contai-notice p .contai-spinner {
+    margin-right: 6px;
+}
+
+/* ============================================================================
+   RESPONSIVE DESIGN
+   ============================================================================ */
+
+@media (max-width: 768px) {
+    .contai-settings-wrap.contai-content-generator {
+        padding: var(--contai-spacing-lg);
+    }
+
+    .contai-page-header {
+        margin-bottom: var(--contai-spacing-lg);
+    }
+
+    .contai-content-generator h1 {
+        font-size: 22px;
+    }
+
+    .contai-content-generator h1 .dashicons {
+        width: 36px;
+        height: 36px;
+        font-size: 18px;
+    }
+
+    .contai-page-subtitle {
+        font-size: 13px;
+    }
+
+    .contai-panel-header {
+        padding: var(--contai-spacing-md);
+    }
+
+    .contai-panel-body {
+        padding: var(--contai-spacing-md);
+    }
+
+    .contai-panel-title {
+        font-size: 15px;
+    }
+
+    .contai-grid-2 {
+        grid-template-columns: 1fr;
+    }
+
+    .contai-input,
+    .contai-select,
+    .contai-textarea {
+        font-size: 16px;
+    }
+
+    .contai-button-action,
+    .button,
+    button[type="submit"],
+    input[type="submit"] {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .contai-keywords-table th,
+    .contai-keywords-table td {
+        padding: 10px;
+        font-size: 12px;
+    }
+
+    .contai-maintenance-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .contai-settings-wrap.contai-content-generator {
+        padding: var(--contai-spacing-md);
+    }
+
+    .contai-content-generator h1 {
+        font-size: 20px;
+    }
+
+    .contai-panel-title {
+        font-size: 14px;
+    }
+}

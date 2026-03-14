@@ -1,0 +1,15 @@
+/**
+ * Responsive styles for About Me sidebar widget.
+ *
+ * @package ContentAI
+ */
+
+@media (max-width: 768px) {
+    .contai-about-me-widget {
+        max-width: 100% !important;
+    }
+    .contai-about-me-widget img {
+        width: 100% !important;
+        height: auto !important;
+    }
+}
