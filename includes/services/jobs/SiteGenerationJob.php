@@ -210,7 +210,7 @@ class ContaiSiteGenerationJob implements ContaiJobInterface
 
         if (!$result->isSuccess()) {
             // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
-            throw new Exception('ContaiKeyword extraction failed: ' . $result->getErrorMessage());
+            throw new Exception('Keyword extraction failed: ' . $result->getErrorMessage());
         }
     }
 

@@ -123,7 +123,7 @@ class ContaiKeywordExtractionHandler {
             'success' => true,
             'message' => sprintf(
                 /* translators: %s: domain name for keyword extraction */
-                __('ContaiKeyword extraction job has been queued. Domain: %s. You can check the Keywords List page for results.', '1platform-content-ai'),
+                __('Keyword extraction job has been queued. Domain: %s. You can check the Keywords List page for results.', '1platform-content-ai'),
                 $validation['domain']
             )
         ];

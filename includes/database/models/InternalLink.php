@@ -247,7 +247,7 @@ class ContaiInternalLink {
         }
 
         if ($this->keyword_id <= 0) {
-            throw new \InvalidArgumentException('ContaiKeyword ID must be greater than 0');
+            throw new \InvalidArgumentException('Keyword ID must be greater than 0');
         }
 
         return true;

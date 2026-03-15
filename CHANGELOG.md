@@ -4,6 +4,17 @@ All notable changes to Content AI are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [2.3.3] - 2026-03-14
+
+### Fixed
+- Search Console: Disconnect Website now deletes the website from the 1Platform API before clearing local state, preventing `initializeWebsiteStatus()` from re-syncing stale data
+- Search Console: Treat HTTP 404 on disconnect as already-disconnected and proceed with local cleanup
+- Fix corrupted string literals (`ContaiKeyword` in user-facing messages) caused by over-aggressive class rename in v2.3.2
+- Fix 288 broken unit tests caused by class name mismatches after `Contai` prefix rename; added `class_alias` mappings in test bootstrap
+
+### Changed
+- Updated Disconnect Website UI description to accurately reflect that it removes both remote and local data
+
 ## [2.3.2] - 2026-03-14
 
 ### Fixed

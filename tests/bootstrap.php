@@ -8,17 +8,36 @@ require_once __DIR__ . '/../vendor/autoload.php';
 
 WP_Mock::bootstrap();
 
+// ── Models ──────────────────────────────────────────────────────
 require_once __DIR__ . '/../includes/database/models/JobStatus.php';
 require_once __DIR__ . '/../includes/database/models/Job.php';
 require_once __DIR__ . '/../includes/database/models/Keyword.php';
 require_once __DIR__ . '/../includes/database/models/InternalLink.php';
+
+class_alias('ContaiJobStatus', 'JobStatus');
+class_alias('ContaiJob', 'Job');
+class_alias('ContaiKeyword', 'Keyword');
+class_alias(WPContentAI\ContaiDatabase\Models\ContaiInternalLink::class, 'WPContentAI\Database\Models\InternalLink');
+
+// ── Database ────────────────────────────────────────────────────
 require_once __DIR__ . '/../includes/database/Database.php';
 require_once __DIR__ . '/../includes/database/repositories/JobRepository.php';
 require_once __DIR__ . '/../includes/database/repositories/KeywordRepository.php';
+
+class_alias('ContaiDatabase', 'Database');
+class_alias('ContaiJobRepository', 'JobRepository');
+class_alias('ContaiKeywordRepository', 'KeywordRepository');
+
+// ── Helpers ─────────────────────────────────────────────────────
 require_once __DIR__ . '/../includes/helpers/crypto.php';
 require_once __DIR__ . '/../includes/helpers/security.php';
 require_once __DIR__ . '/../includes/helpers/TimestampHelper.php';
 require_once __DIR__ . '/../includes/helpers/JobDetailsFormatter.php';
+
+class_alias('ContaiTimestampHelper', 'TimestampHelper');
+class_alias('ContaiJobDetailsFormatter', 'JobDetailsFormatter');
+
+// ── Services ────────────────────────────────────────────────────
 require_once __DIR__ . '/../includes/services/config/EnvironmentDetector.php';
 require_once __DIR__ . '/../includes/services/toc/HeadingParser.php';
 require_once __DIR__ . '/../includes/services/toc/AnchorGenerator.php';
@@ -27,4 +46,28 @@ require_once __DIR__ . '/../includes/services/toc/TocConfiguration.php';
 require_once __DIR__ . '/../includes/services/internal-links/KeywordMatcher.php';
 require_once __DIR__ . '/../includes/services/internal-links/ContentLinkInjector.php';
 require_once __DIR__ . '/../includes/services/http/RateLimiter.php';
+
+class_alias('ContaiEnvironmentDetector', 'EnvironmentDetector');
+class_alias('ContaiHeadingParser', 'HeadingParser');
+class_alias('ContaiAnchorGenerator', 'AnchorGenerator');
+class_alias('ContaiTocBuilder', 'TocBuilder');
+class_alias('ContaiTocConfiguration', 'TocConfiguration');
+class_alias(WPContentAI\Services\InternalLinks\ContaiKeywordMatcher::class, 'WPContentAI\Services\InternalLinks\KeywordMatcher');
+class_alias(WPContentAI\Services\InternalLinks\ContaiContentLinkInjector::class, 'WPContentAI\Services\InternalLinks\ContentLinkInjector');
+class_alias('ContaiRateLimiter', 'RateLimiter');
+
+// ── Providers ───────────────────────────────────────────────────
 require_once __DIR__ . '/../includes/providers/UserProvider.php';
+
+class_alias('ContaiUserProvider', 'UserProvider');
+
+// ── API & Search Console ────────────────────────────────────────
+require_once __DIR__ . '/../includes/services/http/HTTPClientService.php';
+require_once __DIR__ . '/../includes/services/config/Config.php';
+require_once __DIR__ . '/../includes/services/api/OnePlatformAuthService.php';
+require_once __DIR__ . '/../includes/services/http/RequestLogger.php';
+require_once __DIR__ . '/../includes/services/api/OnePlatformEndpoints.php';
+require_once __DIR__ . '/../includes/services/api/OnePlatformClient.php';
+require_once __DIR__ . '/../includes/providers/WebsiteProvider.php';
+require_once __DIR__ . '/../includes/services/search-console/SearchConsoleService.php';
+require_once __DIR__ . '/../includes/admin/apps/handlers/SearchConsoleFormHandler.php';

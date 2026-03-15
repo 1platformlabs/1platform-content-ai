@@ -19,7 +19,7 @@ class ContaiContentGeneratorSidebar {
     private function init_menu_items(): void {
         $this->menu_items = [
             'keyword-extractor' => [
-                'title' => __('ContaiKeyword Extractor', '1platform-content-ai'),
+                'title' => __('Keyword Extractor', '1platform-content-ai'),
                 'icon' => 'dashicons-search',
                 'badge' => null,
             ],
