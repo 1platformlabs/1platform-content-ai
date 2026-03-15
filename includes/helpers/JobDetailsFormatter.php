@@ -7,7 +7,7 @@ class ContaiJobDetailsFormatter
     private const JOB_TYPE_LABELS = [
         'post_generation' => 'Post Generation',
         'internal_link' => 'Internal Links',
-        'keyword_extraction' => 'ContaiKeyword Extraction',
+        'keyword_extraction' => 'Keyword Extraction',
         'site_generation' => 'Site Generation',
     ];
 
@@ -75,7 +75,7 @@ class ContaiJobDetailsFormatter
         $parts = [];
 
         if (isset($payload['keyword_id'])) {
-            $parts[] = sprintf('ContaiKeyword ID: %d', $payload['keyword_id']);
+            $parts[] = sprintf('Keyword ID: %d', $payload['keyword_id']);
         }
 
         if (isset($payload['post_id'])) {

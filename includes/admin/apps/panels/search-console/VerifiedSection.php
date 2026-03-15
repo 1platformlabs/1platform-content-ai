@@ -146,7 +146,7 @@ class ContaiSearchConsoleVerifiedSection
                 <div class="contai-danger-content">
                     <div class="contai-danger-info">
                         <p class="contai-danger-description">
-                            <?php esc_html_e('Disconnect this website from the plugin. This will only remove the local connection data.', '1platform-content-ai'); ?>
+                            <?php esc_html_e('Disconnect this website from the plugin. This will remove the website from 1Platform and clear local connection data.', '1platform-content-ai'); ?>
                         </p>
                     </div>
                     <button type="submit" name="contai_disconnect_website" class="button button-secondary">

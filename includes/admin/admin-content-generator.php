@@ -189,7 +189,7 @@ function contai_content_generator_page() {
 		case 'keyword-extractor':
 			$panel = new ContaiKeywordExtractorPanel();
 			$layout->render_page_title(
-				__( 'ContaiKeyword Extractor', '1platform-content-ai' ),
+				__( 'Keyword Extractor', '1platform-content-ai' ),
 				__( 'Analyze competitor websites and extract valuable keywords for content strategy', '1platform-content-ai' ),
 				'dashicons-search'
 			);

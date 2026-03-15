@@ -4,7 +4,7 @@ Tags: ai content, seo, content generation, internal links, table of contents
 Requires at least: 5.9
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 2.3.1
+Stable tag: 2.3.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -158,6 +158,11 @@ The plugin sends your site URL, API key, and content generation parameters (keyw
 7. Tools — Google Search Console, Publisuites, and Ads Manager integrations.
 
 == Changelog ==
+
+= 2.3.3 =
+* Fix: Search Console Disconnect Website now properly deletes the website from the 1Platform API before clearing local state
+* Fix: Corrupted string literals showing "ContaiKeyword" instead of "Keyword" in user-facing messages
+* Fix: 288 broken unit tests from class name mismatches after Contai prefix rename
 
 = 2.3.1 =
 * Migrated all admin menu slugs and screen IDs from `wpcontentai-` to `contai-` for consistent prefixing

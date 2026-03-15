@@ -78,7 +78,7 @@ class ContaiContentGenerationPollingJob implements ContaiJobInterface
         }
 
         if ($keyword->getStatus() === ContaiKeyword::STATUS_DONE) {
-            return ['success' => true, 'message' => 'ContaiKeyword already processed'];
+            return ['success' => true, 'message' => 'Keyword already processed'];
         }
 
         $poll_start_time = $payload['poll_start_time'] ?? time();

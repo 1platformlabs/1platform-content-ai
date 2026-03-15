@@ -97,6 +97,13 @@ class ContaiSearchConsoleFormHandler
 
     private function handleDisconnectWebsite(): void
     {
+        $response = $this->websiteProvider->deleteWebsite();
+
+        if (!$response->isSuccess() && $response->getStatusCode() !== 404) {
+            $this->redirectWithMessage('error', $response->getMessage());
+            return;
+        }
+
         $this->websiteProvider->deleteWebsiteConfig();
 
         $this->redirectWithMessage('success', __('Website disconnected successfully', '1platform-content-ai'));

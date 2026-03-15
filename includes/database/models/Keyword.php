@@ -93,7 +93,7 @@ class ContaiKeyword {
         $errors = [];
 
         if (empty($this->keyword)) {
-            $errors[] = 'ContaiKeyword is required';
+            $errors[] = 'Keyword is required';
         }
 
         if ($this->volume < 0) {
