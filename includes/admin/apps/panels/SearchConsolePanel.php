@@ -51,12 +51,18 @@ class ContaiSearchConsolePanel
 
         $message = urldecode(sanitize_text_field(wp_unslash($_GET['contai_sc_message'])));
         $type = sanitize_key(wp_unslash($_GET['contai_sc_type']));
+        $trace_id = isset($_GET['contai_sc_trace_id']) ? sanitize_text_field(wp_unslash(urldecode($_GET['contai_sc_trace_id']))) : null;
         // phpcs:enable WordPress.Security.NonceVerification.Recommended
         $class = $type === 'success' ? 'notice-success' : 'notice-error';
 
         ?>
         <div class="notice <?php echo esc_attr($class); ?> is-dismissible">
-            <p><?php echo esc_html($message); ?></p>
+            <p>
+                <?php echo esc_html($message); ?>
+                <?php if (!empty($trace_id)): ?>
+                    <a href="<?php echo esc_url(admin_url('admin.php?page=contai-logs&trace_id=' . urlencode($trace_id))); ?>">[Ref: <?php echo esc_html($trace_id); ?>]</a>
+                <?php endif; ?>
+            </p>
         </div>
         <?php
     }

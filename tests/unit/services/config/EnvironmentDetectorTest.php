@@ -19,13 +19,13 @@ class EnvironmentDetectorTest extends TestCase {
         parent::tearDown();
     }
 
-    public function test_detect_returns_staging_for_local_domain(): void {
+    public function test_detect_returns_development_for_local_domain(): void {
         WP_Mock::userFunction('get_site_url')
             ->andReturn('https://wpcontentai.local');
 
         $env = EnvironmentDetector::detect();
 
-        $this->assertSame('staging', $env);
+        $this->assertSame('development', $env);
     }
 
     public function test_detect_returns_production_for_non_local_domain(): void {
@@ -61,18 +61,18 @@ class EnvironmentDetectorTest extends TestCase {
         $this->assertSame($firstEnv, $secondEnv);
     }
 
+    public function test_is_development_returns_true_for_local(): void {
+        WP_Mock::userFunction('get_site_url')
+            ->andReturn('https://site.local');
+
+        $this->assertTrue(EnvironmentDetector::isDevelopment());
+    }
+
     public function test_is_development_returns_false_for_production(): void {
         WP_Mock::userFunction('get_site_url')
             ->andReturn('https://example.com');
 
         $this->assertFalse(EnvironmentDetector::isDevelopment());
-    }
-
-    public function test_is_staging_returns_true_for_local(): void {
-        WP_Mock::userFunction('get_site_url')
-            ->andReturn('https://site.local');
-
-        $this->assertTrue(EnvironmentDetector::isStaging());
     }
 
     public function test_is_production_returns_true_for_live_site(): void {
@@ -97,6 +97,6 @@ class EnvironmentDetectorTest extends TestCase {
         EnvironmentDetector::reset();
         $env = EnvironmentDetector::detect();
 
-        $this->assertSame('staging', $env);
+        $this->assertSame('development', $env);
     }
 }

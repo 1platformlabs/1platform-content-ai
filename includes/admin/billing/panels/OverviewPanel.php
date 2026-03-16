@@ -30,7 +30,9 @@ class ContaiBillingOverviewPanel
         $response = $this->service->getBilling();
 
         if (!$response->isSuccess()) {
-            $this->renderError($response->getMessage() ?? __('Failed to load billing information.', '1platform-content-ai'));
+            $this->renderError(
+                ContaiNoticeHelper::buildErrorNotice('Load billing', $response, __('Failed to load billing information.', '1platform-content-ai'))
+            );
             return;
         }
 
@@ -175,12 +177,18 @@ class ContaiBillingOverviewPanel
 
         $message = urldecode(sanitize_text_field(wp_unslash($_GET['contai_bl_message'])));
         $type = sanitize_key(wp_unslash($_GET['contai_bl_type']));
+        $trace_id = isset($_GET['contai_bl_trace_id']) ? sanitize_text_field(wp_unslash(urldecode($_GET['contai_bl_trace_id']))) : null;
         // phpcs:enable WordPress.Security.NonceVerification.Recommended
         $class = $type === 'success' ? 'notice-success' : 'notice-error';
 
         ?>
         <div class="notice <?php echo esc_attr($class); ?> is-dismissible">
-            <p><?php echo esc_html($message); ?></p>
+            <p>
+                <?php echo esc_html($message); ?>
+                <?php if (!empty($trace_id)): ?>
+                    <a href="<?php echo esc_url(admin_url('admin.php?page=contai-logs&trace_id=' . urlencode($trace_id))); ?>">[Ref: <?php echo esc_html($trace_id); ?>]</a>
+                <?php endif; ?>
+            </p>
         </div>
         <?php
     }
@@ -199,7 +207,7 @@ class ContaiBillingOverviewPanel
                     <span class="dashicons dashicons-warning"></span>
                     <div>
                         <p><strong><?php esc_html_e('Error', '1platform-content-ai'); ?></strong></p>
-                        <p><?php echo esc_html($message); ?></p>
+                        <p><?php echo wp_kses($message, ['a' => ['href' => [], 'class' => []]]); ?></p>
                     </div>
                 </div>
             </div>

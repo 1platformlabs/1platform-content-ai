@@ -114,7 +114,24 @@ class ContaiOnePlatformClient {
             return $this->request($method, $url, $data, $retry_count + 1);
         }
 
-        return $this->createResponse($response);
+        $platform_response = $this->createResponse($response);
+
+        if (!$platform_response->isSuccess() && class_exists('ContaiClientLogReporter')) {
+            ContaiClientLogReporter::report([
+                'timestamp'        => gmdate('c'),
+                'method'           => $method,
+                'endpoint'         => $url,
+                'action'           => 'api_request',
+                'source_module'    => 'api_client',
+                'response_status'  => $platform_response->getStatusCode(),
+                'response_message' => substr($platform_response->getMessage() ?? self::ERROR_REQUEST_FAILED, 0, 2000),
+                'success'          => false,
+                'error_type'       => 'provider_error',
+                'trace_id'         => $platform_response->getTraceId(),
+            ]);
+        }
+
+        return $platform_response;
     }
 
     private function isWithinRateLimit(): bool {
@@ -219,31 +236,34 @@ class ContaiOnePlatformClient {
 
     private function createResponse(ContaiHTTPResponse $http_response): ContaiOnePlatformResponse {
         $json = $http_response->getJson();
+        $trace_id = $http_response->getHeader('x-trace-id');
 
         if ($http_response->isSuccess()) {
-            return $this->createSuccessResponse($json, $http_response->getStatusCode());
+            return $this->createSuccessResponse($json, $http_response->getStatusCode(), $trace_id);
         }
 
-        return $this->createErrorResponse($json, $http_response);
+        return $this->createErrorResponse($json, $http_response, $trace_id);
     }
 
-    private function createSuccessResponse(array $json, int $status_code): ContaiOnePlatformResponse {
+    private function createSuccessResponse(array $json, int $status_code, ?string $trace_id = null): ContaiOnePlatformResponse {
         return new ContaiOnePlatformResponse(
             $json['success'] ?? true,
             $json['data'] ?? $json,
             $json['msg'] ?? null,
-            $status_code
+            $status_code,
+            $trace_id
         );
     }
 
-    private function createErrorResponse(?array $json, ContaiHTTPResponse $http_response): ContaiOnePlatformResponse {
+    private function createErrorResponse(?array $json, ContaiHTTPResponse $http_response, ?string $trace_id = null): ContaiOnePlatformResponse {
         $error_message = $json['msg'] ?? $http_response->getError() ?? self::ERROR_REQUEST_FAILED;
 
         return new ContaiOnePlatformResponse(
             false,
             null,
             $error_message,
-            $http_response->getStatusCode()
+            $http_response->getStatusCode(),
+            $trace_id
         );
     }
 
@@ -304,12 +324,14 @@ class ContaiOnePlatformResponse {
     private $data;
     private ?string $message;
     private int $status_code;
+    private ?string $trace_id;
 
-    public function __construct(bool $success, $data, ?string $message = null, int $status_code = 200) {
+    public function __construct(bool $success, $data, ?string $message = null, int $status_code = 200, ?string $trace_id = null) {
         $this->success = $success;
         $this->data = $data;
         $this->message = $message;
         $this->status_code = $status_code;
+        $this->trace_id = $trace_id;
     }
 
     public function isSuccess(): bool {
@@ -328,12 +350,17 @@ class ContaiOnePlatformResponse {
         return $this->status_code;
     }
 
+    public function getTraceId(): ?string {
+        return $this->trace_id;
+    }
+
     public function toArray(): array {
         return [
             'success' => $this->success,
             'data' => $this->data,
             'message' => $this->message,
             'status_code' => $this->status_code,
+            'trace_id' => $this->trace_id,
         ];
     }
 }

@@ -27,7 +27,7 @@ class ContaiEnvironmentDetector
         $site_url = defined('WP_SITEURL') ? WP_SITEURL : get_site_url();
 
         if (strpos($site_url, '.local') !== false) {
-            return self::ENV_STAGING;
+            return self::ENV_DEVELOPMENT;
         }
 
         return self::ENV_PRODUCTION;

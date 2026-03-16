@@ -68,7 +68,7 @@ class ContaiTopUpHandler
         $response = $this->service->createTransaction($amount, $currency, 'Account top-up');
 
         if (!$response->isSuccess()) {
-            $this->redirectWithMessage('error', $response->getMessage());
+            $this->redirectWithMessage('error', $response->getMessage(), $response->getTraceId());
             return;
         }
 
@@ -84,13 +84,16 @@ class ContaiTopUpHandler
         $this->redirectWithMessage('error', __('Payment URL not available. Please try again.', '1platform-content-ai'));
     }
 
-    private function redirectWithMessage(string $type, string $message): void
+    private function redirectWithMessage(string $type, string $message, ?string $trace_id = null): void
     {
         $redirect_url = admin_url('admin.php?page=contai-billing&section=overview');
         $args = [
             'contai_bl_message' => urlencode($message),
             'contai_bl_type' => $type,
         ];
+        if (!empty($trace_id)) {
+            $args['contai_bl_trace_id'] = urlencode($trace_id);
+        }
 
         wp_safe_redirect(add_query_arg($args, $redirect_url));
         exit;

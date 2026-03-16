@@ -5,6 +5,7 @@
 .gitignore
 .distignore
 CLAUDE.md
+PIPELINE_PLAN.md
 
 # IDE
 .idea
@@ -31,9 +32,28 @@ tests
 phpunit.xml
 phpunit.xml.dist
 
+# Linting / Static Analysis
+.phpcs.xml
+.phpcs.xml.dist
+.phpstan.neon
+.phpstan.neon.dist
+phpstan.neon
+phpstan.neon.dist
+.editorconfig
+
 # Environment
 .env
 .env.*
 
 # Logs
 *.log
+
+# Deployment
+deploy.sh
+wp-assets
+
+# Other
+CHANGELOG.md
+.phpunit.result.cache
+composer.phar
+skills-lock.json

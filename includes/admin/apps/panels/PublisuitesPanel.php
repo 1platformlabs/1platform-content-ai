@@ -226,8 +226,9 @@ class ContaiPublisuitesPanel
             return;
         }
 
-        $message = sanitize_text_field(wp_unslash(urldecode($_GET['contai_ps_message'])));
-        $type    = sanitize_key(wp_unslash($_GET['contai_ps_type'] ?? 'info'));
+        $message        = sanitize_text_field(wp_unslash(urldecode($_GET['contai_ps_message'])));
+        $type           = sanitize_key(wp_unslash($_GET['contai_ps_type'] ?? 'info'));
+        $trace_id = isset($_GET['contai_ps_trace_id']) ? sanitize_text_field(wp_unslash(urldecode($_GET['contai_ps_trace_id']))) : null;
         // phpcs:enable WordPress.Security.NonceVerification.Recommended
 
         $valid_types = ['success', 'error', 'warning', 'info'];
@@ -244,7 +245,12 @@ class ContaiPublisuitesPanel
         ?>
         <div class="contai-notice contai-notice-<?php echo esc_attr($type); ?> contai-ps-flash" role="status" aria-live="polite">
             <span class="dashicons <?php echo esc_attr($icon_map[$type]); ?>" aria-hidden="true"></span>
-            <p><?php echo esc_html($message); ?></p>
+            <p>
+                <?php echo esc_html($message); ?>
+                <?php if (!empty($trace_id)): ?>
+                    <a href="<?php echo esc_url(admin_url('admin.php?page=contai-logs&trace_id=' . urlencode($trace_id))); ?>">[Ref: <?php echo esc_html($trace_id); ?>]</a>
+                <?php endif; ?>
+            </p>
         </div>
         <?php
     }
