@@ -75,7 +75,7 @@ env:
 - **Timeout:** 15 minutos
 - **Environment:** `QA`
 - **Permissions:** `contents: read`
-- **PHP versions:** Matrix `[7.4, 8.1, 8.3]` (cobertura mínima del plugin: PHP 7.4+)
+- **PHP versions:** Matrix `[8.1, 8.3]` (cobertura mínima del plugin: PHP 8.1+)
 - **Steps:**
   1. Checkout repository
   2. Setup PHP (`shivammathur/setup-php`) con extensions: `mbstring, xml, curl, mysql`
@@ -821,7 +821,7 @@ Crear `1platform-content-ai/.distignore`:
 |---|---|---|
 | **Lenguaje** | Python 3.13+ | PHP 7.4+ |
 | **Tests** | pytest + MongoDB service | PHPUnit (sin WordPress real) |
-| **Test matrix** | Single Python version | PHP 7.4, 8.1, 8.3 |
+| **Test matrix** | Single Python version | PHP 8.1, 8.3 |
 | **Linting** | flake8 + black + isort | PHPCS + PHPStan |
 | **Version bump files** | 1 archivo (`app/core/config.py`) | 2-3 archivos (`1platform-content-ai.php` + `readme.txt` + `OPCAI_VERSION`) |
 | **Version pattern** | `PRODvX.Y.Z` | `X.Y.Z` (sin prefijo) |
