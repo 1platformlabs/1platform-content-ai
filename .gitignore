@@ -34,3 +34,6 @@ package-lock.json
 Thumbs.db
 .php-version
 skills-lock.json
+
+# Testing
+.phpunit.result.cache
