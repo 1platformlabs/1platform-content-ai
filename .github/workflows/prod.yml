@@ -14,7 +14,7 @@ env:
   PHP_VERSION_PROD: "8.3"
   PHP_EXTENSIONS: "mbstring, xml, curl, mysql"
   CHANGELOG_FILE: "CHANGELOG.md"
-  CLAUDE_MODEL: "claude-haiku-4-5-20251001"
+  CLAUDE_MODEL: "claude-sonnet-4-6"
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:

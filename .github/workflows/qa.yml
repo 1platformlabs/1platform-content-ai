@@ -17,7 +17,7 @@ concurrency:
 env:
   PHP_VERSION_PROD: "8.3"
   PHP_EXTENSIONS: "mbstring, xml, curl, mysql"
-  CLAUDE_MODEL: "claude-haiku-4-5-20251001"
+  CLAUDE_MODEL: "claude-sonnet-4-6"
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
@@ -291,11 +291,29 @@ jobs:
 
           Path("claude_raw_output.txt").write_text(text, encoding="utf-8")
 
+          # Strip markdown code fences if present (Claude sometimes wraps JSON)
+          fence_match = re.search(r"```(?:json)?\s*\n(.*?)```", text, re.DOTALL)
+          if fence_match:
+              text = fence_match.group(1).strip()
+
           try:
               review = json.loads(text)
           except json.JSONDecodeError:
-              print("::error::Claude response is not valid JSON")
-              raise SystemExit(1)
+              print("::warning::Claude response is not valid JSON, attempting repair...")
+
+              # Common fixes: trailing commas, missing commas
+              repaired = text
+              repaired = re.sub(r",\s*([}\]])", r"\1", repaired)
+              repaired = re.sub(r'"\s*\n(\s*")', r'",\n\1', repaired)
+              repaired = re.sub(r'}\s*\n(\s*\{)', r'},\n\1', repaired)
+
+              try:
+                  review = json.loads(repaired)
+                  print("::notice::JSON repair successful")
+              except json.JSONDecodeError as e2:
+                  print(f"::error::JSON repair also failed: {e2}")
+                  print(f"::error::First 500 chars: {text[:500]}")
+                  raise SystemExit(1)
 
           if not isinstance(review, dict):
               print("::error::Claude JSON response must be an object")
@@ -340,8 +358,8 @@ jobs:
 
           expected_verdict = "CAMBIOS_REQUERIDOS" if has_critical else "APROBADO"
           if review["verdict"] != expected_verdict:
-              print("::error::Claude verdict inconsistent with findings")
-              raise SystemExit(1)
+              print(f"::warning::Claude verdict '{review['verdict']}' inconsistent with findings (expected '{expected_verdict}'). Overriding to '{expected_verdict}'.")
+              review["verdict"] = expected_verdict
 
           pretty_lines = []
           pretty_lines.append("### Resumen")
@@ -650,8 +668,20 @@ jobs:
           - Solo corrige hallazgos con severity CRITICO
           - No modifiques funcionalidad no relacionada
           - Mantén el estilo de código existente
-          - Responde EXCLUSIVAMENTE con JSON válido, sin markdown, sin texto adicional
-          - NO envuelvas la respuesta en bloques de código (```)"""
+
+          FORMATO DE RESPUESTA — JSON VÁLIDO:
+          - Tu respuesta DEBE ser ÚNICAMENTE un objeto JSON válido, sin texto antes ni después
+          - NO envuelvas la respuesta en bloques de código markdown (```)
+          - NO incluyas comentarios, explicaciones ni texto fuera del JSON
+          - REGLAS CRÍTICAS DE ESCAPE EN JSON:
+            * Las comillas dentro de strings DEBEN escaparse como \\"
+            * Los saltos de línea dentro de strings DEBEN representarse como \\n
+            * Las barras invertidas DEBEN escaparse como \\\\
+            * Los tabuladores DEBEN representarse como \\t
+            * Los campos "search" y "replace" son strings JSON de UNA sola línea con \\n para representar saltos de línea
+          - Ejemplo correcto de un patch con código multilínea:
+            {{"file": "includes/main.php", "description": "Fix import", "search": "require_once 'a.php';\\nrequire_once 'b.php';", "replace": "require_once 'a.php';\\nrequire_once 'b.php';\\nrequire_once 'c.php';"}}
+          - Antes de responder, verifica mentalmente que tu JSON es parseable"""
 
           user_prompt = f"""--- BEGIN UNTRUSTED REVIEW FINDINGS ---
           {findings_json}
@@ -675,13 +705,14 @@ jobs:
           }}
 
           IMPORTANTE:
+          - "search" y "replace" son strings JSON con \\n para saltos de línea — NUNCA uses saltos de línea literales dentro del string
+          - Escapa comillas dobles como \\" dentro de los valores de search/replace
           - Usa "search" con texto literal que exista en el archivo (incluye suficiente contexto para que sea único)
           - "replace" es el texto que reemplazará a "search"
           - Puedes incluir múltiples patches para el mismo archivo
           - NO generes patches para archivos en .github/workflows/ (no se pueden pushear automáticamente)
           - NO devuelvas el archivo completo, solo los fragmentos a cambiar
-          - Asegúrate de que el JSON sea válido y parseable
-          - NO envuelvas la respuesta en bloques de código markdown"""
+          - Verifica que tu respuesta sea JSON válido antes de enviarla"""
 
           payload = {
               "model": os.environ["CLAUDE_MODEL"],
@@ -732,13 +763,30 @@ jobs:
           try:
               result = json.loads(text)
           except json.JSONDecodeError as e:
-              print(f"::error::Claude fix response is not valid JSON: {e}")
-              print(f"::error::First 500 chars: {text[:500]}")
-              raise SystemExit(1)
+              print(f"::warning::Claude fix response is not valid JSON: {e}")
+              print("::notice::Attempting JSON repair...")
+
+              repaired = text
+              repaired = re.sub(r",\s*([}\]])", r"\1", repaired)
+              repaired = re.sub(r'"\s*\n(\s*")', r'",\n\1', repaired)
+              repaired = re.sub(r'}\s*\n(\s*\{)', r'},\n\1', repaired)
+
+              try:
+                  result = json.loads(repaired)
+                  print("::notice::JSON repair successful")
+              except json.JSONDecodeError as e2:
+                  print(f"::warning::JSON repair also failed: {e2}")
+                  print(f"::warning::First 500 chars: {text[:500]}")
+                  print("::warning::Auto-fix skipped due to unparseable Claude response")
+                  with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as fh:
+                      fh.write("has_fixes=false\n")
+                  raise SystemExit(0)
 
           if not isinstance(result, dict) or "patches" not in result:
-              print("::error::Invalid fix response structure (missing 'patches' key)")
-              raise SystemExit(1)
+              print("::warning::Invalid fix response structure (missing 'patches' key), skipping auto-fix")
+              with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as fh:
+                  fh.write("has_fixes=false\n")
+              raise SystemExit(0)
 
           ALLOWED_PREFIXES = ("includes/", "tests/", "assets/", "composer")
           BLOCKED_PATTERNS = [
