@@ -56,6 +56,32 @@ jobs:
           set -euo pipefail
           composer install --prefer-dist --no-progress --no-interaction
 
+      - name: PHP syntax check (changed files)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          CHANGED_PHP=$(gh pr diff "$PR_NUMBER" --repo "${{ github.repository }}" --name-only | grep '\.php$' || true)
+          if [ -z "$CHANGED_PHP" ]; then
+            echo "No PHP files changed, skipping lint"
+            exit 0
+          fi
+          ERRORS=0
+          while IFS= read -r file; do
+            if [ -f "$file" ]; then
+              if ! php -l "$file" 2>&1 | grep -q "No syntax errors"; then
+                ERRORS=$((ERRORS + 1))
+              fi
+            fi
+          done <<< "$CHANGED_PHP"
+          if [ "$ERRORS" -gt 0 ]; then
+            echo "::error::PHP syntax errors found in $ERRORS file(s)"
+            exit 1
+          fi
+          echo "PHP syntax OK ($(echo "$CHANGED_PHP" | wc -l | tr -d ' ') files checked)"
+
       - name: Run PHPUnit
         shell: bash
         run: |
@@ -63,54 +89,8 @@ jobs:
           vendor/bin/phpunit --testsuite=unit -v 2>&1 | tee test_output.txt
           tail -30 test_output.txt > test_summary.txt || true
 
-      - name: Upload test artifacts
-        if: always() && matrix.php == '8.3'
-        uses: actions/upload-artifact@v4
-        with:
-          name: qa-test-artifacts
-          path: |
-            test_output.txt
-            test_summary.txt
-          if-no-files-found: ignore
-          retention-days: 7
-
-      - name: Cleanup
-        if: always()
-        shell: bash
-        run: rm -f test_output.txt test_summary.txt || true
-
-  code-quality:
-    name: Code Quality
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    permissions:
-      contents: read
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v5
-
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: ${{ env.PHP_VERSION_PROD }}
-          extensions: ${{ env.PHP_EXTENSIONS }}
-          coverage: none
-
-      - name: Cache Composer dependencies
-        uses: actions/cache@v4
-        with:
-          path: vendor
-          key: composer-${{ env.PHP_VERSION_PROD }}-${{ hashFiles('composer.lock', 'composer.json') }}
-          restore-keys: composer-${{ env.PHP_VERSION_PROD }}-
-
-      - name: Install dependencies
-        shell: bash
-        run: |
-          set -euo pipefail
-          composer install --prefer-dist --no-progress --no-interaction
-
       - name: Validate version sync
+        if: matrix.php == env.PHP_VERSION_PROD
         shell: bash
         run: |
           set -euo pipefail
@@ -129,9 +109,25 @@ jobs:
 
           echo "Version sync OK: $PLUGIN_VERSION"
 
+      - name: Upload test artifacts
+        if: always() && matrix.php == '8.3'
+        uses: actions/upload-artifact@v4
+        with:
+          name: qa-test-artifacts
+          path: |
+            test_output.txt
+            test_summary.txt
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Cleanup
+        if: always()
+        shell: bash
+        run: rm -f test_output.txt test_summary.txt || true
+
   code-review:
     name: Code Review (Claude AI)
-    needs: [tests, code-quality]
+    needs: [tests]
     runs-on: ubuntu-latest
     timeout-minutes: 10
     environment: QA
@@ -628,7 +624,7 @@ jobs:
                   fh.write("has_fixes=false\n")
               raise SystemExit(0)
 
-          ALLOWED_PREFIXES = ("includes/", "tests/", "assets/", "composer")
+          ALLOWED_PREFIXES = ("includes/", "tests/", "assets/", "composer", "1platform-content-ai.php", "readme.txt")
           files_needed = set()
           for finding in critical:
               fp = finding.get("file")
@@ -788,7 +784,7 @@ jobs:
                   fh.write("has_fixes=false\n")
               raise SystemExit(0)
 
-          ALLOWED_PREFIXES = ("includes/", "tests/", "assets/", "composer")
+          ALLOWED_PREFIXES = ("includes/", "tests/", "assets/", "composer", "1platform-content-ai.php", "readme.txt")
           BLOCKED_PATTERNS = [
               r"(system\s*\(|exec\s*\(|passthru\s*\(|shell_exec\s*\(|popen\s*\()",
               r"(eval\s*\(|assert\s*\(|preg_replace.*\/e)",
@@ -1127,10 +1123,11 @@ jobs:
       VERSION: ${{ needs.approve.outputs.version }}
 
     steps:
-      - name: Setup Python
-        uses: actions/setup-python@v6
+      - name: Checkout repository
+        uses: actions/checkout@v5
         with:
-          python-version: "3.13"
+          sparse-checkout: .github/scripts
+          sparse-checkout-cone-mode: false
 
       - name: Notify Slack — Ready to PROD
         env:
@@ -1138,62 +1135,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python << 'PYEOF'
-          import json
-          import os
-
-          def sanitize_slack(text: str) -> str:
-              text = text.replace("&", "&amp;")
-              text = text.replace("<", "&lt;")
-              text = text.replace(">", "&gt;")
-              return text
-
-          pr_title = sanitize_slack(os.environ.get("PR_TITLE", ""))
-          pr_author = sanitize_slack(os.environ.get("PR_AUTHOR", ""))
-          pr_branch = sanitize_slack(os.environ.get("PR_BRANCH", ""))
-          version = os.environ.get("VERSION", "unknown")
-
-          payload = {
-              "blocks": [
-                  {
-                      "type": "header",
-                      "text": {"type": "plain_text", "text": "🔌 Plugin | Ready to PROD", "emoji": True}
-                  },
-                  {
-                      "type": "section",
-                      "fields": [
-                          {"type": "mrkdwn", "text": f"*PR:*\n#{os.environ['PR_NUMBER']} {pr_title}"},
-                          {"type": "mrkdwn", "text": f"*Author:*\n{pr_author}"},
-                          {"type": "mrkdwn", "text": f"*Branch:*\n`{pr_branch}`"},
-                          {"type": "mrkdwn", "text": f"*Version:*\n`{version}`"}
-                      ]
-                  },
-                  {
-                      "type": "section",
-                      "text": {"type": "mrkdwn", "text": "Tests y code review aprobados. PR listo para merge a producción."}
-                  },
-                  {
-                      "type": "actions",
-                      "elements": [
-                          {
-                              "type": "button",
-                              "text": {"type": "plain_text", "text": "Ver PR"},
-                              "url": os.environ["PR_URL"],
-                              "style": "primary"
-                          },
-                          {
-                              "type": "button",
-                              "text": {"type": "plain_text", "text": "Ver Pipeline"},
-                              "url": os.environ["RUN_URL"]
-                          }
-                      ]
-                  }
-              ]
-          }
-
-          with open("slack_payload.json", "w", encoding="utf-8") as f:
-              json.dump(payload, f)
-          PYEOF
+          python3 .github/scripts/slack_notify.py ready_to_prod
 
           if [ -n "${SLACK_WEBHOOK}" ]; then
             curl -fsSL -X POST \
@@ -1282,27 +1224,27 @@ jobs:
         run: |
           set -euo pipefail
 
-          export PR_TITLE=$(gh pr view "${PR_NUMBER}" --repo "${{ github.repository }}" --json title -q '.title' 2>/dev/null || echo "PR #${PR_NUMBER}")
-          export PR_BODY=$(gh pr view "${PR_NUMBER}" --repo "${{ github.repository }}" --json body -q '.body' 2>/dev/null || echo "")
-          export COMMITS=$(gh pr view "${PR_NUMBER}" --repo "${{ github.repository }}" --json commits -q '.commits[] | "- \(.messageHeadline)"' 2>/dev/null || echo "")
-          export FILES_CHANGED=$(gh pr view "${PR_NUMBER}" --repo "${{ github.repository }}" --json files -q '.files | length' 2>/dev/null || echo "0")
-          export ADDITIONS=$(gh pr view "${PR_NUMBER}" --repo "${{ github.repository }}" --json additions -q '.additions' 2>/dev/null || echo "0")
-          export DELETIONS=$(gh pr view "${PR_NUMBER}" --repo "${{ github.repository }}" --json deletions -q '.deletions' 2>/dev/null || echo "0")
+          gh pr view "${PR_NUMBER}" --repo "${{ github.repository }}" \
+            --json title,body,commits,files,additions,deletions > pr_data.json 2>/dev/null || echo '{}' > pr_data.json
 
           python3 << 'PYEOF'
+          import json
           import os
           from pathlib import Path
 
           pr_number = os.environ.get("PR_NUMBER", "")
           version = os.environ.get("VERSION", "")
-          pr_title = os.environ.get("PR_TITLE", f"PR #{pr_number}")
-          pr_body = os.environ.get("PR_BODY", "")
-          commits = os.environ.get("COMMITS", "")
-          files_changed = os.environ.get("FILES_CHANGED", "0")
-          additions = os.environ.get("ADDITIONS", "0")
-          deletions = os.environ.get("DELETIONS", "0")
           server_url = os.environ.get("GITHUB_SERVER_URL", "")
           repository = os.environ.get("GITHUB_REPOSITORY", "")
+
+          data = json.loads(Path("pr_data.json").read_text(encoding="utf-8", errors="replace"))
+          pr_title = data.get("title", f"PR #{pr_number}")
+          pr_body = data.get("body", "")
+          commits_list = data.get("commits", [])
+          commits = "\n".join(f"- {c.get('messageHeadline', '')}" for c in commits_list) if commits_list else ""
+          files_changed = len(data.get("files", []))
+          additions = data.get("additions", 0)
+          deletions = data.get("deletions", 0)
 
           lines = []
           lines.append(f"> ⚠️ **Pre-release — Not for production use.**\n")
@@ -1363,7 +1305,7 @@ jobs:
         if: always()
         shell: bash
         run: |
-          rm -f "${zip_name}" release_notes.md || true
+          rm -f "${zip_name}" release_notes.md pr_data.json || true
           rm -rf "${build_dir}" || true
 
   notify:
@@ -1384,10 +1326,11 @@ jobs:
       RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
     steps:
-      - name: Setup Python
-        uses: actions/setup-python@v6
+      - name: Checkout repository
+        uses: actions/checkout@v5
         with:
-          python-version: "3.13"
+          sparse-checkout: .github/scripts
+          sparse-checkout-cone-mode: false
 
       - name: Download test artifacts
         if: needs.tests.result == 'failure'
@@ -1404,57 +1347,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python << 'PYEOF'
-          import json
-          import os
-          from pathlib import Path
-
-          def sanitize_slack(text: str) -> str:
-              text = text.replace("&", "&amp;")
-              text = text.replace("<", "&lt;")
-              text = text.replace(">", "&gt;")
-              return text
-
-          error = "No test summary available"
-          summary = Path("test_summary.txt")
-          if summary.exists():
-              error = sanitize_slack(summary.read_text(encoding="utf-8", errors="replace")[:1500])
-
-          pr_title = sanitize_slack(os.environ.get("PR_TITLE", ""))
-          pr_author = sanitize_slack(os.environ.get("PR_AUTHOR", ""))
-          pr_branch = sanitize_slack(os.environ.get("PR_BRANCH", ""))
-
-          payload = {
-              "blocks": [
-                  {
-                      "type": "header",
-                      "text": {"type": "plain_text", "text": "🔌 Plugin | QA Tests Failed", "emoji": True}
-                  },
-                  {
-                      "type": "section",
-                      "fields": [
-                          {"type": "mrkdwn", "text": f"*PR:*\n#{os.environ['PR_NUMBER']} {pr_title}"},
-                          {"type": "mrkdwn", "text": f"*Author:*\n{pr_author}"},
-                          {"type": "mrkdwn", "text": f"*Branch:*\n`{pr_branch}`"}
-                      ]
-                  },
-                  {
-                      "type": "section",
-                      "text": {"type": "mrkdwn", "text": f"*Error:*\n```{error}```"}
-                  },
-                  {
-                      "type": "actions",
-                      "elements": [
-                          {"type": "button", "text": {"type": "plain_text", "text": "Ver PR"}, "url": os.environ["PR_URL"]},
-                          {"type": "button", "text": {"type": "plain_text", "text": "Ver Logs"}, "url": os.environ["RUN_URL"]}
-                      ]
-                  }
-              ]
-          }
-
-          with open("slack_payload.json", "w", encoding="utf-8") as f:
-              json.dump(payload, f)
-          PYEOF
+          python3 .github/scripts/slack_notify.py tests_failed
 
           if [ -n "${SLACK_WEBHOOK}" ]; then
             curl -fsSL -X POST \
@@ -1470,51 +1363,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python << 'PYEOF'
-          import json
-          import os
-
-          def sanitize_slack(text: str) -> str:
-              text = text.replace("&", "&amp;")
-              text = text.replace("<", "&lt;")
-              text = text.replace(">", "&gt;")
-              return text
-
-          pr_title = sanitize_slack(os.environ.get("PR_TITLE", ""))
-          pr_author = sanitize_slack(os.environ.get("PR_AUTHOR", ""))
-          pr_branch = sanitize_slack(os.environ.get("PR_BRANCH", ""))
-
-          payload = {
-              "blocks": [
-                  {
-                      "type": "header",
-                      "text": {"type": "plain_text", "text": "🔌 Plugin | Code Review: Cambios Requeridos", "emoji": True}
-                  },
-                  {
-                      "type": "section",
-                      "fields": [
-                          {"type": "mrkdwn", "text": f"*PR:*\n#{os.environ['PR_NUMBER']} {pr_title}"},
-                          {"type": "mrkdwn", "text": f"*Author:*\n{pr_author}"},
-                          {"type": "mrkdwn", "text": f"*Branch:*\n`{pr_branch}`"}
-                      ]
-                  },
-                  {
-                      "type": "section",
-                      "text": {"type": "mrkdwn", "text": "Claude AI detectó hallazgos críticos en el code review. Revisión manual requerida."}
-                  },
-                  {
-                      "type": "actions",
-                      "elements": [
-                          {"type": "button", "text": {"type": "plain_text", "text": "Ver PR"}, "url": os.environ["PR_URL"]},
-                          {"type": "button", "text": {"type": "plain_text", "text": "Ver Logs"}, "url": os.environ["RUN_URL"]}
-                      ]
-                  }
-              ]
-          }
-
-          with open("slack_payload.json", "w", encoding="utf-8") as f:
-              json.dump(payload, f)
-          PYEOF
+          python3 .github/scripts/slack_notify.py review_failed
 
           if [ -n "${SLACK_WEBHOOK}" ]; then
             curl -fsSL -X POST \
