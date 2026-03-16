@@ -264,8 +264,9 @@ jobs:
               print(f"::warning::Claude returned unexpected bump type '{bump_type}', defaulting to 'patch'")
               bump_type = "patch"
 
-          # Extract current version from plugin header
-          plugin_content = Path("1platform-content-ai.php").read_text(encoding="utf-8")
+          # Read files in binary mode to preserve line endings (CRLF/LF)
+          plugin_raw = Path("1platform-content-ai.php").read_bytes()
+          plugin_content = plugin_raw.decode("utf-8")
           match = re.search(r"Version:\s*([\d.]+)", plugin_content)
           if not match:
               raise SystemExit("Could not extract current version from 1platform-content-ai.php")
@@ -286,22 +287,23 @@ jobs:
 
           print(f"Current: {current} → New: {new_version} (bump: {bump_type})")
 
-          # Update 1platform-content-ai.php
+          # Update 1platform-content-ai.php (binary write to preserve line endings)
           new_plugin = re.sub(
               r"(Version:\s*)[\d.]+",
               rf"\g<1>{new_version}",
               plugin_content,
           )
-          Path("1platform-content-ai.php").write_text(new_plugin, encoding="utf-8")
+          Path("1platform-content-ai.php").write_bytes(new_plugin.encode("utf-8"))
 
-          # Update readme.txt
-          readme_content = Path("readme.txt").read_text(encoding="utf-8")
+          # Update readme.txt (binary write to preserve line endings)
+          readme_raw = Path("readme.txt").read_bytes()
+          readme_content = readme_raw.decode("utf-8")
           new_readme = re.sub(
               r"(Stable tag:\s*)[\d.]+",
               rf"\g<1>{new_version}",
               readme_content,
           )
-          Path("readme.txt").write_text(new_readme, encoding="utf-8")
+          Path("readme.txt").write_bytes(new_readme.encode("utf-8"))
 
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as f:
               f.write(f"new_version={new_version}\n")
