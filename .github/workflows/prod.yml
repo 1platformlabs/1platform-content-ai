@@ -557,6 +557,19 @@ jobs:
             --repo "${{ github.repository }}" \
             --remove-label "ci:review-passed" || true
 
+      - name: Delete merged branch
+        if: needs.tests.outputs.pr_number != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ needs.tests.outputs.pr_number }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          BRANCH=$(gh pr view "$PR_NUMBER" --repo "${{ github.repository }}" --json headRefName -q '.headRefName' 2>/dev/null || echo "")
+          if [ -n "$BRANCH" ] && [ "$BRANCH" != "main" ] && [ "$BRANCH" != "master" ]; then
+            git push origin --delete "$BRANCH" 2>/dev/null && echo "Deleted branch: $BRANCH" || echo "::notice::Branch $BRANCH already deleted or protected"
+          fi
+
       - name: Rollback on release failure
         if: failure()
         env:
