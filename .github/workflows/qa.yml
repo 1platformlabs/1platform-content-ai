@@ -1275,6 +1275,57 @@ jobs:
           echo "zip_name=${ZIP_NAME}" >> "$GITHUB_ENV"
           echo "build_dir=${BUILD_DIR}" >> "$GITHUB_ENV"
 
+      - name: Generate release notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          export PR_TITLE=$(gh pr view "${PR_NUMBER}" --repo "${{ github.repository }}" --json title -q '.title' 2>/dev/null || echo "PR #${PR_NUMBER}")
+          export PR_BODY=$(gh pr view "${PR_NUMBER}" --repo "${{ github.repository }}" --json body -q '.body' 2>/dev/null || echo "")
+          export COMMITS=$(gh pr view "${PR_NUMBER}" --repo "${{ github.repository }}" --json commits -q '.commits[] | "- \(.messageHeadline)"' 2>/dev/null || echo "")
+          export FILES_CHANGED=$(gh pr view "${PR_NUMBER}" --repo "${{ github.repository }}" --json files -q '.files | length' 2>/dev/null || echo "0")
+          export ADDITIONS=$(gh pr view "${PR_NUMBER}" --repo "${{ github.repository }}" --json additions -q '.additions' 2>/dev/null || echo "0")
+          export DELETIONS=$(gh pr view "${PR_NUMBER}" --repo "${{ github.repository }}" --json deletions -q '.deletions' 2>/dev/null || echo "0")
+
+          python3 << 'PYEOF'
+          import os
+          from pathlib import Path
+
+          pr_number = os.environ.get("PR_NUMBER", "")
+          version = os.environ.get("VERSION", "")
+          pr_title = os.environ.get("PR_TITLE", f"PR #{pr_number}")
+          pr_body = os.environ.get("PR_BODY", "")
+          commits = os.environ.get("COMMITS", "")
+          files_changed = os.environ.get("FILES_CHANGED", "0")
+          additions = os.environ.get("ADDITIONS", "0")
+          deletions = os.environ.get("DELETIONS", "0")
+          server_url = os.environ.get("GITHUB_SERVER_URL", "")
+          repository = os.environ.get("GITHUB_REPOSITORY", "")
+
+          lines = []
+          lines.append(f"> ⚠️ **Pre-release — Not for production use.**\n")
+          lines.append(f"### PR #{pr_number}: {pr_title}\n")
+
+          if pr_body and pr_body != "null":
+              lines.append("#### Description\n")
+              lines.append(f"{pr_body}\n")
+
+          if commits:
+              lines.append("#### Commits\n")
+              lines.append(f"{commits}\n")
+
+          lines.append("#### Stats")
+          lines.append(f"- **Files changed:** {files_changed}")
+          lines.append(f"- **Additions:** +{additions}")
+          lines.append(f"- **Deletions:** -{deletions}\n")
+          lines.append("---")
+          lines.append(f"**PR:** {server_url}/{repository}/pull/{pr_number}")
+
+          Path("release_notes.md").write_text("\n".join(lines), encoding="utf-8")
+          PYEOF
+
       - name: Create QA pre-release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -1290,7 +1341,7 @@ jobs:
           gh release create "${TAG}" \
             --repo "${{ github.repository }}" \
             --title "QA: v${VERSION}-rc${PR_NUMBER}" \
-            --notes "QA release for PR #${PR_NUMBER}. **Not for production use.**" \
+            --notes-file release_notes.md \
             --prerelease \
             "${zip_name}"
 
@@ -1312,7 +1363,7 @@ jobs:
         if: always()
         shell: bash
         run: |
-          rm -f "${zip_name}" || true
+          rm -f "${zip_name}" release_notes.md || true
           rm -rf "${build_dir}" || true
 
   notify:
