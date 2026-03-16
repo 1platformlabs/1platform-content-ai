@@ -4,6 +4,24 @@ All notable changes to Content AI are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [2.3.4] - 2026-03-15
+
+### Added
+- Client-side logging system with `ContaiClientLogReporter`, `ContaiLogsService`, `ContaiLogsAdapter`, and Logs admin panel
+- API trace ID propagation (`x-trace-id` header) through `OnePlatformResponse` for error traceability
+- Trace ID links in error notices for Search Console, Publisuites, and Billing panels
+- `ContaiNoticeHelper` for consistent error notice formatting with log references
+- CI/CD pipeline: GitHub Actions workflows for QA (8 jobs) and PROD (5 jobs) with Claude AI code review, auto-fix, semantic version bump, SVN deploy to WordPress.org, and Slack notifications
+- `.distignore` updated with linting/static analysis exclusions
+- WordPress.org asset files (`wp-assets/`)
+
+### Fixed
+- Environment detection: `.local` domains now correctly resolve to `development` instead of `staging`
+
+### Changed
+- `OnePlatformClient` now logs failed API requests automatically via `ContaiClientLogReporter`
+- Error panels in Billing use `wp_kses()` instead of `esc_html()` to allow safe HTML links in error messages
+
 ## [2.3.3] - 2026-03-14
 
 ### Fixed

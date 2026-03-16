@@ -37,7 +37,9 @@ class ContaiBillingHistoryPanel
         $response = $this->service->getTransactions($limit, $skip);
 
         if (!$response->isSuccess()) {
-            $this->renderError($response->getMessage() ?? __('Failed to load transactions.', '1platform-content-ai'));
+            $this->renderError(
+                ContaiNoticeHelper::buildErrorNotice('Load transactions', $response, __('Failed to load transactions.', '1platform-content-ai'))
+            );
             return;
         }
 
@@ -324,7 +326,7 @@ class ContaiBillingHistoryPanel
                     <span class="dashicons dashicons-warning"></span>
                     <div>
                         <p><strong><?php esc_html_e('Error', '1platform-content-ai'); ?></strong></p>
-                        <p><?php echo esc_html($message); ?></p>
+                        <p><?php echo wp_kses($message, ['a' => ['href' => [], 'class' => []]]); ?></p>
                     </div>
                 </div>
             </div>

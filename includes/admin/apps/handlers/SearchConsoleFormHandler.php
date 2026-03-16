@@ -62,7 +62,7 @@ class ContaiSearchConsoleFormHandler
         $response = $this->service->addToSearchConsole();
 
         if (!$response->isSuccess()) {
-            $this->redirectWithMessage('error', $response->getMessage());
+            $this->redirectWithMessage('error', $response->getMessage(), $response->getTraceId());
             return;
         }
 
@@ -86,7 +86,7 @@ class ContaiSearchConsoleFormHandler
         $response = $this->service->verifyWebsite();
 
         if (!$response->isSuccess()) {
-            $this->redirectWithMessage('error', $response->getMessage());
+            $this->redirectWithMessage('error', $response->getMessage(), $response->getTraceId());
             return;
         }
 
@@ -100,7 +100,7 @@ class ContaiSearchConsoleFormHandler
         $response = $this->websiteProvider->deleteWebsite();
 
         if (!$response->isSuccess() && $response->getStatusCode() !== 404) {
-            $this->redirectWithMessage('error', $response->getMessage());
+            $this->redirectWithMessage('error', $response->getMessage(), $response->getTraceId());
             return;
         }
 
@@ -114,7 +114,7 @@ class ContaiSearchConsoleFormHandler
         $response = $this->websiteProvider->deleteWebsite();
 
         if (!$response->isSuccess()) {
-            $this->redirectWithMessage('error', $response->getMessage());
+            $this->redirectWithMessage('error', $response->getMessage(), $response->getTraceId());
             return;
         }
 
@@ -135,13 +135,16 @@ class ContaiSearchConsoleFormHandler
         $this->redirectWithMessage('success', $result['message']);
     }
 
-    private function redirectWithMessage(string $type, string $message): void
+    private function redirectWithMessage(string $type, string $message, ?string $trace_id = null): void
     {
         $redirectUrl = admin_url('admin.php?page=contai-apps&section=search-console');
         $args = [
             'contai_sc_message' => urlencode($message),
-            'contai_sc_type' => $type
+            'contai_sc_type' => $type,
         ];
+        if (!empty($trace_id)) {
+            $args['contai_sc_trace_id'] = urlencode($trace_id);
+        }
 
         wp_safe_redirect(add_query_arg($args, $redirectUrl));
         exit;

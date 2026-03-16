@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1544 500" width="1544" height="500">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a0a0f"/>
+      <stop offset="50%" stop-color="#0d0d14"/>
+      <stop offset="100%" stop-color="#0a0a0f"/>
+    </linearGradient>
+    <linearGradient id="text-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#3b82f6"/>
+      <stop offset="50%" stop-color="#8b5cf6"/>
+      <stop offset="100%" stop-color="#06b6d4"/>
+    </linearGradient>
+    <linearGradient id="one-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3b82f6"/>
+      <stop offset="100%" stop-color="#60a5fa"/>
+    </linearGradient>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="aurora" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="50"/>
+    </filter>
+    <filter id="line-glow" x="-10%" y="-50%" width="120%" height="200%">
+      <feGaussianBlur stdDeviation="3"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1544" height="500" fill="url(#bg)"/>
+
+  <!-- Dot grid -->
+  <pattern id="dots" x="0" y="0" width="24" height="24" patternUnits="userSpaceOnUse">
+    <circle cx="12" cy="12" r="0.6" fill="rgba(255,255,255,0.03)"/>
+  </pattern>
+  <rect width="1544" height="500" fill="url(#dots)"/>
+
+  <!-- Aurora glow blobs -->
+  <ellipse cx="350" cy="150" rx="250" ry="180" fill="#3b82f6" opacity="0.10" filter="url(#aurora)"/>
+  <ellipse cx="900" cy="120" rx="200" ry="160" fill="#8b5cf6" opacity="0.08" filter="url(#aurora)"/>
+  <ellipse cx="1200" cy="350" rx="220" ry="170" fill="#06b6d4" opacity="0.07" filter="url(#aurora)"/>
+
+  <!-- Decorative gradient line -->
+  <line x1="200" y1="370" x2="1344" y2="370" stroke="url(#text-grad)" stroke-width="1" opacity="0.2"/>
+  <line x1="200" y1="370" x2="1344" y2="370" stroke="url(#text-grad)" stroke-width="2" opacity="0.1" filter="url(#line-glow)"/>
+
+  <!-- Logo: "1" in accent + "Platform" in white -->
+  <text x="560" y="240" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" font-weight="800" font-size="82" fill="url(#one-grad)" filter="url(#glow)">1</text>
+  <text x="610" y="240" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" font-weight="700" font-size="82" fill="#ededed">Platform</text>
+
+  <!-- Subtitle -->
+  <text x="772" y="300" text-anchor="middle" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" font-weight="500" font-size="32" fill="#a1a1a1">Content AI</text>
+
+  <!-- Tagline -->
+  <text x="772" y="420" text-anchor="middle" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" font-weight="400" font-size="20" fill="#666666">AI-powered content generation for WordPress</text>
+</svg>

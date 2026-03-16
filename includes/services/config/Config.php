@@ -16,6 +16,7 @@ class ContaiConfig {
         'development' => [
             'api' => [
                 'base_url' => 'http://127.0.0.1:8000/api/v1',
+                'api_key' => 'hwL1z90qwEKxoaAb0XIzET4Q32pJ6eQ3ISwaweyKt4g4wfmAd8Pbz6DLLUTpx1EN',
                 'timeout' => 180,
                 'rate_limit_requests' => 120,
                 'rate_limit_window' => 60,

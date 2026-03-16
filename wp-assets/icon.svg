@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <linearGradient id="bg-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0d0d14"/>
+      <stop offset="100%" stop-color="#0a0a0f"/>
+    </linearGradient>
+    <linearGradient id="accent-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3b82f6"/>
+      <stop offset="50%" stop-color="#8b5cf6"/>
+      <stop offset="100%" stop-color="#06b6d4"/>
+    </linearGradient>
+    <linearGradient id="glow-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.3"/>
+      <stop offset="50%" stop-color="#8b5cf6" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#06b6d4" stop-opacity="0.3"/>
+    </linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="12" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="soft-glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="25"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="256" height="256" rx="48" fill="url(#bg-grad)"/>
+
+  <!-- Subtle border -->
+  <rect x="1" y="1" width="254" height="254" rx="47" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+
+  <!-- Aurora glow blobs -->
+  <circle cx="80" cy="70" r="60" fill="#3b82f6" opacity="0.12" filter="url(#soft-glow)"/>
+  <circle cx="190" cy="90" r="50" fill="#8b5cf6" opacity="0.10" filter="url(#soft-glow)"/>
+  <circle cx="128" cy="200" r="55" fill="#06b6d4" opacity="0.08" filter="url(#soft-glow)"/>
+
+  <!-- Dot grid pattern (subtle) -->
+  <pattern id="dots" x="0" y="0" width="16" height="16" patternUnits="userSpaceOnUse">
+    <circle cx="8" cy="8" r="0.5" fill="rgba(255,255,255,0.04)"/>
+  </pattern>
+  <rect width="256" height="256" rx="48" fill="url(#dots)"/>
+
+  <!-- The "1" character -->
+  <text x="128" y="175" text-anchor="middle" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" font-weight="800" font-size="160" fill="url(#accent-grad)" filter="url(#glow)">1</text>
+</svg>

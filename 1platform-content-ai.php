@@ -33,6 +33,11 @@ require_once plugin_dir_path(__FILE__) . 'includes/admin/admin-apps.php';
 require_once plugin_dir_path(__FILE__) . 'includes/admin/admin-ai-site-generator.php';
 require_once plugin_dir_path(__FILE__) . 'includes/admin/admin-job-monitor.php';
 require_once plugin_dir_path(__FILE__) . 'includes/admin/admin-billing.php';
+require_once plugin_dir_path(__FILE__) . 'includes/admin/panels/ContaiLogsPanel.php';
+require_once plugin_dir_path(__FILE__) . 'includes/services/logs/ContaiLogsService.php';
+require_once plugin_dir_path(__FILE__) . 'includes/adapters/ContaiLogsAdapter.php';
+require_once plugin_dir_path(__FILE__) . 'includes/helpers/ContaiNoticeHelper.php';
+require_once plugin_dir_path(__FILE__) . 'includes/services/logs/ContaiClientLogReporter.php';
 
 require_once plugin_dir_path(__FILE__) . 'includes/services/toc/HeadingParser.php';
 require_once plugin_dir_path(__FILE__) . 'includes/services/toc/AnchorGenerator.php';
@@ -148,6 +153,7 @@ function contai_register_admin_menus() {
     add_submenu_page( 'contai-website-settings', 'Site Wizard', 'Site Wizard', 'manage_options', 'contai-ai-site-generator', 'contai_ai_site_generator_page' );
     add_submenu_page( 'contai-website-settings', 'Jobs', 'Jobs', 'manage_options', 'contai-job-monitor', 'contai_render_job_monitor_page' );
     add_submenu_page( 'contai-website-settings', 'Billing', 'Billing', 'manage_options', 'contai-billing', 'contai_billing_page' );
+    add_submenu_page( 'contai-website-settings', 'Logs', 'Logs', 'manage_options', 'contai-logs', 'contai_logs_page' );
     add_submenu_page( 'contai-website-settings', 'License', 'License', 'manage_options', 'contai-licenses', 'contai_licenses_page' );
 }
 add_action( 'admin_menu', 'contai_register_admin_menus' );
@@ -194,6 +200,23 @@ function contai_render_connection_required_notice() {
     <?php
     return true;
 }
+
+/**
+ * Render the Logs admin page.
+ */
+function contai_logs_page() {
+    $panel = new ContaiLogsPanel();
+    $panel->render();
+}
+
+/**
+ * Sync buffered client logs to the API on shutdown.
+ */
+add_action('shutdown', function() {
+    if (is_admin() && ContaiClientLogReporter::getBufferCount() > 0) {
+        ContaiClientLogReporter::syncBuffer();
+    }
+});
 
 /**
  * Display admin notices for authentication token errors on plugin pages.
