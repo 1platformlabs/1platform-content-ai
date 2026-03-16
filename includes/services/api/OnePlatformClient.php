@@ -116,7 +116,7 @@ class ContaiOnePlatformClient {
 
         $platform_response = $this->createResponse($response);
 
-        if (!$platform_response->isSuccess() && class_exists('ContaiClientLogReporter')) {
+        if (!$platform_response->isSuccess() && class_exists('ContaiClientLogReporter') && !$this->isLogEndpoint($url)) {
             ContaiClientLogReporter::report([
                 'timestamp'        => gmdate('c'),
                 'method'           => $method,
@@ -265,6 +265,10 @@ class ContaiOnePlatformClient {
             $http_response->getStatusCode(),
             $trace_id
         );
+    }
+
+    private function isLogEndpoint(string $url): bool {
+        return strpos($url, '/logs/client') !== false;
     }
 
     private function buildUrl(string $endpoint, array $query_params = []): string {
