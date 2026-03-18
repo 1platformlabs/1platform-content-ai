@@ -4,6 +4,12 @@ All notable changes to Content AI are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [2.3.5] - 2026-03-17
+
+### Fixed
+
+- **BillingHistoryPanel**: `_format_transaction_row()` ahora muestra la moneda del merchant (`currency`) directamente desde la transacción, en lugar de forzar `USD` cuando `usd_amount` está presente — alinea el plugin con el sistema multi-moneda de la API
+
 ## [2.3.4] - 2026-03-15
 
 ### Added

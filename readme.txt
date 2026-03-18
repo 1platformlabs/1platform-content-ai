@@ -4,7 +4,7 @@ Tags: ai content, seo, content generation, internal links, table of contents
 Requires at least: 5.9
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 2.3.3
+Stable tag: 2.3.5
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -158,6 +158,13 @@ The plugin sends your site URL, API key, and content generation parameters (keyw
 7. Tools — Google Search Console, Publisuites, and Ads Manager integrations.
 
 == Changelog ==
+
+= 2.3.5 =
+* Fix: BillingHistoryPanel now shows the correct merchant currency instead of hardcoding USD when usd_amount is present
+
+= 2.3.4 =
+* Added client-side logging system (ContaiClientLogReporter, Logs admin panel)
+* Added API trace ID propagation for error traceability
 
 = 2.3.3 =
 * Fix: Search Console Disconnect Website now properly deletes the website from the 1Platform API before clearing local state

@@ -135,14 +135,9 @@ class ContaiBillingHistoryPanel
     {
         $created_at = $transaction['created_at'] ?? '';
 
-        // Priorizar usd_amount si existe
-        if (isset($transaction['usd_amount']) || isset($transaction['usdAmount'])) {
-            $amount = $transaction['usd_amount'] ?? $transaction['usdAmount'] ?? 0;
-            $currency = 'USD';
-        } else {
-            $amount = $transaction['amount'] ?? 0;
-            $currency = $transaction['currency'] ?? '';
-        }
+        // Priorizar usd_amount (monto original del merchant) si existe
+        $amount = $transaction['usd_amount'] ?? $transaction['usdAmount'] ?? $transaction['amount'] ?? 0;
+        $currency = $transaction['currency'] ?? '';
 
         $status = $transaction['status'] ?? '';
         $description = $transaction['description'] ?? '';

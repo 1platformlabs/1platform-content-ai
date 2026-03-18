@@ -142,7 +142,7 @@ class ContaiClientLogReporter {
                 'wp_error_message' => substr($error->get_error_message(), 0, 200),
                 'php_version'      => PHP_VERSION,
                 'wp_version'       => get_bloginfo('version'),
-                'plugin_version'   => defined('CONTAI_VERSION') ? CONTAI_VERSION : '2.3.3',
+                'plugin_version'   => defined('CONTAI_VERSION') ? CONTAI_VERSION : '2.3.5',
             ],
         ];
     }
