@@ -3,6 +3,8 @@
 define('ABSPATH', '/tmp/wordpress/');
 define('OBJECT', 'OBJECT');
 define('ARRAY_A', 'ARRAY_A');
+define('DAY_IN_SECONDS', 86400);
+define('HOUR_IN_SECONDS', 3600);
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
@@ -60,6 +62,12 @@ class_alias('ContaiRateLimiter', 'RateLimiter');
 require_once __DIR__ . '/../includes/providers/UserProvider.php';
 
 class_alias('ContaiUserProvider', 'UserProvider');
+
+// ── Agents ───────────────────────────────────────────────────
+require_once __DIR__ . '/../includes/services/agents/ContaiAgentEndpoints.php';
+require_once __DIR__ . '/../includes/services/agents/ContaiAgentSettingsService.php';
+require_once __DIR__ . '/../includes/services/agents/ContaiAgentActionHandler.php';
+require_once __DIR__ . '/../includes/services/agents/ContaiSendEmailActionHandler.php';
 
 // ── API & Search Console ────────────────────────────────────────
 require_once __DIR__ . '/../includes/services/http/HTTPClientService.php';

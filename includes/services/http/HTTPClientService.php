@@ -70,7 +70,10 @@ class ContaiHTTPClientService {
         ];
 
         if ($this->shouldIncludeBody($method, $data)) {
-            $args['body'] = is_string($data) ? $data : wp_json_encode($data);
+            // Cast empty arrays to stdClass so they encode as {} instead of []
+            $args['body'] = is_string($data) ? $data : wp_json_encode(
+                (is_array($data) && empty($data)) ? new \stdClass() : $data
+            );
         }
 
         $response = wp_remote_request($url, $args);
