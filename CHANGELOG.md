@@ -4,6 +4,29 @@ All notable changes to Content AI are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [2.4.0] - 2026-03-21
+
+### Added
+
+- **Agent platform integration**: Full WordPress admin UI and API integration for the 1Platform AI agent system
+  - **Agents admin page** (`ContaiAgentsAdminPage`): List agents, view runs, trigger executions, and consume human-in-the-loop actions from wp-admin
+  - **Agent API service** (`ContaiAgentApiService`): Client for all agent API endpoints (catalog, wizard, CRUD, runs, actions)
+  - **Agent REST controller** (`ContaiAgentRestController`): WordPress REST API proxy routes under `contai/v1/` for AJAX calls from the admin UI
+  - **Agent settings service** (`ContaiAgentSettingsService`): Manages agent-related WordPress options
+  - **Agent sync service** (`ContaiAgentSyncService`): Synchronizes agent state between WordPress and the 1Platform API
+  - **Action handlers**: `ContaiAgentActionHandler` base class + `ContaiSendEmailActionHandler` for processing agent-generated actions
+  - **Agent actions cron** (`agent-actions-cron.php`): WP-Cron job for polling and processing pending agent actions
+  - **Admin assets**: `contai-agents-admin.css` + `contai-agents-admin.js` for the Agents admin page
+  - **Admin menu**: "Agents" submenu item under 1Platform Content AI settings
+
+### Changed
+
+- **HTTPClientService**: Empty arrays now encode as `{}` instead of `[]` in JSON request bodies (fixes API compatibility for endpoints expecting objects)
+
+### Tests
+
+- `AgentSettingsServiceTest`, `PublishContentActionHandlerTest`, `SendEmailActionHandlerTest`
+
 ## [2.3.5] - 2026-03-17
 
 ### Fixed

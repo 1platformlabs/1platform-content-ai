@@ -4,7 +4,7 @@
  * Plugin Name: 1Platform Content AI
  * Plugin URI: https://1platform.pro/
  * Description: SaaS client for AI-powered content generation, SEO optimization, and site management. All AI processing happens on 1Platform external servers. Includes free local tools: Table of Contents and Internal Links.
- * Version: 2.3.6
+ * Version: 2.4.0
  * Author: 1Platform
  * License: GPLv2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -50,6 +50,16 @@ require_once plugin_dir_path(__FILE__) . 'includes/services/toc/TocFactory.php';
 require_once plugin_dir_path(__FILE__) . 'includes/services/internal-links/InternalLinksWordPressIntegration.php';
 require_once plugin_dir_path(__FILE__) . 'includes/cron/job-processor-cron.php';
 require_once plugin_dir_path(__FILE__) . 'includes/header.php';
+
+// Agent domain
+require_once plugin_dir_path( __FILE__ ) . 'includes/services/agents/ContaiAgentEndpoints.php';
+require_once plugin_dir_path( __FILE__ ) . 'includes/services/agents/ContaiAgentApiService.php';
+require_once plugin_dir_path( __FILE__ ) . 'includes/services/agents/ContaiAgentSettingsService.php';
+require_once plugin_dir_path( __FILE__ ) . 'includes/services/agents/ContaiAgentActionHandler.php';
+require_once plugin_dir_path( __FILE__ ) . 'includes/services/agents/ContaiAgentSyncService.php';
+require_once plugin_dir_path( __FILE__ ) . 'includes/services/agents/ContaiAgentRestController.php';
+require_once plugin_dir_path( __FILE__ ) . 'includes/admin/agents/ContaiAgentsAdminPage.php';
+require_once plugin_dir_path( __FILE__ ) . 'includes/cron/agent-actions-cron.php';
 
 require_once plugin_dir_path(__FILE__) . 'includes/database/migrations/CreateKeywordsTable.php';
 require_once plugin_dir_path(__FILE__) . 'includes/database/migrations/CreateAPILogsTable.php';
@@ -99,6 +109,12 @@ function contai_activate_plugin() {
         contai_log("Cron registration error: " . $e->getMessage());
     }
 
+    try {
+        contai_register_agent_actions_cron();
+    } catch (Exception $e) {
+        contai_log("Agent cron registration error: " . $e->getMessage());
+    }
+
     // Set site hardening defaults for existing installs (opt-in for new installs)
     add_option('contai_disable_feeds', '1');
     add_option('contai_disable_author_pages', '1');
@@ -107,6 +123,7 @@ function contai_activate_plugin() {
 register_activation_hook(__FILE__, 'contai_activate_plugin');
 
 register_deactivation_hook(__FILE__, 'contai_unregister_job_processor_cron');
+register_deactivation_hook( __FILE__, 'contai_unregister_agent_actions_cron' );
 
 $toc_integration = ContaiTocFactory::create();
 $toc_integration->register();
@@ -154,9 +171,37 @@ function contai_register_admin_menus() {
     add_submenu_page( 'contai-website-settings', 'Jobs', 'Jobs', 'manage_options', 'contai-job-monitor', 'contai_render_job_monitor_page' );
     add_submenu_page( 'contai-website-settings', 'Billing', 'Billing', 'manage_options', 'contai-billing', 'contai_billing_page' );
     add_submenu_page( 'contai-website-settings', 'Logs', 'Logs', 'manage_options', 'contai-logs', 'contai_logs_page' );
+    add_submenu_page( 'contai-website-settings', 'Agents', 'Agents', 'manage_options', 'contai-agents', 'contai_agents_page' );
     add_submenu_page( 'contai-website-settings', 'License', 'License', 'manage_options', 'contai-licenses', 'contai_licenses_page' );
+
 }
 add_action( 'admin_menu', 'contai_register_admin_menus' );
+
+add_action( 'rest_api_init', function() {
+    $controller = new ContaiAgentRestController();
+    $controller->register_routes();
+} );
+
+/**
+ * Render the Agents admin page.
+ */
+function contai_agents_page() {
+    ContaiAgentsAdminPage::render();
+}
+
+add_action( 'admin_enqueue_scripts', function( $hook ) {
+    if ( strpos( $hook, 'contai-agents' ) === false ) {
+        return;
+    }
+    wp_enqueue_style( 'contai-agents-admin', plugin_dir_url( __FILE__ ) . 'includes/admin/agents/contai-agents-admin.css', array(), '2.3.6' );
+    wp_enqueue_script( 'contai-agents-admin', plugin_dir_url( __FILE__ ) . 'includes/admin/agents/contai-agents-admin.js', array(), '2.3.6', true );
+    wp_localize_script( 'contai-agents-admin', 'contaiAgents', array(
+        'restUrl'  => rest_url( 'contai/v1/' ),
+        'nonce'    => wp_create_nonce( 'wp_rest' ),
+        'settings' => ContaiAgentSettingsService::getAllSettings(),
+        'adminUrl' => admin_url( 'admin.php?page=contai-agents' ),
+    ) );
+} );
 
 /**
  * Render a connection-required notice when the API key is not configured.
