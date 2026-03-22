@@ -8,7 +8,7 @@ class ContaiSiteConfigService
     {
         $siteTopic = $config['site_topic'] ?? '';
         $siteLanguage = $config['site_language'] ?? 'english';
-        $wordpressTheme = $config['wordpress_theme'] ?? 'blogfull';
+        $wordpressTheme = $config['wordpress_theme'] ?? 'astra';
 
         if (empty($siteTopic)) {
             throw new InvalidArgumentException('Site topic is required');
@@ -46,7 +46,7 @@ class ContaiSiteConfigService
         return [
             'site_topic' => get_option('contai_site_theme', ''),
             'site_language' => get_option('contai_site_language', 'english'),
-            'wordpress_theme' => get_option('contai_wordpress_theme', 'blogfull'),
+            'wordpress_theme' => get_option('contai_wordpress_theme', 'astra'),
         ];
     }
 }

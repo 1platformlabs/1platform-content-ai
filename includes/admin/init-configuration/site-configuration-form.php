@@ -9,9 +9,7 @@ require_once __DIR__ . '/../../services/category-api/CategoryAPIService.php';
 function contai_render_site_configuration_form() {
 	$site_topic = esc_attr( get_option( 'contai_site_theme', 'blog' ) );
 	$site_language = esc_attr( get_option( 'contai_site_language', 'spanish' ) );
-	$wordpress_theme = esc_attr( get_option( 'contai_wordpress_theme', 'blogfull' ) );
 	$languages = array( 'english', 'spanish' );
-	$themes = array( 'blogfull', 'coral-dark', 'news-portal', 'hyper-news', 'celebnews', 'nova-blog' );
 
 	// Fetch categories for the select field
 	$category_service = new ContaiCategoryAPIService();
@@ -78,9 +76,10 @@ function contai_render_site_configuration_form() {
 									$category_id = esc_attr( $category['id'] ?? '' );
 									$title_en = esc_html( $category['title']['en'] ?? 'Unnamed Category' );
 									$title_es = esc_html( $category['title']['es'] ?? $title_en );
+									$category_theme = esc_attr( $category['recommended_theme'] ?? 'astra' );
 									$is_selected = ( $saved_category === $category_id );
 									?>
-									<option value="<?php echo esc_attr( $category_id ); ?>"<?php selected( $is_selected ); ?> data-title-en="<?php echo esc_attr( $title_en ); ?>" data-title-es="<?php echo esc_attr( $title_es ); ?>">
+									<option value="<?php echo esc_attr( $category_id ); ?>"<?php selected( $is_selected ); ?> data-title-en="<?php echo esc_attr( $title_en ); ?>" data-title-es="<?php echo esc_attr( $title_es ); ?>" data-theme="<?php echo esc_attr( $category_theme ); ?>">
 										<?php
 										$current_lang = ContaiCategoryAPIService::normalizeLanguage( $site_language );
 										echo esc_html( ContaiCategoryAPIService::getCategoryTitle( $category, $current_lang ) );
@@ -93,19 +92,16 @@ function contai_render_site_configuration_form() {
 					</div>
 
 					<div class="contai-form-group">
-						<label for="contai_wordpress_theme" class="contai-label">
+						<label for="contai_wordpress_theme_display" class="contai-label">
 							<span class="dashicons dashicons-art"></span>
 							<?php esc_html_e( 'WordPress Theme', '1platform-content-ai' ); ?>
 						</label>
-						<select id="contai_wordpress_theme" name="contai_wordpress_theme" class="contai-select">
-							<?php foreach ( $themes as $theme ) : ?>
-								<option value="<?php echo esc_attr( $theme ); ?>"
-									<?php selected( $wordpress_theme, $theme ); ?>>
-									<?php echo esc_html( ucfirst( str_replace( '-', ' ', $theme ) ) ); ?>
-								</option>
-							<?php endforeach; ?>
-						</select>
-						<p class="contai-help-text"><?php esc_html_e( 'Select the WordPress theme to be installed', '1platform-content-ai' ); ?></p>
+						<input type="text" id="contai_wordpress_theme_display" class="contai-input" readonly
+							   value="<?php echo esc_attr( ucfirst( get_option( 'contai_wordpress_theme', 'astra' ) ) ); ?>"
+							   style="background-color: #f0f0f1; cursor: default;">
+						<input type="hidden" id="contai_wordpress_theme" name="contai_wordpress_theme"
+							   value="<?php echo esc_attr( get_option( 'contai_wordpress_theme', 'astra' ) ); ?>">
+						<p class="contai-help-text"><?php esc_html_e( 'Automatically assigned based on the selected category', '1platform-content-ai' ); ?></p>
 					</div>
 				</div>
 

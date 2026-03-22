@@ -20,6 +20,70 @@ require_once __DIR__ . '/../services/api/OnePlatformEndpoints.php';
 require_once __DIR__ . '/../providers/WebsiteProvider.php';
 
 /**
+ * Get the primary sidebar ID for the active theme.
+ *
+ * Different themes register sidebars with different IDs. This function
+ * detects the correct sidebar by checking common naming conventions.
+ *
+ * @return string The primary sidebar ID
+ */
+function contai_get_primary_sidebar_id(): string {
+	global $wp_registered_sidebars;
+
+	if ( empty( $wp_registered_sidebars ) ) {
+		return 'sidebar-1';
+	}
+
+	$priority = array( 'sidebar-1', 'sidebar', 'sidebar-primary', 'primary-sidebar', 'primary-widget-area' );
+	foreach ( $priority as $id ) {
+		if ( isset( $wp_registered_sidebars[ $id ] ) ) {
+			return $id;
+		}
+	}
+
+	// Fallback: first registered sidebar
+	$keys = array_keys( $wp_registered_sidebars );
+	return $keys[0] ?? 'sidebar-1';
+}
+
+/**
+ * Apply theme-specific default settings after installation.
+ *
+ * Each theme may need different reading settings, sidebar layouts,
+ * or other configuration to look good out of the box with generated content.
+ *
+ * @param string $theme Theme slug
+ * @return void
+ */
+function contai_apply_theme_defaults( string $theme ): void {
+	// Common defaults for all themes
+	update_option( 'show_on_front', 'posts' );
+	update_option( 'posts_per_page', 10 );
+
+	switch ( $theme ) {
+		case 'newsmatic':
+			if ( function_exists( 'contai_set_newsmatic_reading_defaults' ) ) {
+				contai_set_newsmatic_reading_defaults();
+			}
+			break;
+
+		case 'oceanwp':
+			set_theme_mod( 'ocean_blog_layout', 'right-sidebar' );
+			break;
+
+		case 'generatepress':
+			set_theme_mod( 'content_layout_setting', 'content-sidebar' );
+			break;
+
+		case 'colormag':
+			set_theme_mod( 'colormag_site_layout', 'right-sidebar' );
+			break;
+
+		// astra, neve, blocksy, kadence, sydney: sensible defaults out of the box
+	}
+}
+
+/**
  * Install and activate a WordPress theme
  *
  * Downloads and installs a theme from WordPress.org theme repository if not already installed,
@@ -116,10 +180,6 @@ function contai_delete_sample_content(): void {
 function contai_setup_site_config() {
 	update_option( 'permalink_structure', '/%postname%/' );
 	update_option( 'contai_flush_rewrite', true );
-
-	if ( function_exists( 'contai_set_newsmatic_reading_defaults' ) ) {
-		contai_set_newsmatic_reading_defaults();
-	}
 
 	contai_delete_sample_content();
 }
@@ -321,7 +381,7 @@ function contai_add_sidebar_widgets() {
 	$text = $labels[ $lang ] ?? $labels['spanish'];
 
 	$sidebars_widgets = get_option( 'sidebars_widgets', array() );
-	$sidebar_id       = 'sidebar-1';
+	$sidebar_id       = contai_get_primary_sidebar_id();
 	$sidebars_widgets[ $sidebar_id ] = array();
 
 	$widget_search          = array( '_multiwidget' => 1 );

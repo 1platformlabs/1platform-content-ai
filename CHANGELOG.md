@@ -4,6 +4,33 @@ All notable changes to Content AI are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [2.6.0] - 2026-03-22
+
+### Added
+
+- **Category-based theme auto-selection**: Theme is now automatically assigned based on the selected category's `recommended_theme` field from the API. Replaces the manual theme dropdown in both Site Generator and Settings forms
+- **Theme defaults per theme**: `contai_apply_theme_defaults()` applies theme-specific settings (sidebar layout, reading options) after installation for OceanWP, GeneratePress, ColorMag, and Newsmatic
+- **Dynamic sidebar detection**: `contai_get_primary_sidebar_id()` detects the active theme's primary sidebar ID instead of hardcoding `sidebar-1`
+- **Theme tracking in API**: After theme installation, the selected theme slug is sent to the 1Platform API via `WebsiteProvider::updateWebsite()` (non-critical, wrapped in try/catch)
+- **Auth token retry on null**: `OnePlatformClient` now force-refreshes tokens and retries once when `obtainAuthHeaders()` returns null
+- **License activation retry**: `WPContentAILicensePanel` retries profile fetch with force-refreshed tokens when the first attempt fails
+
+### Changed
+
+- **Default theme changed to Astra**: All default theme references changed from `blogfull` to `astra` across Site Generator, Settings, and SiteConfigService
+- **Site Generator wizard restructured**: Reorganized into 3 steps (Website Identity → Legal Information → Content Generation) with improved help text and placeholders
+- **Theme field is now readonly**: Settings form shows the auto-assigned theme as a readonly field with hidden input, updated via JavaScript when category changes
+
+### Fixed
+
+- **Crypto fallback for legacy keys**: `contai_decrypt_api_key()` now returns the original value when the stored value is not in encrypted format (legacy unencrypted keys), preventing silent data loss
+
+## [2.5.0] - 2026-03-22
+
+### Changed
+
+- chore: bump version to 2.5.0 (minor)
+
 ## [2.4.0] - 2026-03-21
 
 ### Added

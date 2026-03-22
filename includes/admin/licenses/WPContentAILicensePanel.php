@@ -309,6 +309,27 @@ class WPContentAILicensePanel
             return true;
         }
 
+        // First attempt failed — force-refresh all tokens and retry once.
+        // This covers cases where token generation failed transiently
+        // and the OnePlatformClient retry was also exhausted.
+        contai_log('Content AI: Profile fetch failed on first attempt, force-refreshing tokens and retrying');
+        $authService = ContaiOnePlatformAuthService::create();
+        $refreshResult = $authService->forceRefreshAllTokens();
+
+        if (!$refreshResult['success']) {
+            return false;
+        }
+
+        $retryResponse = $this->service->fetchUserProfile();
+
+        if ($retryResponse->isSuccess()) {
+            $data = $retryResponse->getData();
+            if ($data) {
+                $this->service->saveUserProfile($data);
+            }
+            return true;
+        }
+
         return false;
     }
 

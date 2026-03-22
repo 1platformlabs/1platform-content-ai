@@ -184,6 +184,10 @@
     grid-column: 1 / -1;
 }
 
+.contai-span-2 {
+    grid-column: span 2;
+}
+
 /* -- Form Divider -- */
 .contai-form-divider {
     height: 1px;
@@ -662,6 +666,10 @@
     .contai-span-full {
         grid-column: 1 / -1;
     }
+
+    .contai-span-2 {
+        grid-column: 1 / -1;
+    }
 }
 
 /* -- Responsive: Mobile -- */
@@ -708,6 +716,10 @@
 
     .contai-grid-3 {
         grid-template-columns: 1fr;
+    }
+
+    .contai-span-2 {
+        grid-column: 1;
     }
 
     .contai-input,
