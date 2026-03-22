@@ -83,7 +83,7 @@ function contai_handle_ai_site_generator_submission() {
 				'site_topic' => sanitize_text_field( wp_unslash( $_POST['contai_site_topic'] ?? '' ) ),
 				'site_language' => sanitize_text_field( wp_unslash( $_POST['contai_site_language'] ?? 'english' ) ),
 				'site_category' => sanitize_text_field( wp_unslash( $_POST['contai_site_category'] ?? '' ) ),
-				'wordpress_theme' => sanitize_text_field( wp_unslash( $_POST['contai_wordpress_theme'] ?? 'blogfull' ) ),
+				'wordpress_theme' => sanitize_text_field( wp_unslash( $_POST['contai_wordpress_theme'] ?? 'astra' ) ),
 			),
 			'legal_info' => array(
 				'owner' => sanitize_text_field( wp_unslash( $_POST['contai_legal_owner'] ?? '' ) ),

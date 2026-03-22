@@ -3,6 +3,7 @@
 if (!defined('ABSPATH')) exit;
 
 require_once __DIR__ . '/../../helpers/site-generation.php';
+require_once __DIR__ . '/../../providers/WebsiteProvider.php';
 require_once __DIR__ . '/../legal/LegalPagesGenerator.php';
 
 class ContaiWebsiteGenerationService
@@ -16,10 +17,19 @@ class ContaiWebsiteGenerationService
         ];
 
         try {
-            $theme = get_option('contai_wordpress_theme', 'blogfull');
+            $theme = get_option('contai_wordpress_theme', 'astra');
 
             contai_install_theme($theme);
-            $results['steps'][] = 'Theme installed';
+            contai_apply_theme_defaults($theme);
+            $results['steps'][] = 'Theme installed and configured';
+
+            try {
+                $website_provider = new ContaiWebsiteProvider();
+                $website_provider->updateWebsite( array( 'theme' => sanitize_text_field( $theme ) ) );
+                $results['steps'][] = 'Theme tracked in API';
+            } catch ( Exception $e ) {
+                $results['errors'][] = 'Theme tracking failed (non-critical): ' . $e->getMessage();
+            }
 
             contai_setup_site_config();
             $results['steps'][] = 'Site config setup';

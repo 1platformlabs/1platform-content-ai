@@ -97,6 +97,11 @@ class ContaiOnePlatformClient {
         $auth_headers = $this->obtainAuthHeaders();
 
         if ($auth_headers === null) {
+            if ($retry_count < $this->config->getMaxRetries()) {
+                contai_log('Content AI: Auth token generation failed, force-refreshing and retrying');
+                $this->auth_service->forceRefreshAllTokens();
+                return $this->request($method, $url, $data, $retry_count + 1);
+            }
             return $this->createAuthFailedResponse();
         }
 

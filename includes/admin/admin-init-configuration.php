@@ -65,7 +65,7 @@ function contai_handle_save_site_configuration() {
 	}
 
 	if ( empty( $wordpress_theme ) ) {
-		$wordpress_theme = 'blogfull';
+		$wordpress_theme = 'astra';
 	}
 
 	// Save all fields to WP options

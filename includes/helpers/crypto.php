@@ -23,27 +23,35 @@ function contai_decrypt_api_key($encrypted_key) {
         $data = base64_decode($encrypted_key);
 
         if ($data === false || strpos($data, '::') === false) {
+            // Not in encrypted format — return original value (legacy unencrypted key)
             return $encrypted_key;
         }
 
         $parts = explode('::', $data, 2);
 
         if (count($parts) !== 2) {
-            return $encrypted_key;
+            contai_log('Content AI Decrypt: invalid encrypted format (unexpected parts)');
+            return '';
         }
 
         list($encrypted, $iv) = $parts;
 
         if (empty($iv)) {
-            return $encrypted_key;
+            contai_log('Content AI Decrypt: invalid encrypted format (empty IV)');
+            return '';
         }
 
         $decrypted = openssl_decrypt($encrypted, 'aes-256-cbc', $encryption_key, 0, $iv);
 
-        return $decrypted !== false ? $decrypted : $encrypted_key;
+        if ($decrypted === false) {
+            contai_log('Content AI Decrypt: openssl_decrypt failed — possible salt change or corrupted data');
+            return '';
+        }
+
+        return $decrypted;
     } catch (Exception $e) {
-        contai_log('Decryption error: ' . $e->getMessage());
-        return $encrypted_key;
+        contai_log('Content AI Decrypt error: ' . $e->getMessage());
+        return '';
     }
 }
 
