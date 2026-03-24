@@ -23,19 +23,20 @@ class ContaiKeywordExtractorPanel {
                 <form method="post" action="<?php echo esc_url( admin_url( 'admin.php?page=contai-content-generator&section=keyword-extractor' ) ); ?>" class="contai-keyword-form">
                     <div class="contai-form-grid contai-grid-2">
                         <div class="contai-form-group">
-                            <label for="contai_source_url" class="contai-label">
-                                <span class="dashicons dashicons-admin-site-alt3"></span>
-                                <?php esc_html_e('Source Website', '1platform-content-ai'); ?>
+                            <label for="contai_topic" class="contai-label">
+                                <span class="dashicons dashicons-lightbulb"></span>
+                                <?php esc_html_e('Topic / Theme', '1platform-content-ai'); ?>
                             </label>
-                            <input type="url" id="contai_source_url" name="contai_source_url" required
-                                   class="contai-input"
-                                   placeholder="https://example.com"
+                            <input type="text" id="contai_topic" name="contai_topic"
+                                   class="contai-input" required
+                                   placeholder="<?php esc_attr_e('e.g. plantas de interior, salud medioambiental', '1platform-content-ai'); ?>"
+                                   minlength="3" maxlength="200"
                                    value="<?php
                                    // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Repopulating form field after submission; value is sanitized and escaped.
-                                   echo isset($_POST['contai_source_url']) ? esc_attr( sanitize_text_field( wp_unslash( $_POST['contai_source_url'] ) ) ) : ''; ?>">
+                                   echo isset($_POST['contai_topic']) ? esc_attr( sanitize_text_field( wp_unslash( $_POST['contai_topic'] ) ) ) : ''; ?>">
                             <p class="contai-help-text">
                                 <span class="dashicons dashicons-info"></span>
-                                <?php esc_html_e('Enter the competitor website URL to analyze', '1platform-content-ai'); ?>
+                                <?php esc_html_e('Enter a topic or theme to discover keywords from Google (2-4 words work best)', '1platform-content-ai'); ?>
                             </p>
                         </div>
 
@@ -198,7 +199,7 @@ class ContaiKeywordExtractorPanel {
         <table class="contai-table contai-processing-table">
             <thead>
                 <tr>
-                    <th><?php esc_html_e('Domain', '1platform-content-ai'); ?></th>
+                    <th><?php esc_html_e('Topic', '1platform-content-ai'); ?></th>
                     <th><?php esc_html_e('Country', '1platform-content-ai'); ?></th>
                     <th><?php esc_html_e('Language', '1platform-content-ai'); ?></th>
                     <th><?php esc_html_e('Processing Time', '1platform-content-ai'); ?></th>
@@ -214,14 +215,14 @@ class ContaiKeywordExtractorPanel {
     }
 
     private function renderJobRow(array $job): void {
-        $payload = json_decode($job['payload'], true);
-        $domain = $payload['domain'] ?? __('Unknown', '1platform-content-ai');
+        $payload = json_decode($job['payload'], true) ?? [];
+        $topic = $payload['topic'] ?? $payload['domain'] ?? __('Unknown', '1platform-content-ai');
         $country = strtoupper($payload['country'] ?? 'N/A');
         $lang = strtoupper($payload['lang'] ?? 'N/A');
         $elapsed = $this->calculateElapsedTime($job['processed_at']);
         ?>
         <tr>
-            <td><strong><?php echo esc_html($domain); ?></strong></td>
+            <td><strong><?php echo esc_html($topic); ?></strong></td>
             <td><?php echo esc_html($country); ?></td>
             <td><?php echo esc_html($lang); ?></td>
             <td>
@@ -233,10 +234,16 @@ class ContaiKeywordExtractorPanel {
         <?php
     }
 
-    private function calculateElapsedTime(string $processedAt): string {
-        $now = current_time('timestamp');
+    private function calculateElapsedTime(?string $processedAt): string {
+        if (empty($processedAt)) {
+            return __('Just started', '1platform-content-ai');
+        }
         $processed = strtotime($processedAt);
-        $diff = $now - $processed;
+        if ($processed === false) {
+            return __('Unknown', '1platform-content-ai');
+        }
+        $now = time();
+        $diff = max(0, $now - $processed);
 
         $minutes = floor($diff / 60);
         $seconds = $diff % 60;

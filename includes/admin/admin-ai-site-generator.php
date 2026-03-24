@@ -51,7 +51,7 @@ function contai_handle_ai_site_generator_submission() {
 				array(
 					'page' => 'contai-ai-site-generator',
 					'error' => 1,
-					'message' => urlencode( 'Please select a category before starting the site generation process.' ),
+					'message' => 'Please select a category before starting the site generation process.',
 				),
 				admin_url( 'admin.php' )
 			)
@@ -68,7 +68,7 @@ function contai_handle_ai_site_generator_submission() {
 				array(
 					'page' => 'contai-ai-site-generator',
 					'error' => 1,
-					'message' => urlencode( 'There is already an active site generation process running.' ),
+					'message' => 'There is already an active site generation process running.',
 				),
 				admin_url( 'admin.php' )
 			)
@@ -92,7 +92,7 @@ function contai_handle_ai_site_generator_submission() {
 				'activity' => sanitize_text_field( wp_unslash( $_POST['contai_legal_activity'] ?? '' ) ),
 			),
 			'keyword_extraction' => array(
-				'source_url' => esc_url_raw( wp_unslash( $_POST['contai_source_url'] ?? '' ) ),
+				'source_topic' => sanitize_text_field( wp_unslash( $_POST['contai_source_topic'] ?? '' ) ),
 				'target_country' => sanitize_text_field( wp_unslash( $_POST['contai_target_country'] ?? 'us' ) ),
 				'target_language' => sanitize_text_field( wp_unslash( $_POST['contai_target_language'] ?? 'en' ) ),
 			),
@@ -128,7 +128,7 @@ function contai_handle_ai_site_generator_submission() {
 				array(
 					'page' => 'contai-ai-site-generator',
 					'error' => 1,
-					'message' => urlencode( 'Failed to start site generation process.' ),
+					'message' => 'Failed to start site generation process.',
 				),
 				admin_url( 'admin.php' )
 			)
@@ -140,6 +140,16 @@ function contai_handle_ai_site_generator_submission() {
 	update_option( 'contai_site_language', sanitize_text_field( wp_unslash( $_POST['contai_site_language'] ?? 'english' ) ) );
 	if ( ! empty( $_POST['contai_site_category'] ) ) {
 		update_option( 'contai_site_category', sanitize_text_field( wp_unslash( $_POST['contai_site_category'] ) ) );
+	}
+
+	// Save AdSense publisher ID immediately so it appears in Ads Manager
+	// before the background job completes (fixes #12)
+	$adsense_publisher = sanitize_text_field( wp_unslash( $_POST['contai_adsense_publisher'] ?? '' ) );
+	if ( ! empty( $adsense_publisher ) && preg_match( '/^pub-\d+$/', $adsense_publisher ) ) {
+		update_option( 'contai_adsense_publishers', $adsense_publisher );
+		if ( function_exists( 'contai_generate_adsense_ads' ) ) {
+			contai_generate_adsense_ads();
+		}
 	}
 
 	wp_safe_redirect(
@@ -169,14 +179,14 @@ function contai_ai_site_generator_page() {
 	if ( isset( $_GET['success'] ) ) {
         // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$msg = isset( $_GET['message'] ) ? sanitize_text_field( wp_unslash( $_GET['message'] ) ) : 'Success';
-		echo '<div class="notice notice-success is-dismissible"><p>' . esc_html( urldecode( $msg ) ) . '</p></div>';
+		echo '<div class="notice notice-success is-dismissible"><p>' . esc_html( $msg ) . '</p></div>';
 	}
 
     // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display-only read of GET params after redirect.
 	if ( isset( $_GET['error'] ) ) {
         // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$msg = isset( $_GET['message'] ) ? sanitize_text_field( wp_unslash( $_GET['message'] ) ) : 'Error';
-		echo '<div class="notice notice-error is-dismissible"><p>' . esc_html( urldecode( $msg ) ) . '</p></div>';
+		echo '<div class="notice notice-error is-dismissible"><p>' . esc_html( $msg ) . '</p></div>';
 	}
 
 	?>

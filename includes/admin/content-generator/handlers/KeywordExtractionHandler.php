@@ -99,9 +99,9 @@ class ContaiKeywordExtractionHandler {
         }
 
         $payload = [
-            'domain' => $validation['domain'],
+            'topic' => $validation['topic'],
             'country' => $validation['country'],
-            'lang' => $validation['lang']
+            'lang' => $validation['lang'],
         ];
 
         $job = ContaiJob::create(
@@ -122,55 +122,42 @@ class ContaiKeywordExtractionHandler {
         return [
             'success' => true,
             'message' => sprintf(
-                /* translators: %s: domain name for keyword extraction */
-                __('Keyword extraction job has been queued. Domain: %s. You can check the Keywords List page for results.', '1platform-content-ai'),
-                $validation['domain']
+                /* translators: %s: topic name for keyword extraction */
+                __('Keyword extraction job has been queued for: %s. You can check the Keywords List page for results.', '1platform-content-ai'),
+                $validation['topic']
             )
         ];
     }
 
     private function validateExtractionRequest(): array {
         // phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce verified in handleRequest() via verifyNonce().
-        $domain = esc_url_raw(wp_unslash($_POST['contai_source_url'] ?? ''));
+        $topic = sanitize_text_field(wp_unslash($_POST['contai_topic'] ?? ''));
         $country = sanitize_text_field(wp_unslash($_POST['contai_country'] ?? ''));
         $lang = sanitize_text_field(wp_unslash($_POST['contai_target_language'] ?? ''));
         // phpcs:enable WordPress.Security.NonceVerification.Missing
 
-        if (empty($domain) || empty($country) || empty($lang)) {
-            return [
-                'valid' => false,
-                'message' => __('Please fill in all required fields.', '1platform-content-ai')
-            ];
+        if (empty($topic)) {
+            return ['valid' => false, 'message' => __('Please enter a topic for keyword discovery.', '1platform-content-ai')];
         }
-
-        if (!filter_var($domain, FILTER_VALIDATE_URL)) {
-            return [
-                'valid' => false,
-                'message' => __('Please enter a valid URL.', '1platform-content-ai')
-            ];
+        if (mb_strlen($topic) < 3 || mb_strlen($topic) > 200) {
+            return ['valid' => false, 'message' => __('Topic must be between 3 and 200 characters.', '1platform-content-ai')];
         }
 
         $validLanguages = ['en', 'es'];
         if (!in_array($lang, $validLanguages, true)) {
-            return [
-                'valid' => false,
-                'message' => __('Invalid language selected.', '1platform-content-ai')
-            ];
+            return ['valid' => false, 'message' => __('Invalid language selected.', '1platform-content-ai')];
         }
 
         $validCountries = ['us', 'es'];
         if (!in_array($country, $validCountries, true)) {
-            return [
-                'valid' => false,
-                'message' => __('Invalid country selected.', '1platform-content-ai')
-            ];
+            return ['valid' => false, 'message' => __('Invalid country selected.', '1platform-content-ai')];
         }
 
         return [
             'valid' => true,
-            'domain' => $domain,
+            'topic' => $topic,
             'country' => $country,
-            'lang' => $lang
+            'lang' => $lang,
         ];
     }
 

@@ -52,6 +52,7 @@ class ContaiOnePlatformEndpoints {
 
     // ── Content Generation ──────────────────────────────────────
     const POSTS_KEYWORDS = '/posts/keywords/';
+    const POSTS_KEYWORDS_TOPIC = '/posts/keywords/topic/';
     const POSTS_CONTENT = '/posts/content/';
     const POSTS_CONTENT_JOBS = '/posts/content/jobs/';
     const POSTS_INDEXING = '/posts/indexing/';

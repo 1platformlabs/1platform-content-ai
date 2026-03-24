@@ -56,6 +56,22 @@ class ContaiKeywordExtractorService {
         return $this->processAndSaveKeywords($response);
     }
 
+    public function extractByTopicAndSave(
+        string $topic,
+        string $country,
+        string $lang
+    ): ContaiKeywordExtractionResult {
+        $response = $this->requestKeywordExtractionByTopic($topic, $country, $lang);
+
+        if (!$response->isSuccess()) {
+            return ContaiKeywordExtractionResult::failure(
+                $response->getMessage() ?? self::ERROR_API_REQUEST_FAILED
+            );
+        }
+
+        return $this->processAndSaveKeywords($response);
+    }
+
     private function requestKeywordExtraction(
         string $domain,
         string $country,
@@ -68,6 +84,20 @@ class ContaiKeywordExtractorService {
         ];
 
         return $this->client->post(ContaiOnePlatformEndpoints::POSTS_KEYWORDS, $request_data);
+    }
+
+    private function requestKeywordExtractionByTopic(
+        string $topic,
+        string $country,
+        string $lang
+    ): ContaiOnePlatformResponse {
+        $request_data = [
+            'topic' => $topic,
+            'country' => $country,
+            'lang' => $lang,
+        ];
+
+        return $this->client->post(ContaiOnePlatformEndpoints::POSTS_KEYWORDS_TOPIC, $request_data);
     }
 
     private function processAndSaveKeywords(ContaiOnePlatformResponse $response): ContaiKeywordExtractionResult {

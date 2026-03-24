@@ -18,18 +18,24 @@ class ContaiKeywordExtractionJob implements ContaiJobInterface
 
     public function handle(array $payload)
     {
+        $topic = $payload['topic'] ?? '';
         $domain = $payload['domain'] ?? '';
         $country = $payload['country'] ?? '';
         $lang = $payload['lang'] ?? '';
 
-        if (empty($domain) || empty($country) || empty($lang)) {
+        // Support both topic-based (new) and domain-based (legacy) payloads
+        $source = !empty($topic) ? $topic : $domain;
+
+        if (empty($source) || empty($country) || empty($lang)) {
             return [
                 'success' => false,
-                'error' => 'Missing required parameters: domain, country, or lang'
+                'error' => 'Missing required parameters: topic/domain, country, or lang'
             ];
         }
 
-        $result = $this->extractor_service->extractAndSaveKeywords($domain, $country, $lang);
+        $result = !empty($topic)
+            ? $this->extractor_service->extractByTopicAndSave($topic, $country, $lang)
+            : $this->extractor_service->extractAndSaveKeywords($domain, $country, $lang);
 
         if ($result->isSuccess()) {
             return [
@@ -37,14 +43,14 @@ class ContaiKeywordExtractionJob implements ContaiJobInterface
                 'saved_count' => $result->getSavedCount(),
                 'skipped_count' => $result->getSkippedCount(),
                 'total_count' => $result->getTotalCount(),
-                'domain' => $domain
+                'source' => $source,
             ];
         }
 
         return [
             'success' => false,
             'error' => $result->getErrorMessage(),
-            'domain' => $domain
+            'source' => $source,
         ];
     }
 

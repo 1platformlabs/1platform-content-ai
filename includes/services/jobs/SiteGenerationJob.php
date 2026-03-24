@@ -202,11 +202,11 @@ class ContaiSiteGenerationJob implements ContaiJobInterface
     {
         $service = ContaiKeywordExtractorService::create();
 
-        $domain = $extractionConfig['source_url'] ?? '';
+        $topic = $extractionConfig['source_topic'] ?? '';
         $country = $extractionConfig['target_country'] ?? 'us';
         $lang = $extractionConfig['target_language'] ?? 'en';
 
-        $result = $service->extractAndSaveKeywords($domain, $country, $lang);
+        $result = $service->extractByTopicAndSave($topic, $country, $lang);
 
         if (!$result->isSuccess()) {
             // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
