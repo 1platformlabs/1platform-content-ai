@@ -4,6 +4,24 @@ All notable changes to Content AI are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [2.8.0] - 2026-03-24
+
+### Added
+
+- **Topic-based keyword extraction**: Keyword extractor now discovers keywords by topic/theme instead of domain URL, using the new `POST /posts/keywords/topic/` API endpoint
+- **`KeywordExtractorService::extractByTopicAndSave()`**: New method for topic-based extraction via `POSTS_KEYWORDS_TOPIC` endpoint
+- **`POSTS_KEYWORDS_TOPIC` endpoint constant**: Added `/posts/keywords/topic/` to `OnePlatformEndpoints`
+- **AdSense publisher ID early save**: Publisher ID is now saved immediately on form submission (before background job), fixing #12 where the ID wasn't available in Ads Manager until the job completed
+
+### Changed
+
+- **Keyword extractor UI**: Replaced domain URL input with topic/theme text field in the keyword extraction panel (`keyword-extractor.php`)
+- **`KeywordExtractionHandler`**: Validates topic (3-200 chars) instead of URL, sends `topic` field to API
+- **`KeywordExtractionJob`**: Uses `extractByTopicAndSave()` instead of `extractAndSaveKeywords()`
+- **Site Generator form**: Replaced "Source URL" with "Source Topic" field (`source_url` → `source_topic`), redesigned form layout and CSS
+- **`SiteGenerationJob`**: Uses topic-based extraction for keyword discovery step
+- **Error message encoding**: Removed redundant `urlencode()` from error redirect messages (WordPress handles encoding)
+
 ## [2.6.0] - 2026-03-22
 
 ### Added
