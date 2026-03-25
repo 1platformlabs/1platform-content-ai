@@ -4,6 +4,16 @@ All notable changes to Content AI are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [2.10.2] - 2026-03-25
+
+### Fixed
+
+- **Site Wizard ignoring language selection**: Selecting "Spanish" in the Site Wizard generated content in English because `keyword_extraction.target_language` and `post_generation.target_language` read from a non-existent form field (`contai_target_language`) instead of deriving from the actual `contai_site_language` field. Now uses `ContaiCategoryAPIService::normalizeLanguage()` to correctly map `spanish` → `es` and `english` → `en` (#15)
+
+### Added
+
+- **`CategoryAPIServiceTest`**: 10 unit tests for `normalizeLanguage()` and `getCategoryTitle()` covering all language mappings, edge cases, and fallbacks
+- **`SiteGeneratorPayloadTest`**: 5 unit tests validating the Site Wizard payload correctly maps form language to API language codes
 ## [2.9.1] - 2026-03-25
 
 ### Fixed

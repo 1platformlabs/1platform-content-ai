@@ -80,3 +80,6 @@ require_once __DIR__ . '/../includes/providers/WebsiteProvider.php';
 require_once __DIR__ . '/../includes/services/search-console/SearchConsoleService.php';
 require_once __DIR__ . '/../includes/services/setup/SearchConsoleSetupService.php';
 require_once __DIR__ . '/../includes/admin/apps/handlers/SearchConsoleFormHandler.php';
+
+// ── Category API ────────────────────────────────────────────────
+require_once __DIR__ . '/../includes/services/category-api/CategoryAPIService.php';
