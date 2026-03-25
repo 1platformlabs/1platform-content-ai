@@ -4,6 +4,18 @@ All notable changes to Content AI are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [2.9.0] - 2026-03-25
+
+### Changed
+
+- **Search Console one-click setup**: Unified the 3-step manual flow (add site → create verification file → verify) into a single click that runs all steps automatically via `SearchConsoleSetupService::activateSearchConsole()`
+- **`SearchConsoleFormHandler`**: Replaced `handleAddWebsite()` with `handleSetup()` that delegates to the existing `SearchConsoleSetupService` for full orchestration
+- **`AddWebsiteSection` UI**: Updated panel to show the 4 automated steps and use the new `contai_setup_search_console` form action
+
+### Added
+
+- **`SearchConsoleFormHandlerTest`**: Unit tests for one-click setup flow — success, failure at add, failure at verify, and graceful sitemap failure scenarios
+
 ## [2.8.0] - 2026-03-24
 
 ### Added
