@@ -142,7 +142,11 @@ class ContaiSiteGenerationJob implements ContaiJobInterface
                 break;
 
             case 'setupAdsManager':
-                $this->setupAdsManager($config['adsense']['publisher_id']);
+                try {
+                    $this->setupAdsManager($config['adsense']['publisher_id'] ?? '');
+                } catch (Exception $e) {
+                    contai_log("Optional step 'setupAdsManager' failed: " . $e->getMessage()); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+                }
                 break;
         }
         return $payload;
