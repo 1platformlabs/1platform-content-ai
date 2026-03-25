@@ -4,6 +4,17 @@ All notable changes to Content AI are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [2.10.2] - 2026-03-25
+
+### Fixed
+
+- **Site Wizard ignoring language selection**: Selecting "Spanish" in the Site Wizard generated content in English because `keyword_extraction.target_language` and `post_generation.target_language` read from a non-existent form field (`contai_target_language`) instead of deriving from the actual `contai_site_language` field. Now uses `ContaiCategoryAPIService::normalizeLanguage()` to correctly map `spanish` → `es` and `english` → `en` (#15)
+
+### Added
+
+- **`CategoryAPIServiceTest`**: 10 unit tests for `normalizeLanguage()` and `getCategoryTitle()` covering all language mappings, edge cases, and fallbacks
+- **`SiteGeneratorPayloadTest`**: 5 unit tests validating the Site Wizard payload correctly maps form language to API language codes
+
 ## [2.10.1] - 2026-03-25
 
 ### Fixed
@@ -19,7 +30,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **`WPContentAILicensePanel::getAuthService()`**: Centralized auth service accessor supporting dependency injection
 - **`OnePlatformAuthServiceTest`**: 7 unit tests covering error clearing, token validation, and auth header generation
 - **`WPContentAILicensePanelTest`**: 3 unit tests covering stale error clearing on connection success, retry success, and error persistence on failure
-
 ## [2.9.1] - 2026-03-25
 
 ### Fixed

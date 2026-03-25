@@ -7,6 +7,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 require_once __DIR__ . '/../services/jobs/SiteGenerationJob.php';
 require_once __DIR__ . '/../database/repositories/JobRepository.php';
 require_once __DIR__ . '/../database/models/Job.php';
+require_once __DIR__ . '/../services/category-api/CategoryAPIService.php';
 
 function contai_enqueue_ai_site_generator_styles() {
 	$screen = get_current_screen();
@@ -76,12 +77,15 @@ function contai_handle_ai_site_generator_submission() {
 		exit;
 	}
 
+	$site_language = sanitize_text_field( wp_unslash( $_POST['contai_site_language'] ?? 'english' ) );
+	$target_language = ContaiCategoryAPIService::normalizeLanguage( $site_language );
+
 	$payload = array(
 		'config' => array(
 			'license_key' => get_option( 'contai_api_key', '' ),
 			'site_config' => array(
 				'site_topic' => sanitize_text_field( wp_unslash( $_POST['contai_site_topic'] ?? '' ) ),
-				'site_language' => sanitize_text_field( wp_unslash( $_POST['contai_site_language'] ?? 'english' ) ),
+				'site_language' => $site_language,
 				'site_category' => sanitize_text_field( wp_unslash( $_POST['contai_site_category'] ?? '' ) ),
 				'wordpress_theme' => sanitize_text_field( wp_unslash( $_POST['contai_wordpress_theme'] ?? 'astra' ) ),
 			),
@@ -94,12 +98,12 @@ function contai_handle_ai_site_generator_submission() {
 			'keyword_extraction' => array(
 				'source_topic' => sanitize_text_field( wp_unslash( $_POST['contai_source_topic'] ?? '' ) ),
 				'target_country' => sanitize_text_field( wp_unslash( $_POST['contai_target_country'] ?? 'us' ) ),
-				'target_language' => sanitize_text_field( wp_unslash( $_POST['contai_target_language'] ?? 'en' ) ),
+				'target_language' => $target_language,
 			),
 			'post_generation' => array(
 				'num_posts' => absint( $_POST['contai_num_posts'] ?? 100 ),
 				'target_country' => sanitize_text_field( wp_unslash( $_POST['contai_target_country'] ?? 'us' ) ),
-				'target_language' => sanitize_text_field( wp_unslash( $_POST['contai_target_language'] ?? 'en' ) ),
+				'target_language' => $target_language,
 				'image_provider' => sanitize_text_field( wp_unslash( $_POST['contai_image_provider'] ?? 'pexels' ) ),
 			),
 			'comments' => array(
@@ -137,7 +141,7 @@ function contai_handle_ai_site_generator_submission() {
 	}
 
 	// Save site configuration to options for use by other services
-	update_option( 'contai_site_language', sanitize_text_field( wp_unslash( $_POST['contai_site_language'] ?? 'english' ) ) );
+	update_option( 'contai_site_language', $site_language );
 	if ( ! empty( $_POST['contai_site_category'] ) ) {
 		update_option( 'contai_site_category', sanitize_text_field( wp_unslash( $_POST['contai_site_category'] ) ) );
 	}

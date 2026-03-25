@@ -84,3 +84,6 @@ require_once __DIR__ . '/../includes/admin/apps/handlers/SearchConsoleFormHandle
 // ── User Profile & License ─────────────────────────────────────
 require_once __DIR__ . '/../includes/services/user-profile/UserProfileService.php';
 require_once __DIR__ . '/../includes/admin/licenses/WPContentAILicensePanel.php';
+
+// ── Category API ────────────────────────────────────────────────
+require_once __DIR__ . '/../includes/services/category-api/CategoryAPIService.php';
