@@ -26,6 +26,7 @@ class ContaiSearchConsoleSetupService
             'errors' => []
         ];
 
+        // Steps 1-3 are critical — failure stops the flow
         try {
             $addResponse = $this->searchConsoleService->addToSearchConsole();
             if (!$addResponse->isSuccess()) {
@@ -47,19 +48,24 @@ class ContaiSearchConsoleSetupService
             $this->websiteProvider->saveSearchConsoleConfig($verifyResponse->getData());
             $results['steps'][] = 'Website verified';
 
-            $sitemaps = $this->websiteProvider->getSitemapUrls();
-            if (!empty($sitemaps)) {
-                $sitemapResponse = $this->searchConsoleService->submitSitemaps($sitemaps);
-                if (!$sitemapResponse->isSuccess()) {
-                    throw new Exception('Failed to submit sitemaps: ' . $sitemapResponse->getMessage());
-                }
-                $this->websiteProvider->saveSitemapsConfig($sitemapResponse->getData());
-                $results['steps'][] = 'Sitemaps submitted';
-            }
-
         } catch (Exception $e) {
             $results['success'] = false;
             $results['errors'][] = $e->getMessage();
+            return $results;
+        }
+
+        // Step 4: Sitemaps — best-effort, does not fail the flow
+        $sitemaps = $this->websiteProvider->getSitemapUrls();
+        if (!empty($sitemaps)) {
+            try {
+                $sitemapResponse = $this->searchConsoleService->submitSitemaps($sitemaps);
+                if ($sitemapResponse->isSuccess()) {
+                    $this->websiteProvider->saveSitemapsConfig($sitemapResponse->getData());
+                    $results['steps'][] = 'Sitemaps submitted';
+                }
+            } catch (Exception $e) {
+                // Sitemap failure is non-critical — site is already verified
+            }
         }
 
         return $results;

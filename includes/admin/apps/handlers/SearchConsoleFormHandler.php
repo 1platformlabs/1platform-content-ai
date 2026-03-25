@@ -4,6 +4,7 @@ if (!defined('ABSPATH')) exit;
 
 require_once __DIR__ . '/../../../providers/WebsiteProvider.php';
 require_once __DIR__ . '/../../../services/search-console/SearchConsoleService.php';
+require_once __DIR__ . '/../../../services/setup/SearchConsoleSetupService.php';
 
 class ContaiSearchConsoleFormHandler
 {
@@ -36,8 +37,8 @@ class ContaiSearchConsoleFormHandler
             return;
         }
 
-        if (isset($_POST['contai_add_website'])) {
-            $this->handleAddWebsite();
+        if (isset($_POST['contai_setup_search_console'])) {
+            $this->handleSetup();
         }
 
         if (isset($_POST['contai_verify_website'])) {
@@ -57,28 +58,25 @@ class ContaiSearchConsoleFormHandler
         }
     }
 
-    private function handleAddWebsite(): void
+    private function handleSetup(): void
     {
-        $response = $this->service->addToSearchConsole();
+        $setupService = new ContaiSearchConsoleSetupService(
+            $this->websiteProvider,
+            $this->service
+        );
 
-        if (!$response->isSuccess()) {
-            $this->redirectWithMessage('error', $response->getMessage(), $response->getTraceId());
+        $result = $setupService->activateSearchConsole();
+
+        if (!$result['success']) {
+            $errorMsg = implode('. ', $result['errors']);
+            $this->redirectWithMessage('error', $errorMsg);
             return;
         }
 
-        $this->websiteProvider->saveSearchConsoleConfig($response->getData());
-
-        $sitemaps = $this->websiteProvider->getSitemapUrls();
-
-        if (!empty($sitemaps)) {
-            $sitemapResponse = $this->service->submitSitemaps($sitemaps);
-
-            if ($sitemapResponse->isSuccess()) {
-                $this->websiteProvider->saveSitemapsConfig($sitemapResponse->getData());
-            }
-        }
-
-        $this->redirectWithMessage('success', __('Website added to Search Console successfully', '1platform-content-ai'));
+        $this->redirectWithMessage(
+            'success',
+            __('Website connected to Search Console successfully', '1platform-content-ai')
+        );
     }
 
     private function handleVerifyWebsite(): void

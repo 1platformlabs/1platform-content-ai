@@ -78,4 +78,5 @@ require_once __DIR__ . '/../includes/services/api/OnePlatformEndpoints.php';
 require_once __DIR__ . '/../includes/services/api/OnePlatformClient.php';
 require_once __DIR__ . '/../includes/providers/WebsiteProvider.php';
 require_once __DIR__ . '/../includes/services/search-console/SearchConsoleService.php';
+require_once __DIR__ . '/../includes/services/setup/SearchConsoleSetupService.php';
 require_once __DIR__ . '/../includes/admin/apps/handlers/SearchConsoleFormHandler.php';
