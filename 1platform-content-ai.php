@@ -277,6 +277,15 @@ function contai_display_auth_error_notices(): void {
     }
 
     require_once plugin_dir_path(__FILE__) . 'includes/services/api/OnePlatformAuthService.php';
+    require_once plugin_dir_path(__FILE__) . 'includes/services/config/Config.php';
+
+    // If tokens are currently valid, clear any stale error notices
+    // left over from a previous transient failure.
+    $authService = ContaiOnePlatformAuthService::create();
+    if ($authService->validateToken()) {
+        $authService->clearErrors();
+        return;
+    }
 
     $app_error = ContaiOnePlatformAuthService::getAppTokenError();
     if ($app_error !== null) {
