@@ -4,6 +4,17 @@ All notable changes to Content AI are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [2.10.3] - 2026-03-25
+
+### Fixed
+
+- **Site Wizard categories not loading after previous attempt**: The `activateLicense()` step read the already-encrypted API key from the job payload and re-saved it through `saveApiKey()`, which encrypted it again. After double-encryption, all authenticated API calls failed, causing "No categories available" on subsequent wizard runs. Removed `license_key` from the job payload and changed `activateLicense()` to validate the existing key via `hasApiKey()` (#16)
+
+### Added
+
+- **`CategoryAPIServiceGetActiveCategoriesTest`**: 9 unit tests for `getActiveCategories()` covering API success, auth failure, cache hit, force refresh, inactive categories, non-array data, reindexing, and no-cache-on-failure
+- **`SiteGeneratorPayloadNoLicenseKeyTest`**: 3 unit tests verifying the job payload contains no sensitive data
+
 ## [2.10.2] - 2026-03-25
 
 ### Fixed

@@ -82,7 +82,6 @@ function contai_handle_ai_site_generator_submission() {
 
 	$payload = array(
 		'config' => array(
-			'license_key' => get_option( 'contai_api_key', '' ),
 			'site_config' => array(
 				'site_topic' => sanitize_text_field( wp_unslash( $_POST['contai_site_topic'] ?? '' ) ),
 				'site_language' => $site_language,
