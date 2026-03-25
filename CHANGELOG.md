@@ -4,6 +4,13 @@ All notable changes to Content AI are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [2.9.1] - 2026-03-25
+
+### Fixed
+
+- **`SiteGenerationJob::setupAdsManager`**: Wrapped in try/catch to prevent AdSense setup failures from crashing the entire site generation job — now logs the error and continues, consistent with other optional steps (#13)
+- **Null coalescing fallback**: Added `$config['adsense']['publisher_id'] ?? ''` to prevent `TypeError` when the `adsense` key is missing from the payload
+
 ## [2.9.0] - 2026-03-25
 
 ### Changed
