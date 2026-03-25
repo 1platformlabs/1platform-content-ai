@@ -15,12 +15,14 @@ class WPContentAILicensePanel
     private const NONCE_FIELD = 'contai_license_nonce';
 
     private ContaiUserProfileService $service;
+    private ?ContaiOnePlatformAuthService $authService;
     private ?string $message = null;
     private string $messageType = 'success';
 
-    public function __construct()
+    public function __construct(?ContaiUserProfileService $service = null, ?ContaiOnePlatformAuthService $authService = null)
     {
-        $this->service = new ContaiUserProfileService();
+        $this->service = $service ?? new ContaiUserProfileService();
+        $this->authService = $authService;
     }
 
     public function handleFormSubmissionEarly(): void
@@ -270,8 +272,7 @@ class WPContentAILicensePanel
      */
     private function handleRefreshTokens(): void
     {
-        $authService = ContaiOnePlatformAuthService::create();
-        $result = $authService->forceRefreshAllTokens();
+        $result = $this->getAuthService()->forceRefreshAllTokens();
 
         if (!$result['success']) {
             $this->message = $result['message'] ?? __('Failed to refresh tokens', '1platform-content-ai');
@@ -306,6 +307,7 @@ class WPContentAILicensePanel
             if ($data) {
                 $this->service->saveUserProfile($data);
             }
+            $this->clearStaleTokenErrors();
             return true;
         }
 
@@ -313,8 +315,7 @@ class WPContentAILicensePanel
         // This covers cases where token generation failed transiently
         // and the OnePlatformClient retry was also exhausted.
         contai_log('Content AI: Profile fetch failed on first attempt, force-refreshing tokens and retrying');
-        $authService = ContaiOnePlatformAuthService::create();
-        $refreshResult = $authService->forceRefreshAllTokens();
+        $refreshResult = $this->getAuthService()->forceRefreshAllTokens();
 
         if (!$refreshResult['success']) {
             return false;
@@ -327,10 +328,21 @@ class WPContentAILicensePanel
             if ($data) {
                 $this->service->saveUserProfile($data);
             }
+            $this->clearStaleTokenErrors();
             return true;
         }
 
         return false;
+    }
+
+    private function clearStaleTokenErrors(): void
+    {
+        $this->getAuthService()->clearErrors();
+    }
+
+    private function getAuthService(): ContaiOnePlatformAuthService
+    {
+        return $this->authService ?? ContaiOnePlatformAuthService::create();
     }
 
     private function renderMessage(): void

@@ -81,5 +81,9 @@ require_once __DIR__ . '/../includes/services/search-console/SearchConsoleServic
 require_once __DIR__ . '/../includes/services/setup/SearchConsoleSetupService.php';
 require_once __DIR__ . '/../includes/admin/apps/handlers/SearchConsoleFormHandler.php';
 
+// ── User Profile & License ─────────────────────────────────────
+require_once __DIR__ . '/../includes/services/user-profile/UserProfileService.php';
+require_once __DIR__ . '/../includes/admin/licenses/WPContentAILicensePanel.php';
+
 // ── Category API ────────────────────────────────────────────────
 require_once __DIR__ . '/../includes/services/category-api/CategoryAPIService.php';

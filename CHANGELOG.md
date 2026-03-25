@@ -14,6 +14,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - **`CategoryAPIServiceTest`**: 10 unit tests for `normalizeLanguage()` and `getCategoryTitle()` covering all language mappings, edge cases, and fallbacks
 - **`SiteGeneratorPayloadTest`**: 5 unit tests validating the Site Wizard payload correctly maps form language to API language codes
+
+## [2.10.1] - 2026-03-25
+
+### Fixed
+
+- **Stale auth error banner persisting after connection recovery**: The "Failed to obtain user authentication token" admin notice now auto-clears when tokens are valid, preventing stale errors from a previous transient API failure (#20)
+- **`validateConnectionStatus()` leaving stale errors**: Successful connection validation (first attempt or retry) now clears any leftover token error options from `wp_options`
+- **`forceRefreshAllTokens()` not clearing errors early enough**: Errors are now cleared at the start of a force-refresh, not just at the end — prevents stale errors from persisting if the refresh partially fails
+- **`WPContentAILicensePanel` testability**: Constructor now accepts optional `UserProfileService` and `AuthService` dependencies for unit testing
+
+### Added
+
+- **`OnePlatformAuthService::clearErrors()`**: Public method to clear both app and user token error options
+- **`WPContentAILicensePanel::getAuthService()`**: Centralized auth service accessor supporting dependency injection
+- **`OnePlatformAuthServiceTest`**: 7 unit tests covering error clearing, token validation, and auth header generation
+- **`WPContentAILicensePanelTest`**: 3 unit tests covering stale error clearing on connection success, retry success, and error persistence on failure
 ## [2.9.1] - 2026-03-25
 
 ### Fixed

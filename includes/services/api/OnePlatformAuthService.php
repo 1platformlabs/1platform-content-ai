@@ -272,6 +272,7 @@ class ContaiOnePlatformAuthService {
      */
     public function forceRefreshAllTokens(): array {
         $this->clearToken();
+        $this->clearErrors();
 
         $app_token = $this->generateNewAppToken();
 
@@ -363,6 +364,11 @@ class ContaiOnePlatformAuthService {
         $user_expires = (int) get_option(self::OPTION_USER_TOKEN_EXPIRES, 0);
 
         return $now < ($app_expires - $buffer) && $now < ($user_expires - $buffer);
+    }
+
+    public function clearErrors(): void {
+        $this->clearError(self::OPTION_APP_TOKEN_ERROR);
+        $this->clearError(self::OPTION_USER_TOKEN_ERROR);
     }
 
     private function storeError(string $option_key, string $message): void {
