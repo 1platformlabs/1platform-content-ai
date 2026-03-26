@@ -14,8 +14,8 @@ class ContaiPostGenerationQueueHandler {
 
     private $queueManager;
 
-    public function __construct() {
-        $this->queueManager = new ContaiQueueManager();
+    public function __construct(?ContaiQueueManager $queueManager = null) {
+        $this->queueManager = $queueManager ?? new ContaiQueueManager();
     }
 
     public function handleRequest(): void {
