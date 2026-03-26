@@ -97,7 +97,7 @@ class ContaiSiteGenerationJob implements ContaiJobInterface
 
         switch ($stepName) {
             case 'activateLicense':
-                $this->activateLicense($config['license_key']);
+                $this->activateLicense();
                 break;
 
             case 'saveSiteConfig':
@@ -152,10 +152,13 @@ class ContaiSiteGenerationJob implements ContaiJobInterface
         return $payload;
     }
 
-    private function activateLicense(string $licenseKey): void
+    private function activateLicense(): void
     {
         $service = new ContaiUserProfileService();
-        $service->saveApiKey($licenseKey);
+
+        if (!$service->hasApiKey()) {
+            throw new Exception('License activation failed: No API key configured');
+        }
 
         $result = $service->refreshUserProfile();
 
