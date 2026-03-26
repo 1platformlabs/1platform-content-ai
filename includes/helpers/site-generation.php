@@ -402,23 +402,19 @@ function contai_add_sidebar_widgets() {
 
 	$profile = contai_fetch_generated_profile_from_api( $owner, $theme, $lang_code );
 
-	if ( ! $profile ) {
-		contai_log( 'contai_add_sidebar_widgets: Profile generation failed, skipping About Me widget.' );
-		return;
-	}
+	if ( $profile ) {
+		$fullname  = sanitize_text_field( $profile['fullname'] );
+		$bio_safe  = wp_kses_post( $profile['bio'] );
+		$rrss_safe = wp_kses_post( $profile['rrss'] );
+		$image_url = contai_sideload_profile_image( $profile['profile_image_url'], $fullname );
 
-	$fullname  = sanitize_text_field( $profile['fullname'] );
-	$bio_safe  = wp_kses_post( $profile['bio'] );
-	$rrss_safe = wp_kses_post( $profile['rrss'] );
-	$image_url = contai_sideload_profile_image( $profile['profile_image_url'], $fullname );
+		if ( ! $image_url ) {
+			$image_url = esc_url( $profile['profile_image_url'] );
+		}
 
-	if ( ! $image_url ) {
-		$image_url = esc_url( $profile['profile_image_url'] );
-	}
+		$about_me_title = $lang === 'english' ? 'About Me' : 'Sobre mí';
 
-	$about_me_title = $lang === 'english' ? 'About Me' : 'Sobre mí';
-
-	$about_me_html = '
+		$about_me_html = '
     <div class="contai-about-me-widget" style="width: 100%; max-width: 320px; padding: 20px; border: 1px solid #ccc; border-radius: 10px; font-family: Arial, sans-serif; background-color: #f0f4fa; box-sizing: border-box; margin: 0 auto;">
         <img src="' . esc_url( $image_url ) . '" alt="' . esc_attr( $fullname ) . '" style="width: 100%; height: auto; border-radius: 10px; margin-bottom: 15px; display: block;">
         <h2 style="margin-top: 0; font-size: 18px; margin-bottom: 10px;">' . esc_html( $about_me_title ) . '</h2>
@@ -426,12 +422,15 @@ function contai_add_sidebar_widgets() {
         ' . $rrss_safe . '
     </div>';
 
-	$sidebars_widgets[ $sidebar_id ][] = "block-$block_id";
+		$sidebars_widgets[ $sidebar_id ][] = "block-$block_id";
+		$widget_block[ $block_id ] = array( 'content' => $about_me_html );
+	} else {
+		contai_log( 'contai_add_sidebar_widgets: Profile generation failed, skipping About Me widget.' );
+	}
+
 	$sidebars_widgets[ $sidebar_id ][] = "search-$search_id";
 	$sidebars_widgets[ $sidebar_id ][] = "recent-comments-$comments_id";
 	$sidebars_widgets[ $sidebar_id ][] = "recent-posts-$posts_id";
-
-	$widget_block[ $block_id ] = array( 'content' => $about_me_html );
 
 	$widget_search[ $search_id ] = array(
 		'title' => $text['search'],
