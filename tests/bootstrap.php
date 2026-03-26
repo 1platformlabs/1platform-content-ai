@@ -84,6 +84,7 @@ require_once __DIR__ . '/../includes/admin/apps/handlers/SearchConsoleFormHandle
 
 // ── Admin Handlers (Billing, Publisuites, Content Generator) ───
 require_once __DIR__ . '/../includes/services/billing/BillingService.php';
+require_once __DIR__ . '/../includes/services/billing/CreditGuard.php';
 require_once __DIR__ . '/../includes/admin/billing/handlers/TopUpHandler.php';
 require_once __DIR__ . '/../includes/services/publisuites/PublisuitesService.php';
 require_once __DIR__ . '/../includes/admin/apps/handlers/PublisuitesFormHandler.php';

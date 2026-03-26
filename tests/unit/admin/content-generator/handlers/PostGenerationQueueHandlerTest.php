@@ -20,6 +20,11 @@ class PostGenerationQueueHandlerTest extends TestCase
         parent::setUp();
         WP_Mock::setUp();
 
+        // Mock billing cache so CreditGuard passes without hitting BillingService
+        WP_Mock::userFunction('get_transient')
+            ->with('contai_billing_cache')
+            ->andReturn(['balance' => 100.00, 'currency' => 'USD']);
+
         $this->queueManager = Mockery::mock(ContaiQueueManager::class);
         $this->handler = new ContaiPostGenerationQueueHandler($this->queueManager);
     }

@@ -11,10 +11,17 @@ class ContaiCreditGuard {
 
     public const INSUFFICIENT_CREDITS_PREFIX = 'INSUFFICIENT_CREDITS: ';
 
-    private ContaiBillingService $billingService;
+    private ?ContaiBillingService $billingService;
 
     public function __construct(?ContaiBillingService $billingService = null) {
-        $this->billingService = $billingService ?? new ContaiBillingService();
+        $this->billingService = $billingService;
+    }
+
+    private function getBillingService(): ContaiBillingService {
+        if ($this->billingService === null) {
+            $this->billingService = new ContaiBillingService();
+        }
+        return $this->billingService;
     }
 
     /**
@@ -92,7 +99,7 @@ class ContaiCreditGuard {
      * @return array|null
      */
     private function fetchAndCacheBilling(): ?array {
-        $response = $this->billingService->getBilling();
+        $response = $this->getBillingService()->getBilling();
 
         if (!$response->isSuccess()) {
             return null;

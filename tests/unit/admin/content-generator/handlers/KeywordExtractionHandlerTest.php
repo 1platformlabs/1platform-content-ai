@@ -22,6 +22,11 @@ class KeywordExtractionHandlerTest extends TestCase
         parent::setUp();
         WP_Mock::setUp();
 
+        // Mock billing cache so CreditGuard passes without hitting BillingService
+        WP_Mock::userFunction('get_transient')
+            ->with('contai_billing_cache')
+            ->andReturn(['balance' => 100.00, 'currency' => 'USD']);
+
         $this->jobRepository = Mockery::mock(ContaiJobRepository::class);
         $this->handler = new ContaiKeywordExtractionHandler($this->jobRepository);
     }
