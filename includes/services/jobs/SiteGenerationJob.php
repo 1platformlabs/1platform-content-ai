@@ -20,6 +20,7 @@ class ContaiSiteGenerationJob implements ContaiJobInterface
 
     private ContaiJobRepository $jobRepository;
     private array $steps = [
+        'validateCredits',
         'activateLicense',
         'saveSiteConfig',
         'saveLegalInfo',
@@ -35,6 +36,11 @@ class ContaiSiteGenerationJob implements ContaiJobInterface
     public function __construct()
     {
         $this->jobRepository = new ContaiJobRepository();
+    }
+
+    public function getStepCount(): int
+    {
+        return count($this->steps);
     }
 
     public function handle(array $payload)
@@ -96,6 +102,10 @@ class ContaiSiteGenerationJob implements ContaiJobInterface
         $config = $payload['config'] ?? [];
 
         switch ($stepName) {
+            case 'validateCredits':
+                $this->validateCreditsStep();
+                break;
+
             case 'activateLicense':
                 $this->activateLicense();
                 break;
@@ -150,6 +160,24 @@ class ContaiSiteGenerationJob implements ContaiJobInterface
                 break;
         }
         return $payload;
+    }
+
+    private function validateCreditsStep(): void
+    {
+        require_once __DIR__ . '/../billing/CreditGuard.php';
+
+        $creditGuard = new ContaiCreditGuard();
+        $creditCheck = $creditGuard->validateCredits();
+
+        if (!$creditCheck['has_credits']) {
+            throw new Exception(
+                sprintf(
+                    'Insufficient balance (%s %s). Please add credits before generating content.',
+                    number_format($creditCheck['balance'], 2),
+                    $creditCheck['currency']
+                )
+            );
+        }
     }
 
     private function activateLicense(): void

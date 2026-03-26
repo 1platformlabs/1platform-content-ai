@@ -525,6 +525,15 @@ class ContaiAgentRestController {
      * @return WP_REST_Response|WP_Error
      */
     public function run_agent( $request ) {
+        // Validate credits before running agent
+        require_once __DIR__ . '/../billing/CreditGuard.php';
+        $creditGuard = new ContaiCreditGuard();
+        $creditCheck = $creditGuard->validateCredits();
+
+        if ( ! $creditCheck['has_credits'] ) {
+            return $this->error( 'insufficient_credits', $creditCheck['message'], 402 );
+        }
+
         $id   = sanitize_text_field( $request->get_param( 'id' ) );
         $body = $request->get_json_params();
 
@@ -682,6 +691,15 @@ class ContaiAgentRestController {
      * @return WP_REST_Response|WP_Error
      */
     public function consume_action( $request ) {
+        // Validate credits before consuming action
+        require_once __DIR__ . '/../billing/CreditGuard.php';
+        $creditGuard = new ContaiCreditGuard();
+        $creditCheck = $creditGuard->validateCredits();
+
+        if ( ! $creditCheck['has_credits'] ) {
+            return $this->error( 'insufficient_credits', $creditCheck['message'], 402 );
+        }
+
         $action_id = sanitize_text_field( $request->get_param( 'action_id' ) );
         $sync      = ContaiAgentSyncService::create();
         $result    = $sync->consumeActionManually( $action_id );

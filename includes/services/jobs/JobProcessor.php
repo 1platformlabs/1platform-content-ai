@@ -11,6 +11,7 @@ require_once __DIR__ . '/KeywordExtractionJob.php';
 require_once __DIR__ . '/SiteGenerationJob.php';
 require_once __DIR__ . '/ContentGenerationPollingJob.php';
 require_once __DIR__ . '/recovery/JobRecoveryService.php';
+require_once __DIR__ . '/../billing/CreditGuard.php';
 
 class ContaiJobProcessor
 {
@@ -100,10 +101,17 @@ class ContaiJobProcessor
             $job->markAsCompleted();
             $this->jobRepository->update($job);
         } catch (Exception $e) {
-            contai_log("ContaiJob {$job->getId()} failed: " . $e->getMessage()); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+            $errorMessage = $e->getMessage(); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+
+            // Tag 402 errors so recovery strategies can skip them
+            if ($this->isInsufficientCreditsException($e)) {
+                $errorMessage = ContaiCreditGuard::INSUFFICIENT_CREDITS_PREFIX . $errorMessage;
+            }
+
+            contai_log("ContaiJob {$job->getId()} failed: " . $errorMessage); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
 
             $job->incrementAttempts();
-            $job->markAsFailed($e->getMessage()); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+            $job->markAsFailed($errorMessage); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
             $this->jobRepository->update($job);
         }
     }
@@ -131,6 +139,23 @@ class ContaiJobProcessor
     private function getHandler($jobType)
     {
         return $this->jobHandlers[$jobType] ?? null;
+    }
+
+    private function isInsufficientCreditsException(Exception $e): bool {
+        $message = strtolower($e->getMessage());
+
+        if (strpos($message, 'insufficient balance') !== false
+            || strpos($message, 'insufficient credits') !== false
+            || strpos($message, 'payment required') !== false
+        ) {
+            return true;
+        }
+
+        if (method_exists($e, 'getStatusCode') && $e->getStatusCode() === 402) {
+            return true;
+        }
+
+        return false;
     }
 
     private function acquireLock()

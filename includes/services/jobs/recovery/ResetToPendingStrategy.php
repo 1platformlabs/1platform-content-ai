@@ -4,6 +4,7 @@ if (!defined('ABSPATH')) exit;
 
 require_once __DIR__ . '/JobRecoveryStrategy.php';
 require_once __DIR__ . '/../../../helpers/TimestampHelper.php';
+require_once __DIR__ . '/../../billing/CreditGuard.php';
 
 class ContaiResetToPendingStrategy implements ContaiJobRecoveryStrategy
 {
@@ -17,6 +18,12 @@ class ContaiResetToPendingStrategy implements ContaiJobRecoveryStrategy
     public function shouldRecover(ContaiJob $job): bool
     {
         if ($job->getStatus() !== ContaiJobStatus::PROCESSING) {
+            return false;
+        }
+
+        // Never re-queue jobs that failed due to insufficient credits
+        $errorMessage = $job->getErrorMessage() ?? '';
+        if (ContaiCreditGuard::isInsufficientCreditsError($errorMessage)) {
             return false;
         }
 

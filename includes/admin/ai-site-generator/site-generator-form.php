@@ -5,6 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 require_once __DIR__ . '/../../services/category-api/CategoryAPIService.php';
+require_once __DIR__ . '/../../services/billing/CreditGuard.php';
 
 function contai_render_full_site_generator_form() {
 	// Fetch categories for the select field
@@ -14,7 +15,54 @@ function contai_render_full_site_generator_form() {
 	$site_domain    = wp_parse_url( home_url(), PHP_URL_HOST );
 	$default_email  = 'info@' . preg_replace( '/^www\./', '', $site_domain );
 
+	// Check credit balance for UI feedback
+	$creditGuard = new ContaiCreditGuard();
+	$creditCheck = $creditGuard->validateCredits();
+
 	?>
+	<?php if ( ! $creditCheck['has_credits'] ) : ?>
+		<div class="contai-info-box contai-info-box-warning" style="margin-bottom: 20px;">
+			<div class="contai-info-box-icon">
+				<span class="dashicons dashicons-warning"></span>
+			</div>
+			<div class="contai-info-box-content">
+				<p><strong><?php esc_html_e( 'Insufficient Balance', '1platform-content-ai' ); ?></strong></p>
+				<p>
+					<?php
+					printf(
+						/* translators: %1$s: balance amount, %2$s: currency code */
+						esc_html__( 'Your current balance is %1$s %2$s. You need credits to generate content.', '1platform-content-ai' ),
+						esc_html( number_format( $creditCheck['balance'], 2 ) ),
+						esc_html( $creditCheck['currency'] )
+					);
+					?>
+				</p>
+				<a href="<?php echo esc_url( admin_url( 'admin.php?page=contai-billing' ) ); ?>" class="button button-primary" style="margin-top: 8px;">
+					<span class="dashicons dashicons-plus-alt2" style="margin-top: 3px;"></span>
+					<?php esc_html_e( 'Add Credits', '1platform-content-ai' ); ?>
+				</a>
+			</div>
+		</div>
+	<?php else : ?>
+		<div class="contai-info-box contai-info-box-success" style="margin-bottom: 20px;">
+			<div class="contai-info-box-icon">
+				<span class="dashicons dashicons-money-alt"></span>
+			</div>
+			<div class="contai-info-box-content">
+				<p>
+					<?php
+					printf(
+						/* translators: %1$s: balance amount, %2$s: currency code */
+						esc_html__( 'Available balance: %1$s %2$s', '1platform-content-ai' ),
+						esc_html( number_format( $creditCheck['balance'], 2 ) ),
+						esc_html( $creditCheck['currency'] )
+					);
+					?>
+				</p>
+			</div>
+		</div>
+	<?php endif; ?>
+
 	<form method="post" class="contai-site-generator-form">
 		<?php wp_nonce_field( 'contai_site_generator_nonce', 'contai_site_generator_nonce' ); ?>
 		<input type="hidden" name="contai_start_site_generation" value="1">
@@ -249,7 +297,7 @@ function contai_render_full_site_generator_form() {
 						</div>
 					</div>
 					<div class="contai-submit-area">
-						<button type="submit" id="contai_submit_btn" class="contai-btn contai-btn-primary contai-btn-lg">
+						<button type="submit" id="contai_submit_btn" class="contai-btn contai-btn-primary contai-btn-lg" <?php echo ! $creditCheck['has_credits'] ? 'disabled' : ''; ?>>
 							<span class="dashicons dashicons-controls-play"></span>
 							<?php esc_html_e( 'Launch Site Generation', '1platform-content-ai' ); ?>
 						</button>

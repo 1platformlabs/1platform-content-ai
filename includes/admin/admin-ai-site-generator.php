@@ -60,6 +60,25 @@ function contai_handle_ai_site_generator_submission() {
 		exit;
 	}
 
+	// Validate credits before starting site generation
+	require_once __DIR__ . '/../services/billing/CreditGuard.php';
+	$creditGuard = new ContaiCreditGuard();
+	$creditCheck = $creditGuard->validateCredits();
+
+	if ( ! $creditCheck['has_credits'] ) {
+		wp_safe_redirect(
+			add_query_arg(
+				array(
+					'page'    => 'contai-ai-site-generator',
+					'error'   => 1,
+					'message' => $creditCheck['message'],
+				),
+				admin_url( 'admin.php' )
+			)
+		);
+		exit;
+	}
+
 	$jobRepository = new ContaiJobRepository();
 	$activeJob = $jobRepository->findActiveSiteGenerationJob();
 
@@ -117,7 +136,7 @@ function contai_handle_ai_site_generator_submission() {
 			'current_step' => 0,
 			'current_step_name' => '',
 			'completed_steps' => array(),
-			'total_steps' => 11,
+			'total_steps' => ( new ContaiSiteGenerationJob() )->getStepCount(),
 			'started_at' => current_time( 'mysql' ),
 		),
 	);
@@ -216,11 +235,12 @@ function contai_ai_site_generator_page() {
 }
 
 function contai_render_active_job_status( $job ) {
+	require_once __DIR__ . '/../services/billing/CreditGuard.php';
 	$payload = $job->getPayload();
 	$progress = $payload['progress'] ?? array();
 	$currentStep = $progress['current_step_name'] ?? 'Unknown';
 	$completedSteps = $progress['completed_steps'] ?? array();
-	$totalSteps = $progress['total_steps'] ?? 11;
+	$totalSteps = $progress['total_steps'] ?? ( new ContaiSiteGenerationJob() )->getStepCount();
 	$completedCount = count( $completedSteps );
 	$percentage = $totalSteps > 0 ? round( ( $completedCount / $totalSteps ) * 100 ) : 0;
 	$status = $job->getStatus();
@@ -290,16 +310,36 @@ function contai_render_active_job_status( $job ) {
 				</a>
 			</div>
 
-			<?php if ( $status === 'FAILED' ) : ?>
-				<div class="contai-info-box contai-info-box-error" style="margin-top: 20px;">
-					<div class="contai-info-box-icon">
-						<span class="dashicons dashicons-warning"></span>
+			<?php if ( $status === 'FAILED' ) :
+				$jobError = $job->getErrorMessage() ?? 'Unknown error';
+				$isBalanceError = ContaiCreditGuard::isInsufficientCreditsError( $jobError )
+					|| stripos( $jobError, 'Insufficient balance' ) !== false;
+			?>
+				<?php if ( $isBalanceError ) : ?>
+					<div class="contai-info-box contai-info-box-warning" style="margin-top: 20px;">
+						<div class="contai-info-box-icon">
+							<span class="dashicons dashicons-warning"></span>
+						</div>
+						<div class="contai-info-box-content">
+							<h4><?php esc_html_e( 'Insufficient Credits', '1platform-content-ai' ); ?></h4>
+							<p><?php esc_html_e( 'Content generation could not complete due to insufficient balance.', '1platform-content-ai' ); ?></p>
+							<a href="<?php echo esc_url( admin_url( 'admin.php?page=contai-billing' ) ); ?>" class="button button-primary" style="margin-top: 10px;">
+								<span class="dashicons dashicons-plus-alt2" style="margin-top: 3px;"></span>
+								<?php esc_html_e( 'Add Credits', '1platform-content-ai' ); ?>
+							</a>
+						</div>
 					</div>
-					<div class="contai-info-box-content">
-						<h4><?php esc_html_e( 'Error', '1platform-content-ai' ); ?></h4>
-						<p><?php echo esc_html( $job->getErrorMessage() ?? 'Unknown error' ); ?></p>
+				<?php else : ?>
+					<div class="contai-info-box contai-info-box-error" style="margin-top: 20px;">
+						<div class="contai-info-box-icon">
+							<span class="dashicons dashicons-warning"></span>
+						</div>
+						<div class="contai-info-box-content">
+							<h4><?php esc_html_e( 'Error', '1platform-content-ai' ); ?></h4>
+							<p><?php echo esc_html( $jobError ); ?></p>
+						</div>
 					</div>
-				</div>
+				<?php endif; ?>
 			<?php endif; ?>
 		</div>
 	</div>

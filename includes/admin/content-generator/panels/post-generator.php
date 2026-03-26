@@ -3,6 +3,7 @@
 if (!defined('ABSPATH')) exit;
 
 require_once __DIR__ . '/../../../services/jobs/QueueManager.php';
+require_once __DIR__ . '/../../../services/billing/CreditGuard.php';
 
 class ContaiPostGeneratorPanel {
 
@@ -14,6 +15,29 @@ class ContaiPostGeneratorPanel {
 
     public function render(): void {
         $this->renderAdminNotices();
+
+        $creditGuard = new ContaiCreditGuard();
+        $creditCheck = $creditGuard->validateCredits();
+
+        if ( ! $creditCheck['has_credits'] ) : ?>
+            <div class="notice notice-warning" style="margin-bottom: 15px;">
+                <p>
+                    <strong><?php esc_html_e( 'Insufficient Balance', '1platform-content-ai' ); ?></strong> —
+                    <?php
+                    printf(
+                        /* translators: %1$s: balance amount, %2$s: currency code */
+                        esc_html__( 'Your balance is %1$s %2$s. Add credits to generate content.', '1platform-content-ai' ),
+                        esc_html( number_format( $creditCheck['balance'], 2 ) ),
+                        esc_html( $creditCheck['currency'] )
+                    );
+                    ?>
+                    <a href="<?php echo esc_url( admin_url( 'admin.php?page=contai-billing' ) ); ?>">
+                        <?php esc_html_e( 'Add Credits', '1platform-content-ai' ); ?>
+                    </a>
+                </p>
+            </div>
+        <?php endif;
+
         $status = $this->queueManager->getQueueStatus();
         ?>
         <div class="contai-post-generator-container">
@@ -82,7 +106,7 @@ class ContaiPostGeneratorPanel {
                         <?php wp_nonce_field('contai_post_generator_nonce', 'contai_post_generator_nonce'); ?>
 
                         <div class="contai-button-group">
-                            <button type="submit" name="contai_enqueue_posts" class="button button-primary contai-button-action">
+                            <button type="submit" name="contai_enqueue_posts" class="button button-primary contai-button-action" <?php echo ! $creditCheck['has_credits'] ? 'disabled' : ''; ?>>
                                 <span class="dashicons dashicons-edit"></span>
                                 <span class="contai-button-text"><?php esc_html_e('Add to Queue', '1platform-content-ai'); ?></span>
                             </button>

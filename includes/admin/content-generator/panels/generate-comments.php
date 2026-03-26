@@ -10,6 +10,7 @@ class ContaiGenerateCommentsPanel {
     private bool $comments_generated = false;
     private int $posts_processed = 0;
     private int $posts_failed = 0;
+    private array $creditCheck = ['has_credits' => true];
 
     public function __construct() {
         $this->handle_form_submissions();
@@ -35,6 +36,21 @@ class ContaiGenerateCommentsPanel {
     }
 
     private function handle_comment_generation(): void {
+        // Validate credits before generating comments
+        require_once __DIR__ . '/../../../services/billing/CreditGuard.php';
+        $creditGuard = new ContaiCreditGuard();
+        $creditCheck = $creditGuard->validateCredits();
+
+        if (!$creditCheck['has_credits']) {
+            add_settings_error(
+                'contai_comments',
+                'insufficient_credits',
+                $creditCheck['message'],
+                'error'
+            );
+            return;
+        }
+
         // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in handle_form_submissions() via check_admin_referer().
         $num_posts = isset($_POST['contai_num_posts']) ? absint($_POST['contai_num_posts']) : 10;
         // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in handle_form_submissions() via check_admin_referer().
@@ -138,6 +154,28 @@ class ContaiGenerateCommentsPanel {
         $this->render_notices();
         settings_errors('contai_comments');
 
+        $creditGuard = new ContaiCreditGuard();
+        $this->creditCheck = $creditGuard->validateCredits();
+
+        if ( ! $this->creditCheck['has_credits'] ) : ?>
+            <div class="notice notice-warning" style="margin-bottom: 15px;">
+                <p>
+                    <strong><?php esc_html_e( 'Insufficient Balance', '1platform-content-ai' ); ?></strong> —
+                    <?php
+                    printf(
+                        /* translators: %1$s: balance amount, %2$s: currency code */
+                        esc_html__( 'Your balance is %1$s %2$s. Add credits to generate comments.', '1platform-content-ai' ),
+                        esc_html( number_format( $this->creditCheck['balance'], 2 ) ),
+                        esc_html( $this->creditCheck['currency'] )
+                    );
+                    ?>
+                    <a href="<?php echo esc_url( admin_url( 'admin.php?page=contai-billing' ) ); ?>">
+                        <?php esc_html_e( 'Add Credits', '1platform-content-ai' ); ?>
+                    </a>
+                </p>
+            </div>
+        <?php endif;
+
         $this->render_generation_form();
 
         if ($this->comments_generated && !empty($this->generated_comments)) {
@@ -229,7 +267,7 @@ class ContaiGenerateCommentsPanel {
                     </div>
 
                     <div class="contai-button-group" style="padding: 20px; border-top: 1px solid #e5e5e5; background: #f8f9fa; margin: 0;">
-                        <button type="submit" name="contai_generate_now" class="button button-primary">
+                        <button type="submit" name="contai_generate_now" class="button button-primary" <?php echo ! $this->creditCheck['has_credits'] ? 'disabled' : ''; ?>>
                             <span class="dashicons dashicons-update" style="margin-top: 3px;"></span>
                             <?php esc_html_e('Generate Comments Now', '1platform-content-ai'); ?>
                         </button>

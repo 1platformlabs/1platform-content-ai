@@ -29,6 +29,20 @@ class ContaiPostGenerationJob implements ContaiJobInterface
 
     public function handle(array $payload)
     {
+        // Fail-fast credit check before consuming API resources
+        require_once __DIR__ . '/../billing/CreditGuard.php';
+        $creditGuard = new ContaiCreditGuard();
+        $creditCheck = $creditGuard->validateCredits();
+
+        if (!$creditCheck['has_credits']) {
+            $keyword = $this->loadKeyword($payload);
+            $this->updateKeywordStatus($keyword, ContaiKeyword::STATUS_FAILED);
+            throw new ContaiContentGenerationException(
+                $creditCheck['message'],
+                402
+            );
+        }
+
         $keyword = $this->loadKeyword($payload);
 
         $this->updateKeywordStatus($keyword, ContaiKeyword::STATUS_PROCESSING);

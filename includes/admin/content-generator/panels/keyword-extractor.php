@@ -5,6 +5,7 @@ if (!defined('ABSPATH')) exit;
 require_once __DIR__ . '/../../../database/repositories/JobRepository.php';
 require_once __DIR__ . '/../../../database/models/JobStatus.php';
 require_once __DIR__ . '/../../../services/jobs/KeywordExtractionJob.php';
+require_once __DIR__ . '/../../../services/billing/CreditGuard.php';
 
 class ContaiKeywordExtractorPanel {
 
@@ -16,6 +17,29 @@ class ContaiKeywordExtractorPanel {
 
     public function render(): void {
         $this->renderAdminNotices();
+
+        $creditGuard = new ContaiCreditGuard();
+        $creditCheck = $creditGuard->validateCredits();
+
+        if ( ! $creditCheck['has_credits'] ) : ?>
+            <div class="notice notice-warning" style="margin-bottom: 15px;">
+                <p>
+                    <strong><?php esc_html_e( 'Insufficient Balance', '1platform-content-ai' ); ?></strong> —
+                    <?php
+                    printf(
+                        /* translators: %1$s: balance amount, %2$s: currency code */
+                        esc_html__( 'Your balance is %1$s %2$s. Add credits to extract keywords.', '1platform-content-ai' ),
+                        esc_html( number_format( $creditCheck['balance'], 2 ) ),
+                        esc_html( $creditCheck['currency'] )
+                    );
+                    ?>
+                    <a href="<?php echo esc_url( admin_url( 'admin.php?page=contai-billing' ) ); ?>">
+                        <?php esc_html_e( 'Add Credits', '1platform-content-ai' ); ?>
+                    </a>
+                </p>
+            </div>
+        <?php endif;
+
         $status = $this->getQueueStatus();
         ?>
         <div class="contai-settings-panel contai-panel-keyword-extractor">
@@ -82,7 +106,7 @@ class ContaiKeywordExtractorPanel {
                     <?php wp_nonce_field('contai_keyword_extractor_nonce', 'contai_keyword_extractor_nonce'); ?>
 
                     <div class="contai-button-group">
-                        <button type="submit" name="contai_extract_keywords" class="button button-primary contai-button-action">
+                        <button type="submit" name="contai_extract_keywords" class="button button-primary contai-button-action" <?php echo ! $creditCheck['has_credits'] ? 'disabled' : ''; ?>>
                             <span class="dashicons dashicons-search"></span>
                             <span class="contai-button-text"><?php esc_html_e('Extract Keywords', '1platform-content-ai'); ?></span>
                         </button>
