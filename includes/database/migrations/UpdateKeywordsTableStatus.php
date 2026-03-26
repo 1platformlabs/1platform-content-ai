@@ -26,4 +26,22 @@ class ContaiUpdateKeywordsTableStatus {
 
         return $this->db->query($sql);
     }
+
+    public function down(): bool {
+        if (!$this->db->tableExists($this->tableName)) {
+            return true;
+        }
+
+        $table = $this->db->getTableName($this->tableName);
+
+        $sql = "ALTER TABLE {$table}
+                MODIFY COLUMN status ENUM('active', 'inactive', 'pending', 'processing', 'done')
+                NOT NULL DEFAULT 'pending'";
+
+        return $this->db->query($sql);
+    }
+
+    public function getTableName(): string {
+        return $this->tableName;
+    }
 }

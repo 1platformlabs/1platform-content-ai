@@ -23,6 +23,7 @@ class_alias(WPContentAI\ContaiDatabase\Models\ContaiInternalLink::class, 'WPCont
 
 // ── Database ────────────────────────────────────────────────────
 require_once __DIR__ . '/../includes/database/Database.php';
+require_once __DIR__ . '/../includes/database/MigrationRunner.php';
 require_once __DIR__ . '/../includes/database/repositories/JobRepository.php';
 require_once __DIR__ . '/../includes/database/repositories/KeywordRepository.php';
 
