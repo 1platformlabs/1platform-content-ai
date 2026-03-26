@@ -174,4 +174,8 @@ class ContaiHTTPResponse {
     public function isForbidden(): bool {
         return $this->status_code === 403;
     }
+
+    public function isPaymentRequired(): bool {
+        return $this->status_code === 402;
+    }
 }

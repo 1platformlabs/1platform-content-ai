@@ -18,6 +18,18 @@ class ContaiKeywordExtractionJob implements ContaiJobInterface
 
     public function handle(array $payload)
     {
+        // Fail-fast credit check before consuming API resources
+        require_once __DIR__ . '/../billing/CreditGuard.php';
+        $creditGuard = new ContaiCreditGuard();
+        $creditCheck = $creditGuard->validateCredits();
+
+        if (!$creditCheck['has_credits']) {
+            return [
+                'success' => false,
+                'error' => $creditCheck['message'],
+            ];
+        }
+
         $topic = $payload['topic'] ?? '';
         $domain = $payload['domain'] ?? '';
         $country = $payload['country'] ?? '';

@@ -363,6 +363,10 @@ class ContaiOnePlatformResponse {
         return $this->trace_id;
     }
 
+    public function isPaymentRequired(): bool {
+        return $this->status_code === 402;
+    }
+
     public function toArray(): array {
         return [
             'success' => $this->success,

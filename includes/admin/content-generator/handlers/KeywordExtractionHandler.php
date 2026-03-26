@@ -89,6 +89,18 @@ class ContaiKeywordExtractionHandler {
     }
 
     private function extractKeywords(): array {
+        // Validate credits before enqueueing keyword extraction
+        require_once __DIR__ . '/../../../services/billing/CreditGuard.php';
+        $creditGuard = new ContaiCreditGuard();
+        $creditCheck = $creditGuard->validateCredits();
+
+        if (!$creditCheck['has_credits']) {
+            return [
+                'success' => false,
+                'message' => $creditCheck['message']
+            ];
+        }
+
         $validation = $this->validateExtractionRequest();
 
         if (!$validation['valid']) {

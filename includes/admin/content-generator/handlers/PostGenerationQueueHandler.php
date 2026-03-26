@@ -97,6 +97,18 @@ class ContaiPostGenerationQueueHandler {
     }
 
     private function enqueuePosts(): array {
+        // Validate credits before enqueueing posts
+        require_once __DIR__ . '/../../../services/billing/CreditGuard.php';
+        $creditGuard = new ContaiCreditGuard();
+        $creditCheck = $creditGuard->validateCredits();
+
+        if (!$creditCheck['has_credits']) {
+            return [
+                'success' => false,
+                'message' => $creditCheck['message']
+            ];
+        }
+
         $validation = $this->validateEnqueueRequest();
 
         if (!$validation['valid']) {
