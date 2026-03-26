@@ -4,6 +4,17 @@ All notable changes to Content AI are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [2.10.5] - 2026-03-25
+
+### Fixed
+
+- **Orphan agent cron on plugin uninstall**: `uninstall.php` only cleared `contai_process_job_queue` but not `contai_agent_actions_poll`, leaving an orphan cron event after plugin deletion (#23)
+- **Job processor deactivation not clearing all instances**: `contai_unregister_job_processor_cron` used `wp_unschedule_event` (removes one instance) instead of `wp_clear_scheduled_hook` (removes all), which could leave orphan entries if a race condition caused double-scheduling. Now both cron hooks use `wp_clear_scheduled_hook` consistently
+
+### Added
+
+- **`CronDeactivationTest`**: 6 unit tests covering registration and unregistration of both cron hooks (`contai_process_job_queue` and `contai_agent_actions_poll`)
+
 ## [2.10.3] - 2026-03-25
 
 ### Fixed

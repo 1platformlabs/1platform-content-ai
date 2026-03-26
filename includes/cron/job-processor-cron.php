@@ -15,10 +15,7 @@ function contai_register_job_processor_cron()
 
 function contai_unregister_job_processor_cron()
 {
-    $timestamp = wp_next_scheduled('contai_process_job_queue');
-    if ($timestamp) {
-        wp_unschedule_event($timestamp, 'contai_process_job_queue');
-    }
+    wp_clear_scheduled_hook('contai_process_job_queue');
 }
 
 function contai_process_job_queue_callback()
