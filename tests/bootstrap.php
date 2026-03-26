@@ -87,3 +87,7 @@ require_once __DIR__ . '/../includes/admin/licenses/WPContentAILicensePanel.php'
 
 // ── Category API ────────────────────────────────────────────────
 require_once __DIR__ . '/../includes/services/category-api/CategoryAPIService.php';
+
+// ── Cron ────────────────────────────────────────────────────────
+require_once __DIR__ . '/../includes/cron/job-processor-cron.php';
+require_once __DIR__ . '/../includes/cron/agent-actions-cron.php';

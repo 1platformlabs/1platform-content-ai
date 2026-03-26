@@ -105,3 +105,4 @@ $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LI
 
 // Clear scheduled cron events.
 wp_clear_scheduled_hook( 'contai_process_job_queue' );
+wp_clear_scheduled_hook( 'contai_agent_actions_poll' );
