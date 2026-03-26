@@ -61,46 +61,37 @@ require_once plugin_dir_path( __FILE__ ) . 'includes/services/agents/ContaiAgent
 require_once plugin_dir_path( __FILE__ ) . 'includes/admin/agents/ContaiAgentsAdminPage.php';
 require_once plugin_dir_path( __FILE__ ) . 'includes/cron/agent-actions-cron.php';
 
+require_once plugin_dir_path(__FILE__) . 'includes/database/MigrationRunner.php';
 require_once plugin_dir_path(__FILE__) . 'includes/database/migrations/CreateKeywordsTable.php';
 require_once plugin_dir_path(__FILE__) . 'includes/database/migrations/CreateAPILogsTable.php';
 require_once plugin_dir_path(__FILE__) . 'includes/database/migrations/CreateJobsTable.php';
 require_once plugin_dir_path(__FILE__) . 'includes/database/migrations/UpdateKeywordsTableStatus.php';
 require_once plugin_dir_path(__FILE__) . 'includes/database/migrations/CreateInternalLinksTable.php';
 
+/**
+ * Build the migration runner with all registered migrations.
+ *
+ * Each migration is assigned a sequential version number.
+ * New migrations MUST be appended at the end with the next version number.
+ */
+function contai_build_migration_runner(): ContaiMigrationRunner {
+    $runner = new ContaiMigrationRunner();
+
+    $runner->register(1, new ContaiCreateKeywordsTable());
+    $runner->register(2, new ContaiCreateAPILogsTable());
+    $runner->register(3, new ContaiCreateJobsTable());
+    $runner->register(4, new ContaiUpdateKeywordsTableStatus());
+    $runner->register(5, new ContaiCreateInternalLinksTable());
+
+    return $runner;
+}
+
 function contai_activate_plugin() {
-    try {
-        $keywords_migration = new ContaiCreateKeywordsTable();
-        $keywords_migration->up();
-    } catch (Exception $e) {
-        contai_log("ContaiCreateKeywordsTable migration error: " . $e->getMessage());
-    }
+    $runner = contai_build_migration_runner();
+    $result = $runner->run();
 
-    try {
-        $api_logs_migration = new ContaiCreateAPILogsTable();
-        $api_logs_migration->up();
-    } catch (Exception $e) {
-        contai_log("ContaiCreateAPILogsTable migration error: " . $e->getMessage());
-    }
-
-    try {
-        $jobs_migration = new ContaiCreateJobsTable();
-        $jobs_migration->up();
-    } catch (Exception $e) {
-        contai_log("ContaiCreateJobsTable migration error: " . $e->getMessage());
-    }
-
-    try {
-        $update_keywords_status = new ContaiUpdateKeywordsTableStatus();
-        $update_keywords_status->up();
-    } catch (Exception $e) {
-        contai_log("ContaiUpdateKeywordsTableStatus migration error: " . $e->getMessage());
-    }
-
-    try {
-        $internal_links_migration = new ContaiCreateInternalLinksTable();
-        $internal_links_migration->up();
-    } catch (Exception $e) {
-        contai_log("ContaiCreateInternalLinksTable migration error: " . $e->getMessage());
+    if (!$result['success']) {
+        contai_log('Migration batch failed: ' . $result['message']);
     }
 
     try {
@@ -308,3 +299,31 @@ function contai_display_auth_error_notices(): void {
     }
 }
 add_action('admin_notices', 'contai_display_auth_error_notices');
+
+/**
+ * Display admin notice when database migrations have failed.
+ */
+function contai_display_migration_error_notice(): void {
+    if (!current_user_can('manage_options')) {
+        return;
+    }
+
+    $screen = get_current_screen();
+    if (!$screen || strpos($screen->id, 'contai') === false) {
+        return;
+    }
+
+    require_once plugin_dir_path(__FILE__) . 'includes/database/MigrationRunner.php';
+
+    $error = ContaiMigrationRunner::getError();
+    if ($error === null) {
+        return;
+    }
+
+    printf(
+        '<div class="notice notice-error"><p><strong>%s</strong> %s</p></div>',
+        esc_html__('Content AI Database Error:', '1platform-content-ai'),
+        esc_html($error)
+    );
+}
+add_action('admin_notices', 'contai_display_migration_error_notice');
