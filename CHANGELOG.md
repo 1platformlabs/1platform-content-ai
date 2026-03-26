@@ -4,6 +4,22 @@ All notable changes to Content AI are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [2.10.6] - 2026-03-25
+
+### Added
+
+- **Admin form handler unit tests**: 38 new tests covering the 4 most critical admin form handlers (#22)
+  - `TopUpHandlerTest` (9 tests): nonce/capability checks, amount validation ($5–$200), currency validation, payment URL redirect, API failure handling
+  - `PublisuitesFormHandlerTest` (10 tests): nonce/capability checks, connect, verify, disconnect, verification file creation
+  - `KeywordExtractionHandlerTest` (10 tests): nonce/capability checks, topic/language/country validation, job creation success and failure
+  - `PostGenerationQueueHandlerTest` (9 tests): nonce/capability checks, post count/language/image provider validation, enqueue and clear queue
+
+### Changed
+
+- **`KeywordExtractionHandler`**: Constructor now accepts optional `ContaiJobRepository` for dependency injection
+- **`PostGenerationQueueHandler`**: Constructor now accepts optional `ContaiQueueManager` for dependency injection
+- **`phpunit.xml.dist`**: Admin handler directories now included in code coverage (previously all of `includes/admin` was excluded)
+
 ## [2.10.5] - 2026-03-25
 
 ### Fixed

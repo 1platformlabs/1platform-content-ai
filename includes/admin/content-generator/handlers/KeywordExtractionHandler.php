@@ -15,8 +15,8 @@ class ContaiKeywordExtractionHandler {
 
     private $jobRepository;
 
-    public function __construct() {
-        $this->jobRepository = new ContaiJobRepository();
+    public function __construct(?ContaiJobRepository $jobRepository = null) {
+        $this->jobRepository = $jobRepository ?? new ContaiJobRepository();
     }
 
     public function handleRequest(): void {

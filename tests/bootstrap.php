@@ -81,6 +81,16 @@ require_once __DIR__ . '/../includes/services/search-console/SearchConsoleServic
 require_once __DIR__ . '/../includes/services/setup/SearchConsoleSetupService.php';
 require_once __DIR__ . '/../includes/admin/apps/handlers/SearchConsoleFormHandler.php';
 
+// ── Admin Handlers (Billing, Publisuites, Content Generator) ───
+require_once __DIR__ . '/../includes/services/billing/BillingService.php';
+require_once __DIR__ . '/../includes/admin/billing/handlers/TopUpHandler.php';
+require_once __DIR__ . '/../includes/services/publisuites/PublisuitesService.php';
+require_once __DIR__ . '/../includes/admin/apps/handlers/PublisuitesFormHandler.php';
+require_once __DIR__ . '/../includes/services/jobs/KeywordExtractionJob.php';
+require_once __DIR__ . '/../includes/admin/content-generator/handlers/KeywordExtractionHandler.php';
+require_once __DIR__ . '/../includes/services/jobs/QueueManager.php';
+require_once __DIR__ . '/../includes/admin/content-generator/handlers/PostGenerationQueueHandler.php';
+
 // ── User Profile & License ─────────────────────────────────────
 require_once __DIR__ . '/../includes/services/user-profile/UserProfileService.php';
 require_once __DIR__ . '/../includes/admin/licenses/WPContentAILicensePanel.php';

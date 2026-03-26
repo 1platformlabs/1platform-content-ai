@@ -21,8 +21,24 @@
             <directory suffix=".php">includes</directory>
         </include>
         <exclude>
-            <directory>includes/admin</directory>
+            <directory>includes/admin/pages</directory>
+            <directory>includes/admin/views</directory>
+            <directory>includes/admin/panels</directory>
+            <directory>includes/admin/assets</directory>
+            <directory>includes/admin/agents</directory>
+            <directory>includes/admin/licenses</directory>
+            <directory>includes/admin/logs</directory>
+            <directory>includes/admin/init-configuration</directory>
+            <directory>includes/admin/ai-site-generator</directory>
             <directory>includes/database/migrations</directory>
+            <file>includes/admin/admin-adsense-injector.php</file>
+            <file>includes/admin/admin-ai-site-generator.php</file>
+            <file>includes/admin/admin-apps.php</file>
+            <file>includes/admin/admin-billing.php</file>
+            <file>includes/admin/admin-content-generator.php</file>
+            <file>includes/admin/admin-init-configuration.php</file>
+            <file>includes/admin/admin-job-monitor.php</file>
+            <file>includes/admin/admin-licenses.php</file>
             <file>includes/header.php</file>
             <file>includes/cron/job-processor-cron.php</file>
         </exclude>
