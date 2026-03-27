@@ -64,6 +64,10 @@ class ContaiQueueManager
             }
         }
 
+        if ($enqueuedCount > 0) {
+            contai_trigger_immediate_job_processing();
+        }
+
         return $enqueuedCount;
     }
 
