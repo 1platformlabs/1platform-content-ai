@@ -32,7 +32,8 @@ class PublisuitesFormHandlerTest extends TestCase
             $_POST['contai_connect_publisuites'],
             $_POST['contai_verify_publisuites'],
             $_POST['contai_disconnect_publisuites'],
-            $_POST['contai_create_verification_file']
+            $_POST['contai_create_verification_file'],
+            $_POST['contai_setup_publisuites']
         );
         WP_Mock::tearDown();
         Mockery::close();
@@ -277,6 +278,144 @@ class PublisuitesFormHandlerTest extends TestCase
             $this->fail('Expected redirect');
         } catch (PublisuitesRedirectException $e) {
             $this->assertStringContainsString('contai_ps_type=error', $redirectUrl->url);
+        }
+    }
+
+    // ── One-Click Setup Tests ─────────────────────────────────────
+
+    public function test_setup_success_redirects_with_success_message(): void
+    {
+        $this->mockValidRequest('contai_setup_publisuites');
+
+        $connectData = [
+            'publisuites_id' => 'ps-123',
+            'verification_file_name' => 'verify.html',
+            'verification_file_content' => '<html>verify</html>',
+        ];
+
+        $this->service
+            ->shouldReceive('connectWebsite')
+            ->once()
+            ->andReturn(new ContaiOnePlatformResponse(true, $connectData, 'Added', 200));
+
+        $this->service
+            ->shouldReceive('savePublisuitesConfig')
+            ->twice();
+
+        $this->service
+            ->shouldReceive('createVerificationFile')
+            ->once()
+            ->andReturn(['success' => true, 'message' => 'File created']);
+
+        $this->service
+            ->shouldReceive('verifyWebsite')
+            ->once()
+            ->andReturn(new ContaiOnePlatformResponse(true, ['verified' => true, 'verified_at' => '2026-03-26'], 'Verified', 200));
+
+        $this->service
+            ->shouldReceive('getPublisuitesConfig')
+            ->once()
+            ->andReturn(['publisuites_id' => 'ps-123']);
+
+        WP_Mock::userFunction('__')->andReturnUsing(function ($text) { return $text; });
+
+        $redirectUrl = $this->expectRedirect();
+
+        try {
+            $this->handler->handleRequest();
+            $this->fail('Expected redirect');
+        } catch (PublisuitesRedirectException $e) {
+            $this->assertStringContainsString('contai_ps_type=success', $redirectUrl->url);
+            $this->assertStringContainsString('marketplace', urldecode($redirectUrl->url));
+        }
+    }
+
+    public function test_setup_failure_redirects_with_error_message(): void
+    {
+        $this->mockValidRequest('contai_setup_publisuites');
+
+        $this->service
+            ->shouldReceive('connectWebsite')
+            ->once()
+            ->andReturn(new ContaiOnePlatformResponse(false, null, 'Credentials not configured', 400));
+
+        $this->service->shouldNotReceive('savePublisuitesConfig');
+        $this->service->shouldNotReceive('createVerificationFile');
+        $this->service->shouldNotReceive('verifyWebsite');
+
+        $redirectUrl = $this->expectRedirect();
+
+        try {
+            $this->handler->handleRequest();
+            $this->fail('Expected redirect');
+        } catch (PublisuitesRedirectException $e) {
+            $this->assertStringContainsString('contai_ps_type=error', $redirectUrl->url);
+            $this->assertStringContainsString('Failed', urldecode($redirectUrl->url));
+        }
+    }
+
+    public function test_setup_does_not_break_existing_connect_action(): void
+    {
+        $this->mockValidRequest('contai_connect_publisuites');
+
+        $responseData = [
+            'publisuites_id' => 'ps-999',
+            'verification_file_name' => 'verify.html',
+            'verification_file_content' => 'content',
+            'message' => 'Connected',
+        ];
+
+        $this->service
+            ->shouldReceive('connectWebsite')
+            ->once()
+            ->andReturn(new ContaiOnePlatformResponse(true, $responseData, 'Connected', 200));
+
+        $this->service
+            ->shouldReceive('savePublisuitesConfig')
+            ->once();
+
+        WP_Mock::userFunction('__')->andReturnUsing(function ($text) { return $text; });
+
+        $redirectUrl = $this->expectRedirect();
+
+        try {
+            $this->handler->handleRequest();
+            $this->fail('Expected redirect');
+        } catch (PublisuitesRedirectException $e) {
+            $this->assertStringContainsString('contai_ps_type=success', $redirectUrl->url);
+        }
+    }
+
+    public function test_setup_does_not_break_existing_verify_action(): void
+    {
+        $this->mockValidRequest('contai_verify_publisuites');
+
+        $this->service
+            ->shouldReceive('verifyWebsite')
+            ->once()
+            ->andReturn(new ContaiOnePlatformResponse(true, ['verified' => true, 'verified_at' => '2026-01-01'], 'Verified', 200));
+
+        $this->service
+            ->shouldReceive('getPublisuitesConfig')
+            ->once()
+            ->andReturn(['publisuites_id' => 'ps-123', 'status' => 'pending_verification']);
+
+        $this->service
+            ->shouldReceive('savePublisuitesConfig')
+            ->once()
+            ->with(Mockery::on(function ($config) {
+                return $config['verified'] === true && $config['status'] === 'active';
+            }));
+
+        WP_Mock::userFunction('__')->andReturnUsing(function ($text) { return $text; });
+
+        $redirectUrl = $this->expectRedirect();
+
+        try {
+            $this->handler->handleRequest();
+            $this->fail('Expected redirect');
+        } catch (PublisuitesRedirectException $e) {
+            $this->assertStringContainsString('contai_ps_type=success', $redirectUrl->url);
         }
     }
 

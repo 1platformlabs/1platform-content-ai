@@ -85,7 +85,7 @@ class ContaiPublisuitesPanel
                     'status_class'      => 'contai-badge--warning',
                     'primary_cta_label' => null,
                     'primary_cta_action'=> null,
-                    'message'           => $status['message'] ?? __('Website registration is required before connecting to Publisuites.', '1platform-content-ai'),
+                    'message'           => $status['message'] ?? __('Website registration is required before connecting to the marketplace.', '1platform-content-ai'),
                 ]);
 
             case 'not_connected':
@@ -93,8 +93,8 @@ class ContaiPublisuitesPanel
                     'status_key'        => 'not_connected',
                     'status_label'      => __('Not Connected', '1platform-content-ai'),
                     'status_class'      => 'contai-badge--neutral',
-                    'primary_cta_label' => __('Connect to Publisuites', '1platform-content-ai'),
-                    'primary_cta_action'=> 'contai_connect_publisuites',
+                    'primary_cta_label' => __('Connect to Marketplace', '1platform-content-ai'),
+                    'primary_cta_action'=> 'contai_setup_publisuites',
                 ]);
 
             case 'configured':
@@ -208,7 +208,7 @@ class ContaiPublisuitesPanel
                 <div>
                     <p><strong><?php esc_html_e('Active License Required', '1platform-content-ai'); ?></strong></p>
                     <p>
-                        <?php esc_html_e('You need an active license to use the Publisuites integration. Please activate your license to access this feature.', '1platform-content-ai'); ?>
+                        <?php esc_html_e('You need an active license to use the link building integration. Please activate your license to access this feature.', '1platform-content-ai'); ?>
                     </p>
                     <a href="<?php echo esc_url(admin_url('admin.php?page=contai-licenses')); ?>" class="button button-primary">
                         <?php esc_html_e('Activate License', '1platform-content-ai'); ?>

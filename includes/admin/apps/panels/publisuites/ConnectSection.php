@@ -29,12 +29,13 @@ class ContaiPublisuitesConnectSection
 
             <div class="contai-ps-hero">
                 <p class="contai-ps-hero__text">
-                    <?php esc_html_e('Connect your website to Publisuites to unlock sponsored content opportunities and start earning revenue from your posts.', '1platform-content-ai'); ?>
+                    <?php esc_html_e('Connect your website to the link building marketplace to unlock sponsored content opportunities and start earning revenue from your posts.', '1platform-content-ai'); ?>
                 </p>
             </div>
 
             <?php $this->renderBenefitsGrid(); ?>
             <?php $this->renderWebsiteCard(); ?>
+            <?php $this->renderSetupSteps(); ?>
             <?php $this->renderConnectForm(); ?>
 
         </div>
@@ -57,7 +58,7 @@ class ContaiPublisuitesConnectSection
         <div class="contai-ps-benefits">
             <h3 class="contai-ps-section-title">
                 <span class="dashicons dashicons-star-filled" aria-hidden="true"></span>
-                <?php esc_html_e('Why Connect to Publisuites?', '1platform-content-ai'); ?>
+                <?php esc_html_e('Why Connect to the Marketplace?', '1platform-content-ai'); ?>
             </h3>
             <div class="contai-ps-benefits__grid" role="list">
                 <?php foreach ($this->view_data['benefits'] as $benefit) : ?>
@@ -92,6 +93,26 @@ class ContaiPublisuitesConnectSection
         <?php
     }
 
+    private function renderSetupSteps(): void
+    {
+        ?>
+        <div class="contai-ps-card contai-ps-card--info">
+            <h3 class="contai-ps-card__header">
+                <span class="dashicons dashicons-update" aria-hidden="true"></span>
+                <?php esc_html_e('What will happen', '1platform-content-ai'); ?>
+            </h3>
+            <p class="contai-ps-card__desc" style="margin-bottom: 8px;">
+                <?php esc_html_e('Clicking the button below will automatically:', '1platform-content-ai'); ?>
+            </p>
+            <ol class="contai-ps-info-list" style="padding-left: 20px; margin: 0;">
+                <li><?php esc_html_e('Register your site in the marketplace', '1platform-content-ai'); ?></li>
+                <li><?php esc_html_e('Create the verification file', '1platform-content-ai'); ?></li>
+                <li><?php esc_html_e('Verify your website ownership', '1platform-content-ai'); ?></li>
+            </ol>
+        </div>
+        <?php
+    }
+
     private function renderConnectForm(): void
     {
         if (empty($this->view_data['primary_cta_action'])) {
@@ -104,7 +125,7 @@ class ContaiPublisuitesConnectSection
                 type="submit"
                 name="<?php echo esc_attr($this->view_data['primary_cta_action']); ?>"
                 class="button button-primary button-hero contai-ps-cta"
-                aria-label="<?php esc_attr_e('Connect your website to Publisuites', '1platform-content-ai'); ?>"
+                aria-label="<?php esc_attr_e('Connect your website to the marketplace', '1platform-content-ai'); ?>"
             >
                 <span class="dashicons dashicons-plus-alt2" aria-hidden="true"></span>
                 <?php echo esc_html($this->view_data['primary_cta_label']); ?>

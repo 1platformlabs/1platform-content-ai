@@ -51,7 +51,7 @@ class ContaiPublisuitesConnectedSection
             <div>
                 <h3 class="contai-ps-card__title"><?php esc_html_e('Website Verified', '1platform-content-ai'); ?></h3>
                 <p class="contai-ps-card__desc">
-                    <?php esc_html_e('Your website is connected to Publisuites and ready to receive sponsored content opportunities.', '1platform-content-ai'); ?>
+                    <?php esc_html_e('Your website is connected to the marketplace and ready to receive sponsored content opportunities.', '1platform-content-ai'); ?>
                 </p>
             </div>
         </div>
@@ -77,7 +77,7 @@ class ContaiPublisuitesConnectedSection
                     </dd>
                 </div>
                 <div class="contai-ps-info-list__row">
-                    <dt><?php esc_html_e('Publisuites ID', '1platform-content-ai'); ?></dt>
+                    <dt><?php esc_html_e('Marketplace ID', '1platform-content-ai'); ?></dt>
                     <dd class="contai-ps-mono"><?php echo esc_html($config['publisuitesId'] ?? '—'); ?></dd>
                 </div>
                 <?php if (!empty($config['verifiedAt'])) : ?>
@@ -106,7 +106,7 @@ class ContaiPublisuitesConnectedSection
         }
 
         $confirm_message = esc_js(
-            __('Are you sure you want to disconnect from Publisuites? You will need to reconnect later.', '1platform-content-ai')
+            __('Are you sure you want to disconnect from the marketplace? You will need to reconnect later.', '1platform-content-ai')
         );
         ?>
         <div class="contai-ps-danger">
@@ -118,13 +118,13 @@ class ContaiPublisuitesConnectedSection
                 <?php wp_nonce_field($this->view_data['nonce_action'], $this->view_data['nonce_field']); ?>
                 <div class="contai-ps-danger__row">
                     <p class="contai-ps-danger__desc">
-                        <?php esc_html_e('Disconnect from Publisuites. This will only remove the local connection data.', '1platform-content-ai'); ?>
+                        <?php esc_html_e('Disconnect from the marketplace. This will only remove the local connection data.', '1platform-content-ai'); ?>
                     </p>
                     <button
                         type="submit"
                         name="<?php echo esc_attr($this->view_data['secondary_cta_action']); ?>"
                         class="button button-secondary contai-ps-btn--danger"
-                        aria-label="<?php esc_attr_e('Disconnect from Publisuites', '1platform-content-ai'); ?>"
+                        aria-label="<?php esc_attr_e('Disconnect from the marketplace', '1platform-content-ai'); ?>"
                     >
                         <span class="dashicons dashicons-dismiss" aria-hidden="true"></span>
                         <?php echo esc_html($this->view_data['secondary_cta_label']); ?>

@@ -87,6 +87,7 @@ require_once __DIR__ . '/../includes/services/billing/BillingService.php';
 require_once __DIR__ . '/../includes/services/billing/CreditGuard.php';
 require_once __DIR__ . '/../includes/admin/billing/handlers/TopUpHandler.php';
 require_once __DIR__ . '/../includes/services/publisuites/PublisuitesService.php';
+require_once __DIR__ . '/../includes/services/setup/PublisuitesSetupService.php';
 require_once __DIR__ . '/../includes/admin/apps/handlers/PublisuitesFormHandler.php';
 require_once __DIR__ . '/../includes/services/jobs/KeywordExtractionJob.php';
 require_once __DIR__ . '/../includes/admin/content-generator/handlers/KeywordExtractionHandler.php';

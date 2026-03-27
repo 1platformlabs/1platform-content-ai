@@ -3,6 +3,7 @@
 if (!defined('ABSPATH')) exit;
 
 require_once __DIR__ . '/../../../services/publisuites/PublisuitesService.php';
+require_once __DIR__ . '/../../../services/setup/PublisuitesSetupService.php';
 
 class ContaiPublisuitesFormHandler
 {
@@ -31,6 +32,10 @@ class ContaiPublisuitesFormHandler
             return;
         }
 
+        if (isset($_POST['contai_setup_publisuites'])) {
+            $this->handleSetup();
+        }
+
         if (isset($_POST['contai_connect_publisuites'])) {
             $this->handleConnect();
         }
@@ -46,6 +51,23 @@ class ContaiPublisuitesFormHandler
         if (isset($_POST['contai_create_verification_file'])) {
             $this->handleCreateVerificationFile();
         }
+    }
+
+    private function handleSetup(): void
+    {
+        $setupService = new ContaiPublisuitesSetupService($this->service);
+        $result = $setupService->activatePublisuites();
+
+        if (!$result['success']) {
+            $errorMsg = implode('. ', $result['errors']);
+            $this->redirectWithMessage('error', $errorMsg);
+            return;
+        }
+
+        $this->redirectWithMessage(
+            'success',
+            __('Website connected to marketplace successfully', '1platform-content-ai')
+        );
     }
 
     private function handleConnect(): void
@@ -71,7 +93,7 @@ class ContaiPublisuitesFormHandler
 
         $this->service->savePublisuitesConfig($configData);
 
-        $this->redirectWithMessage('success', __('Connected to Publisuites successfully. Please verify your website.', '1platform-content-ai'));
+        $this->redirectWithMessage('success', __('Connected to marketplace successfully. Please verify your website.', '1platform-content-ai'));
     }
 
     private function handleVerify(): void
@@ -95,7 +117,7 @@ class ContaiPublisuitesFormHandler
             $this->service->savePublisuitesConfig($config);
         }
 
-        $this->redirectWithMessage('success', __('Website verified successfully with Publisuites', '1platform-content-ai'));
+        $this->redirectWithMessage('success', __('Website verified successfully', '1platform-content-ai'));
     }
 
     private function handleDisconnect(): void
@@ -103,7 +125,7 @@ class ContaiPublisuitesFormHandler
         // Only delete local configuration, don't call API
         $this->service->deletePublisuitesConfig();
 
-        $this->redirectWithMessage('success', __('Disconnected from Publisuites successfully', '1platform-content-ai'));
+        $this->redirectWithMessage('success', __('Disconnected from marketplace successfully', '1platform-content-ai'));
     }
 
     private function handleCreateVerificationFile(): void

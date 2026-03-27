@@ -28,7 +28,7 @@ class ContaiPublisuitesVerificationSection
 
             <div class="contai-ps-hero">
                 <p class="contai-ps-hero__text">
-                    <?php esc_html_e('Your website needs to be verified with Publisuites. Follow the steps below to complete the verification process.', '1platform-content-ai'); ?>
+                    <?php esc_html_e('Your website needs to be verified. Follow the steps below to complete the verification process.', '1platform-content-ai'); ?>
                 </p>
             </div>
 
@@ -128,7 +128,7 @@ class ContaiPublisuitesVerificationSection
             <div class="contai-ps-step-body">
                 <h4 class="contai-ps-card__title"><?php esc_html_e('Verify your website', '1platform-content-ai'); ?></h4>
                 <p class="contai-ps-card__desc">
-                    <?php esc_html_e('Once the file is in place, click the button below to verify your website with Publisuites.', '1platform-content-ai'); ?>
+                    <?php esc_html_e('Once the file is in place, click the button below to verify your website.', '1platform-content-ai'); ?>
                 </p>
             </div>
         </div>
@@ -163,7 +163,7 @@ class ContaiPublisuitesVerificationSection
                 type="submit"
                 name="<?php echo esc_attr($this->view_data['primary_cta_action']); ?>"
                 class="button button-primary button-hero contai-ps-cta"
-                aria-label="<?php esc_attr_e('Verify your website with Publisuites', '1platform-content-ai'); ?>"
+                aria-label="<?php esc_attr_e('Verify your website ownership', '1platform-content-ai'); ?>"
             >
                 <span class="dashicons dashicons-yes-alt" aria-hidden="true"></span>
                 <?php echo esc_html($this->view_data['primary_cta_label']); ?>
@@ -179,7 +179,7 @@ class ContaiPublisuitesVerificationSection
         }
 
         $confirm_message = esc_js(
-            __('Are you sure you want to disconnect from Publisuites? You will need to reconnect later.', '1platform-content-ai')
+            __('Are you sure you want to disconnect from the marketplace? You will need to reconnect later.', '1platform-content-ai')
         );
         ?>
         <div class="contai-ps-danger">
@@ -191,13 +191,13 @@ class ContaiPublisuitesVerificationSection
                 <?php wp_nonce_field($this->view_data['nonce_action'], $this->view_data['nonce_field']); ?>
                 <div class="contai-ps-danger__row">
                     <p class="contai-ps-danger__desc">
-                        <?php esc_html_e('Disconnect from Publisuites. This will only remove the local connection data.', '1platform-content-ai'); ?>
+                        <?php esc_html_e('Disconnect from the marketplace. This will only remove the local connection data.', '1platform-content-ai'); ?>
                     </p>
                     <button
                         type="submit"
                         name="<?php echo esc_attr($this->view_data['secondary_cta_action']); ?>"
                         class="button button-secondary contai-ps-btn--danger"
-                        aria-label="<?php esc_attr_e('Disconnect from Publisuites', '1platform-content-ai'); ?>"
+                        aria-label="<?php esc_attr_e('Disconnect from the marketplace', '1platform-content-ai'); ?>"
                     >
                         <span class="dashicons dashicons-dismiss" aria-hidden="true"></span>
                         <?php echo esc_html($this->view_data['secondary_cta_label']); ?>
