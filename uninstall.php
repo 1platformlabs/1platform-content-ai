@@ -87,6 +87,9 @@ $content_ai_options = array(
 	'contai_internal_links_same_category',
 	'contai_internal_links_min_keyword_length',
 	'contai_internal_links_distribute',
+	// Analytics integration.
+	'1platform_ga4_measurement_id',
+	'1platform_website_id',
 );
 
 foreach ( $content_ai_options as $content_ai_option ) {

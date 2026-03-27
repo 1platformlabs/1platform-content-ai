@@ -68,6 +68,13 @@ class ContaiOnePlatformEndpoints {
     // ── Webhooks ────────────────────────────────────────────────
     const WEBHOOKS_TRANSACTIONS = '/webhooks/transactions';
 
+    // ── Analytics ─────────────────────────────────────────────
+    const ANALYTICS_OAUTH_AUTHORIZE = '/analytics/oauth/authorize';
+    const ANALYTICS_OAUTH_STATUS    = '/analytics/oauth/status';
+    const ANALYTICS_SETUP           = '/analytics/setup';
+    const ANALYTICS_STATUS          = '/analytics/status';
+    const ANALYTICS_MP_EVENT        = '/analytics/mp-event';
+
     // ── Businesses ──────────────────────────────────────────────
     const BUSINESSES = '/businesses';
 

@@ -47,6 +47,13 @@ class ContaiAppsPanel {
                 'url' => add_query_arg(['section' => 'ads-manager'], admin_url('admin.php?page=contai-apps')),
                 'status' => 'active',
             ],
+            'analytics' => [
+                'title' => __('Google Analytics', '1platform-content-ai'),
+                'description' => __('Connect Google Analytics GA4 to track AI content performance, measure ROI, and monitor site traffic', '1platform-content-ai'),
+                'icon' => 'dashicons-chart-area',
+                'url' => add_query_arg(['section' => 'analytics'], admin_url('admin.php?page=contai-apps')),
+                'status' => 'active',
+            ],
         ];
     }
 

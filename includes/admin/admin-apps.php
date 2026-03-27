@@ -9,9 +9,13 @@ require_once __DIR__ . '/apps/panels/InternalLinksPanel.php';
 require_once __DIR__ . '/apps/panels/SearchConsolePanel.php';
 require_once __DIR__ . '/apps/panels/PublisuitesPanel.php';
 require_once __DIR__ . '/apps/panels/AdsManagerPanel.php';
+require_once __DIR__ . '/apps/panels/AnalyticsPanel.php';
 require_once __DIR__ . '/apps/handlers/SearchConsoleFormHandler.php';
 require_once __DIR__ . '/apps/handlers/InternalLinksQueueHandler.php';
 require_once __DIR__ . '/apps/handlers/PublisuitesFormHandler.php';
+require_once __DIR__ . '/apps/handlers/AnalyticsFormHandler.php';
+
+new ContaiAnalyticsFormHandler();
 
 require_once __DIR__ . '/../services/toc/HeadingParser.php';
 require_once __DIR__ . '/../services/toc/AnchorGenerator.php';
@@ -133,7 +137,7 @@ function contai_apps_page()
 {
     // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display-only section navigation parameter.
     $section = sanitize_key($_GET['section'] ?? 'apps');
-    $valid_sections = ['toc', 'internal-links', 'search-console', 'publisuites', 'ads-manager'];
+    $valid_sections = ['toc', 'internal-links', 'search-console', 'publisuites', 'ads-manager', 'analytics'];
 
     if (!in_array($section, $valid_sections, true)) {
         $section = 'apps';
@@ -186,6 +190,15 @@ function contai_apps_page()
                 __('Ads Manager', '1platform-content-ai'),
                 __('Configure AdSense publisher IDs, ads.txt generation, and custom header code', '1platform-content-ai'),
                 'dashicons-megaphone'
+            );
+            $panel->render();
+            break;
+        case 'analytics':
+            $panel = new ContaiAnalyticsPanel();
+            $layout->render_page_title(
+                __('Google Analytics', '1platform-content-ai'),
+                __('Connect Google Analytics GA4 to track content performance and site traffic', '1platform-content-ai'),
+                'dashicons-chart-area'
             );
             $panel->render();
             break;
