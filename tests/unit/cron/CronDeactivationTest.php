@@ -94,4 +94,60 @@ class CronDeactivationTest extends TestCase {
 
         $this->assertTrue( true );
     }
+
+    // ── Self-healing & Immediate Trigger ──────────────────────────
+
+    public function test_ensure_job_processor_cron_re_registers_when_missing(): void {
+        WP_Mock::userFunction( 'wp_next_scheduled' )
+            ->with( 'contai_process_job_queue' )
+            ->andReturn( false );
+
+        WP_Mock::userFunction( 'wp_schedule_event' )
+            ->once()
+            ->with( \Mockery::type( 'int' ), 'contai_every_minute', 'contai_process_job_queue' );
+
+        contai_ensure_job_processor_cron();
+
+        $this->assertTrue( true );
+    }
+
+    public function test_ensure_job_processor_cron_skips_when_present(): void {
+        WP_Mock::userFunction( 'wp_next_scheduled' )
+            ->with( 'contai_process_job_queue' )
+            ->andReturn( 1234567890 );
+
+        WP_Mock::userFunction( 'wp_schedule_event' )->never();
+
+        contai_ensure_job_processor_cron();
+
+        $this->assertTrue( true );
+    }
+
+    public function test_trigger_immediate_job_processing_calls_spawn_cron(): void {
+        WP_Mock::userFunction( 'wp_next_scheduled' )
+            ->with( 'contai_process_job_queue' )
+            ->andReturn( 1234567890 );
+
+        WP_Mock::userFunction( 'spawn_cron' )->once();
+
+        contai_trigger_immediate_job_processing();
+
+        $this->assertTrue( true );
+    }
+
+    public function test_trigger_immediate_re_registers_cron_when_missing(): void {
+        WP_Mock::userFunction( 'wp_next_scheduled' )
+            ->with( 'contai_process_job_queue' )
+            ->andReturn( false );
+
+        WP_Mock::userFunction( 'wp_schedule_event' )
+            ->once()
+            ->with( \Mockery::type( 'int' ), 'contai_every_minute', 'contai_process_job_queue' );
+
+        WP_Mock::userFunction( 'spawn_cron' )->once();
+
+        contai_trigger_immediate_job_processing();
+
+        $this->assertTrue( true );
+    }
 }
