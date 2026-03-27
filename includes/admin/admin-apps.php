@@ -174,8 +174,8 @@ function contai_apps_page()
         case 'publisuites':
             $panel = new ContaiPublisuitesPanel();
             $layout->render_page_title(
-                __('Publisuites', '1platform-content-ai'),
-                __('Connect your website to Publisuites to monetize your content', '1platform-content-ai'),
+                __('Link Building', '1platform-content-ai'),
+                __('Connect your website to the marketplace to monetize your content', '1platform-content-ai'),
                 'dashicons-money-alt'
             );
             $panel->render();

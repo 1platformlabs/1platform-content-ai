@@ -34,8 +34,8 @@ class ContaiAppsPanel {
                 'status' => 'active',
             ],
             'publisuites' => [
-                'title' => __('Publisuites', '1platform-content-ai'),
-                'description' => __('Connect your website to Publisuites to monetize your content and manage sponsored posts', '1platform-content-ai'),
+                'title' => __('Link Building', '1platform-content-ai'),
+                'description' => __('Connect your website to the marketplace to monetize your content and manage sponsored posts', '1platform-content-ai'),
                 'icon' => 'dashicons-money-alt',
                 'url' => add_query_arg(['section' => 'publisuites'], admin_url('admin.php?page=contai-apps')),
                 'status' => 'active',
