@@ -4,6 +4,17 @@ All notable changes to Content AI are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [2.11.2] - 2026-03-26
+
+### Fixed
+
+- **Job queue stuck in PENDING**: Cron event `contai_process_job_queue` was only registered on plugin activation. If the WP-Cron event was lost (database operations, object-cache flushes, plugin auto-updates, caching-plugin interference), jobs would stay in PENDING forever. Added self-healing `init` hook to re-register the cron event automatically (#39)
+
+### Added
+
+- **Immediate job processing trigger**: After enqueuing jobs, the plugin now calls `spawn_cron()` to kick WP-Cron immediately instead of waiting up to 60 seconds for the next scheduled cycle
+- **4 new regression tests**: Self-healing cron re-registration (2 tests) and immediate trigger behavior (2 tests)
+
 ## [2.10.6] - 2026-03-25
 
 ### Added
