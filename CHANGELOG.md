@@ -4,7 +4,24 @@ All notable changes to Content AI are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [2.12.0] - 2026-03-26
+## [2.12.0] - 2026-03-27
+
+### Added
+- **Google Analytics panel**: Full OAuth2 connection flow with 3-step visual wizard (Authorize → Select Property → Auto-Configure)
+- **AnalyticsFormHandler**: Dedicated AJAX handler class for analytics operations (connect, disconnect, OAuth, setup, polling)
+- **GA4 tag injection**: Automatic gtag.js with GDPR Consent Mode v2 (analytics denied by default)
+- **Custom dimensions**: content_source, target_keyword, content_cluster, op_content_type sent on page views
+- **Server-side events**: content_published, content_updated, comment_received, seo_action via Measurement Protocol
+- **Analytics endpoint constants**: 5 new constants in OnePlatformEndpoints (ANALYTICS_OAUTH_AUTHORIZE, ANALYTICS_OAUTH_STATUS, ANALYTICS_SETUP, ANALYTICS_STATUS, ANALYTICS_MP_EVENT)
+- **BackfillAnalyticsMeta migration**: Backfills _1platform_ai_generated and _1platform_keyword post meta from existing keywords table
+- **PostMetadataBuilder**: Adds analytics meta (_1platform_ai_generated, _1platform_keyword, _1platform_cluster) during content generation
+
+### Fixed
+- **Server event error handling**: Replaced dead is_wp_error() check with correct $result->isSuccess() check
+- **Event idempotency**: Added event_id (md5 hash) to prevent duplicate Measurement Protocol events
+- **Rate limit logging**: Added error_log() when server event rate limit (60/hour) is reached
+
+## [2.11.4] - 2026-03-26
 
 ### Added
 
