@@ -4,6 +4,17 @@ All notable changes to Content AI are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [2.12.0] - 2026-03-26
+
+### Added
+
+- **One-click link building setup**: Unified the 3-step Publisuites flow (connect, create file, verify) into a single click, matching the Search Console one-click pattern. New `PublisuitesSetupService` orchestrates the full flow with error recovery via existing manual fallback panels
+- **11 new tests**: 7 unit tests for `PublisuitesSetupService` (success, 3 failure points, idempotency, config validation) + 4 tests for `PublisuitesFormHandler` (setup success/failure, backward compatibility)
+
+### Fixed
+
+- **Provider name exposure**: Removed all instances of "Publisuites" from client-facing UI strings across ConnectSection, VerificationSection, ConnectedSection, PublisuitesPanel, AppsPanel, AppsSidebar, admin-apps, and FormHandler. Replaced with "marketplace" or "link building" per 1Platform branding rules
+
 ## [2.11.2] - 2026-03-26
 
 ### Fixed
