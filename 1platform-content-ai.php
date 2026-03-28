@@ -4,7 +4,7 @@
  * Plugin Name: 1Platform Content AI
  * Plugin URI: https://1platform.pro/
  * Description: SaaS client for AI-powered content generation, SEO optimization, and site management. All AI processing happens on 1Platform external servers. Includes free local tools: Table of Contents and Internal Links.
- * Version: 2.13.0
+ * Version: 2.12.0
  * Author: 1Platform
  * License: GPLv2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -61,12 +61,17 @@ require_once plugin_dir_path( __FILE__ ) . 'includes/services/agents/ContaiAgent
 require_once plugin_dir_path( __FILE__ ) . 'includes/admin/agents/ContaiAgentsAdminPage.php';
 require_once plugin_dir_path( __FILE__ ) . 'includes/cron/agent-actions-cron.php';
 
+// Analytics domain
+require_once plugin_dir_path(__FILE__) . 'includes/analytics/class-analytics-tag.php';
+require_once plugin_dir_path(__FILE__) . 'includes/analytics/class-analytics-server.php';
+
 require_once plugin_dir_path(__FILE__) . 'includes/database/MigrationRunner.php';
 require_once plugin_dir_path(__FILE__) . 'includes/database/migrations/CreateKeywordsTable.php';
 require_once plugin_dir_path(__FILE__) . 'includes/database/migrations/CreateAPILogsTable.php';
 require_once plugin_dir_path(__FILE__) . 'includes/database/migrations/CreateJobsTable.php';
 require_once plugin_dir_path(__FILE__) . 'includes/database/migrations/UpdateKeywordsTableStatus.php';
 require_once plugin_dir_path(__FILE__) . 'includes/database/migrations/CreateInternalLinksTable.php';
+require_once plugin_dir_path(__FILE__) . 'includes/database/migrations/BackfillAnalyticsMeta.php';
 
 /**
  * Build the migration runner with all registered migrations.
@@ -82,6 +87,7 @@ function contai_build_migration_runner(): ContaiMigrationRunner {
     $runner->register(3, new ContaiCreateJobsTable());
     $runner->register(4, new ContaiUpdateKeywordsTableStatus());
     $runner->register(5, new ContaiCreateInternalLinksTable());
+    $runner->register(6, new ContaiBackfillAnalyticsMeta());
 
     return $runner;
 }
@@ -122,6 +128,15 @@ $toc_integration->register();
 add_action('plugins_loaded', function() {
     $internal_links_integration = new ContaiInternalLinksWordPressIntegration();
     $internal_links_integration->register();
+
+    // Analytics: GA4 tag injection + server-side events
+    if (get_option('1platform_ga4_measurement_id', '')) {
+        $analytics_tag = new OnePlatform_Analytics_Tag();
+        $analytics_tag->init();
+
+        $analytics_server = new OnePlatform_Analytics_Server();
+        $analytics_server->init();
+    }
 });
 
 /**

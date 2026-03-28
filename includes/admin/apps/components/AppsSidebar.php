@@ -53,6 +53,12 @@ class ContaiAppsSidebar
                 'badge' => null,
                 'home' => false
             ],
+            'analytics' => [
+                'title' => __('Google Analytics', '1platform-content-ai'),
+                'icon' => 'dashicons-chart-area',
+                'badge' => null,
+                'home' => false
+            ],
         ];
     }
 

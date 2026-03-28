@@ -4,7 +4,7 @@ Tags: ai content, seo, content generation, internal links, table of contents
 Requires at least: 5.9
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 2.13.0
+Stable tag: 2.12.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -32,6 +32,7 @@ AI-powered blog posts, internal linking, tables of contents, and content strateg
 
 = Integrations =
 
+* **Google Analytics** — Connect your GA4 property with OAuth2 and inject the tracking tag with GDPR Consent Mode v2 (analytics denied by default until user consent).
 * **Google Search Console** — Connect your site to Google Search Console through 1Platform to pull performance data.
 * **Publisuites** — Connect your website to Publisuites to explore content monetization opportunities.
 * **Ads Manager** — Configure your AdSense publisher ID, auto-generate your ads.txt file, and inject custom header code.
@@ -155,9 +156,68 @@ The plugin sends your site URL, API key, and content generation parameters (keyw
 4. Job Monitor — Track all background tasks in real time.
 5. Internal Links — Configure automatic internal linking between posts.
 6. Table of Contents — Automatic TOC generation settings.
-7. Tools — Google Search Console, Publisuites, and Ads Manager integrations.
+7. Tools — Google Analytics, Google Search Console, Publisuites, and Ads Manager integrations.
 
 == Changelog ==
+
+= 2.12.0 =
+* Added Google Analytics panel with full OAuth2 connection flow and 3-step visual wizard
+* Added GA4 tag injection with GDPR Consent Mode v2 (analytics denied by default)
+* Added custom dimensions and server-side events via Measurement Protocol
+* Added BackfillAnalyticsMeta migration for existing posts
+* Fix: Server event error handling and event idempotency
+
+= 2.11.4 =
+* Added one-click link building setup (unified 3-step flow into single click)
+* Fix: Removed provider name exposure from client-facing UI strings
+
+= 2.11.2 =
+* Fix: Job queue stuck in PENDING when WP-Cron event is lost — added self-healing cron re-registration
+* Added immediate job processing trigger via spawn_cron()
+
+= 2.10.6 =
+* Added 38 unit tests for admin form handlers (billing, link building, keyword extraction, and content queue)
+
+= 2.10.5 =
+* Fix: Orphan agent cron event not cleared on plugin uninstall
+* Fix: Job processor deactivation not clearing all scheduled instances
+
+= 2.10.3 =
+* Fix: Site Wizard categories not loading after previous attempt due to double-encrypted API key
+
+= 2.10.2 =
+* Fix: Site Wizard ignoring language selection — language now correctly mapped from form field
+
+= 2.10.1 =
+* Fix: Stale auth error banner persisting after connection recovery
+* Added error auto-clearing on successful connection validation
+
+= 2.9.1 =
+* Fix: AdSense setup failures no longer crash the entire site generation job
+
+= 2.9.0 =
+* Changed Search Console to one-click setup (unified 3-step manual flow into single click)
+
+= 2.8.0 =
+* Added topic-based keyword extraction (replaces domain URL input)
+* Changed Site Generator to use topic-based extraction for keyword discovery
+* Fix: AdSense publisher ID now saved immediately on form submission
+
+= 2.6.0 =
+* Added category-based theme auto-selection from API recommended themes
+* Added theme defaults per theme (OceanWP, GeneratePress, ColorMag, Newsmatic)
+* Added auth token retry on null and license activation retry
+* Changed default theme to Astra
+* Fix: Crypto fallback for legacy unencrypted keys
+
+= 2.5.0 =
+* Version bump
+
+= 2.4.0 =
+* Added AI Agent platform integration with full WordPress admin UI
+* Added Agents admin page, API service, REST controller, settings and sync services
+* Added agent actions cron for polling and processing pending actions
+* Fix: Empty arrays now encode as objects in JSON request bodies for API compatibility
 
 = 2.3.5 =
 * Fix: BillingHistoryPanel now shows the correct merchant currency instead of hardcoding USD when usd_amount is present
@@ -207,6 +267,24 @@ The plugin sends your site URL, API key, and content generation parameters (keyw
 * Initial release
 
 == Upgrade Notice ==
+
+= 2.12.0 =
+Google Analytics integration with GDPR Consent Mode v2. Connect your GA4 property directly from the plugin.
+
+= 2.11.4 =
+One-click link building setup and provider name cleanup.
+
+= 2.9.0 =
+Search Console now connects with a single click instead of 3 manual steps.
+
+= 2.8.0 =
+Keyword extraction now works by topic instead of competitor URL. Site Generator updated accordingly.
+
+= 2.6.0 =
+Theme is now auto-selected based on category. Default theme changed to Astra.
+
+= 2.4.0 =
+New AI Agent platform integration. Manage and trigger AI agents directly from wp-admin.
 
 = 2.3.1 =
 Prefix consistency and security hardening. All admin slugs, meta keys, and SQL queries updated for WordPress.org compliance.
