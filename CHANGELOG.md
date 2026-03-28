@@ -4,6 +4,26 @@ All notable changes to Content AI are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [2.12.4] - 2026-03-28
+
+### Fixed
+- **Site Wizard category sync**: `SiteConfigService` now saves `site_category` and PATCHes the API with `category_id` + `lang` during wizard flow, fixing sites created with `category_id: null` (#46)
+- **Tagline generation**: `contai_configure_site_metadata()` now fetches AI-generated tagline from the API, fixing "My Blog" default tagline (#46)
+- **Sidebar visibility in cron**: Static sidebar ID mapping per theme replaces unreliable `$wp_registered_sidebars` global in async/cron context (#46)
+- **Nav menu assignment in cron**: Static nav menu location mapping per theme replaces `get_registered_nav_menus()` which returns empty in cron (#46)
+- **Sidebar layout for all themes**: `contai_apply_theme_defaults()` now forces right-sidebar layout for all 9 supported themes (previously only 3) (#46)
+- **Theme installation verification**: `contai_install_theme()` now checks `themes_api()` and `$upgrader->install()` return values and throws on failure (#46)
+- **Category menu matching**: `MainMenuManager` now tries slug-based lookup before name-based, fixing case-sensitive mismatches (#46)
+- **Tagline acceptance**: Plugin now always accepts AI tagline from API response, removing the `empty()` guard that blocked updates (#46)
+- **$_POST in cron**: `contai_generate_cookies_banner()` no longer reads from `$_POST` in cron context (#46)
+- **Redundant get_option calls**: Removed duplicate `get_option()` calls in `WebsiteProvider` (#46)
+- **Echo in cron**: Removed HTML `echo` from widget/icon handlers that run in background jobs (#46)
+
+### Added
+- **Footer menu with legal pages**: New `contai_create_footer_menu_with_legal_pages()` creates a footer nav menu and assigns legal pages to the theme's footer location (#46)
+- **SiteConfigService tests**: 9 new unit tests covering save, validate, get, and API sync failure scenarios (#46)
+- **`contai_site_topic` option**: New option with backward compatibility for legacy `contai_site_theme` (#46)
+
 ## [2.12.2] - 2026-03-28
 
 ### Changed

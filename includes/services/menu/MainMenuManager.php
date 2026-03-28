@@ -43,6 +43,18 @@ class ContaiMainMenuManager {
 
     private function assignMenuToPrimaryLocation(int $menu_id): void {
         $locations = get_nav_menu_locations();
+
+        // Try static mapping first (reliable in cron/async context)
+        if (function_exists('contai_get_primary_nav_location')) {
+            $static_location = contai_get_primary_nav_location();
+            if ($static_location) {
+                $locations[$static_location] = $menu_id;
+                set_theme_mod('nav_menu_locations', $locations);
+                return;
+            }
+        }
+
+        // Fallback to runtime detection
         $registered_menus = get_registered_nav_menus();
 
         if (empty($registered_menus)) {
@@ -223,7 +235,13 @@ class ContaiMainMenuManager {
     }
 
     private function addCategoryMenuItem(int $menu_id, string $category_name): void {
-        $category = get_term_by('name', $category_name, 'category');
+        // Try slug first (case-insensitive), then fall back to name match
+        $slug     = sanitize_title($category_name);
+        $category = get_term_by('slug', $slug, 'category');
+
+        if (!$category || is_wp_error($category)) {
+            $category = get_term_by('name', $category_name, 'category');
+        }
 
         if (!$category || is_wp_error($category)) {
             return;

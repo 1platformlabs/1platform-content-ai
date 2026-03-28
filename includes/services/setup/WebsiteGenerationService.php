@@ -56,6 +56,13 @@ class ContaiWebsiteGenerationService
                 $results['errors'] = array_merge($results['errors'], $legalResult['errors']);
             }
 
+            try {
+                contai_create_footer_menu_with_legal_pages();
+                $results['steps'][] = 'Footer menu with legal pages created';
+            } catch (Exception $e) {
+                $results['errors'][] = 'Footer menu creation failed (non-critical): ' . $e->getMessage();
+            }
+
             contai_generate_cookies_banner();
             $results['steps'][] = 'Cookie banner configured';
 
