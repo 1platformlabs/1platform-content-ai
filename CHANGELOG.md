@@ -4,6 +4,11 @@ All notable changes to Content AI are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [2.12.2] - 2026-03-28
+
+### Changed
+- **Publisuites menu label**: Renamed "Link Building" to "Publisuites" in sidebar, page title, apps panel, and logs adapter (#44)
+
 ## [2.12.1] - 2026-03-28
 
 ### Fixed
