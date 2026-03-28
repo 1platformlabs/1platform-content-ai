@@ -363,7 +363,9 @@ class ContaiAnalyticsPanel
                         var popup = window.open(res.data.authorize_url, '1platform_oauth', 'width=600,height=700,scrollbars=yes');
 
                         /* Listen for postMessage from callback page */
+                        var apiOrigin = (new URL('<?php echo esc_js(\ContaiConfig::getInstance()->getApiBaseUrl()); ?>')).origin;
                         window.addEventListener('message', function handler(event) {
+                            if (event.origin !== apiOrigin) return;
                             if (!event.data || event.data.type !== '1platform_oauth_complete') return;
                             if (event.data.service !== 'analytics') return;
                             window.removeEventListener('message', handler);
