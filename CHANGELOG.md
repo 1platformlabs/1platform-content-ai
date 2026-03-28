@@ -4,6 +4,11 @@ All notable changes to Content AI are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [2.12.1] - 2026-03-28
+
+### Fixed
+- **Release pipeline**: Resolved orphaned git tag v2.13.0 that blocked CI tag & release job
+
 ## [2.12.0] - 2026-03-27
 
 ### Added
