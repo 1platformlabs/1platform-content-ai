@@ -136,21 +136,12 @@ class ContaiWebsiteProvider
     public function getCategoryId(): ?string
     {
         $category_id = get_option('contai_site_category', '');
-
-        if (empty($category_id)) {
-            $category_id = get_option('contai_site_category', '');
-        }
-
         return !empty($category_id) ? sanitize_text_field($category_id) : null;
     }
 
     public function getLanguageCode(): ?string
     {
         $language = get_option('contai_site_language', '');
-
-        if (empty($language)) {
-            $language = get_option('contai_site_language', '');
-        }
 
         if (empty($language)) {
             return null;
@@ -387,7 +378,7 @@ class ContaiWebsiteProvider
         }
         $response = $this->client->post(ContaiOnePlatformEndpoints::USERS_WEBSITES, $data);
 
-        if ($response->isSuccess() && empty($this->getSiteDescription())) {
+        if ($response->isSuccess()) {
             $responseData = $response->getData();
             $tagline = $responseData['site_description'] ?? '';
 

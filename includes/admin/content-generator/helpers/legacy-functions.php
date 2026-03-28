@@ -9,6 +9,6 @@ function contai_get_legal_info(): array {
 }
 
 function contai_generate_cookies_banner(): void {
-    // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Legacy function; nonce verified by caller.
-    ContaiLegalPagesHelper::save_cookie_settings($_POST);
+    // Pass empty array in cron/async context; save_cookie_settings uses defaults when fields are absent.
+    ContaiLegalPagesHelper::save_cookie_settings( array() );
 }

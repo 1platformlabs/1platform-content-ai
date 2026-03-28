@@ -20,30 +20,87 @@ require_once __DIR__ . '/../services/api/OnePlatformEndpoints.php';
 require_once __DIR__ . '/../providers/WebsiteProvider.php';
 
 /**
+ * Static mapping of sidebar IDs per theme.
+ *
+ * Used in cron/async context where $wp_registered_sidebars may be empty
+ * because the theme's widgets_init hook has not fired.
+ */
+define( 'CONTAI_THEME_SIDEBAR_MAP', array(
+	'astra'          => 'sidebar-1',
+	'generatepress'  => 'sidebar-1',
+	'neve'           => 'sidebar-1',
+	'blocksy'        => 'sidebar-1',
+	'kadence'        => 'sidebar-1',
+	'sydney'         => 'sidebar-1',
+	'oceanwp'        => 'sidebar',
+	'newsmatic'      => 'sidebar-1',
+	'colormag'       => 'sidebar-right',
+) );
+
+/**
+ * Static mapping of primary nav menu locations per theme.
+ *
+ * Used in cron/async context where get_registered_nav_menus() may return empty.
+ */
+define( 'CONTAI_THEME_NAV_LOCATION_MAP', array(
+	'astra'          => 'primary',
+	'generatepress'  => 'primary',
+	'neve'           => 'primary',
+	'blocksy'        => 'header-menu-1',
+	'kadence'        => 'primary',
+	'sydney'         => 'primary',
+	'oceanwp'        => 'main_menu',
+	'newsmatic'      => 'menu-1',
+	'colormag'       => 'primary',
+) );
+
+/**
  * Get the primary sidebar ID for the active theme.
  *
- * Different themes register sidebars with different IDs. This function
- * detects the correct sidebar by checking common naming conventions.
+ * Uses a static mapping to reliably resolve the sidebar ID even in
+ * cron/async context where $wp_registered_sidebars may be empty.
  *
  * @return string The primary sidebar ID
  */
 function contai_get_primary_sidebar_id(): string {
+	$theme = get_option( 'contai_wordpress_theme', 'astra' );
+
+	if ( isset( CONTAI_THEME_SIDEBAR_MAP[ $theme ] ) ) {
+		return CONTAI_THEME_SIDEBAR_MAP[ $theme ];
+	}
+
+	// Try runtime detection as fallback
 	global $wp_registered_sidebars;
-
-	if ( empty( $wp_registered_sidebars ) ) {
-		return 'sidebar-1';
-	}
-
-	$priority = array( 'sidebar-1', 'sidebar', 'sidebar-primary', 'primary-sidebar', 'primary-widget-area' );
-	foreach ( $priority as $id ) {
-		if ( isset( $wp_registered_sidebars[ $id ] ) ) {
-			return $id;
+	if ( ! empty( $wp_registered_sidebars ) ) {
+		$priority = array( 'sidebar-1', 'sidebar', 'sidebar-primary', 'primary-sidebar', 'primary-widget-area' );
+		foreach ( $priority as $id ) {
+			if ( isset( $wp_registered_sidebars[ $id ] ) ) {
+				return $id;
+			}
 		}
+		$keys = array_keys( $wp_registered_sidebars );
+		return $keys[0] ?? 'sidebar-1';
 	}
 
-	// Fallback: first registered sidebar
-	$keys = array_keys( $wp_registered_sidebars );
-	return $keys[0] ?? 'sidebar-1';
+	return 'sidebar-1';
+}
+
+/**
+ * Get the primary nav menu location for the active theme.
+ *
+ * Uses a static mapping to reliably resolve the menu location even in
+ * cron/async context where get_registered_nav_menus() may return empty.
+ *
+ * @return string|null The primary nav menu location or null if unknown
+ */
+function contai_get_primary_nav_location(): ?string {
+	$theme = get_option( 'contai_wordpress_theme', 'astra' );
+
+	if ( isset( CONTAI_THEME_NAV_LOCATION_MAP[ $theme ] ) ) {
+		return CONTAI_THEME_NAV_LOCATION_MAP[ $theme ];
+	}
+
+	return null;
 }
 
 /**
@@ -79,7 +136,31 @@ function contai_apply_theme_defaults( string $theme ): void {
 			set_theme_mod( 'colormag_site_layout', 'right-sidebar' );
 			break;
 
-		// astra, neve, blocksy, kadence, sydney: sensible defaults out of the box
+		case 'astra':
+			// Force right sidebar layout site-wide
+			set_theme_mod( 'site-sidebar-layout', 'right-sidebar' );
+			set_theme_mod( 'single-post-sidebar-layout', 'right-sidebar' );
+			set_theme_mod( 'archive-post-sidebar-layout', 'right-sidebar' );
+			break;
+
+		case 'neve':
+			set_theme_mod( 'neve_default_sidebar_layout', 'right' );
+			set_theme_mod( 'neve_single_post_sidebar_layout', 'right' );
+			break;
+
+		case 'blocksy':
+			set_theme_mod( 'blog_has_sidebar', 'right' );
+			set_theme_mod( 'single_has_sidebar', 'right' );
+			break;
+
+		case 'kadence':
+			set_theme_mod( 'post_layout', 'right' );
+			set_theme_mod( 'archive_layout', 'right' );
+			break;
+
+		case 'sydney':
+			set_theme_mod( 'sidebar_position', 'sidebar-right' );
+			break;
 	}
 }
 
@@ -103,18 +184,38 @@ function contai_install_theme( $theme ) {
 		$api = themes_api(
 			'theme_information',
 			array(
-				'slug' => $theme,
+				'slug'   => $theme,
 				'fields' => array( 'sections' => false ),
 			)
 		);
 
-		if ( ! is_wp_error( $api ) ) {
-			$upgrader = new Theme_Upgrader( new WP_Ajax_Upgrader_Skin() );
-			$upgrader->install( $api->download_link );
+		if ( is_wp_error( $api ) ) {
+			contai_log( 'contai_install_theme: themes_api failed for "' . $theme . '": ' . $api->get_error_message() );
+			throw new Exception( 'Theme API lookup failed for "' . $theme . '": ' . $api->get_error_message() );
+		}
+
+		$upgrader = new Theme_Upgrader( new WP_Ajax_Upgrader_Skin() );
+		$result   = $upgrader->install( $api->download_link );
+
+		if ( is_wp_error( $result ) ) {
+			contai_log( 'contai_install_theme: install failed for "' . $theme . '": ' . $result->get_error_message() );
+			throw new Exception( 'Theme install failed for "' . $theme . '": ' . $result->get_error_message() );
+		}
+
+		if ( $result === false ) {
+			contai_log( 'contai_install_theme: install returned false for "' . $theme . '"' );
+			throw new Exception( 'Theme install failed for "' . $theme . '"' );
 		}
 	}
 
 	switch_theme( $theme );
+
+	// Verify the theme was activated
+	$active = wp_get_theme()->get_stylesheet();
+	if ( $active !== $theme ) {
+		contai_log( 'contai_install_theme: switch_theme failed. Expected "' . $theme . '", got "' . $active . '"' );
+		throw new Exception( 'Theme activation failed: expected "' . $theme . '", active is "' . $active . '"' );
+	}
 }
 
 /**
@@ -132,7 +233,6 @@ function contai_install_theme( $theme ) {
  */
 function contai_handle_generate_widget_submit() {
 	contai_add_sidebar_widgets();
-	echo '<div class="notice notice-success is-dismissible"><p>Widgets generated successfully.</p></div>';
 }
 
 /**
@@ -145,9 +245,8 @@ function contai_handle_generate_widget_submit() {
 function contai_handle_generate_icon_submit() {
 	$result = contai_generate_and_set_site_icon_from_openai();
 	if ( is_wp_error( $result ) ) {
-		echo '<div class="notice notice-error"><p>Error: ' . esc_html( $result->get_error_message() ) . '</p></div>';
-	} else {
-		echo '<div class="notice notice-success is-dismissible"><p>Icon generated and assigned successfully. Attachment ID: ' . intval( $result ) . '.</p></div>';
+		contai_log( 'contai_handle_generate_icon_submit: Error — ' . $result->get_error_message() );
+		throw new Exception( 'Icon generation failed: ' . $result->get_error_message() );
 	}
 }
 
@@ -202,6 +301,126 @@ function contai_configure_site_metadata() {
 
 	if ( $host ) {
 		update_option( 'blogname', $host );
+	}
+
+	// Fetch the AI-generated tagline from the API
+	$website_provider = new ContaiWebsiteProvider();
+	$response         = $website_provider->getWebsiteFromApi();
+
+	if ( $response && $response->isSuccess() ) {
+		$data    = $response->getData();
+		$tagline = $data['site_description'] ?? '';
+
+		if ( ! empty( $tagline ) ) {
+			update_option( 'blogdescription', sanitize_text_field( $tagline ) );
+		}
+	}
+}
+
+/**
+ * Create a footer navigation menu containing legal pages.
+ *
+ * Finds all published pages created by the legal page generator
+ * (identified by _contai_legal_source meta) and adds them to a
+ * "Footer" menu assigned to the theme's footer menu location.
+ *
+ * @return void
+ */
+function contai_create_footer_menu_with_legal_pages(): void {
+	$menu_name = 'Footer';
+	$menu      = wp_get_nav_menu_object( $menu_name );
+
+	if ( $menu ) {
+		$menu_id = $menu->term_id;
+	} else {
+		$menu_id = wp_create_nav_menu( $menu_name );
+		if ( is_wp_error( $menu_id ) ) {
+			contai_log( 'contai_create_footer_menu_with_legal_pages: failed to create menu — ' . $menu_id->get_error_message() );
+			return;
+		}
+	}
+
+	// Find legal pages by meta
+    // phpcs:disable WordPress.DB.SlowDBQuery.slow_db_query_meta_key, WordPress.DB.SlowDBQuery.slow_db_query_meta_value
+	$legal_pages = get_posts(
+		array(
+			'post_type'   => 'page',
+			'post_status' => 'publish',
+			'meta_key'    => '_contai_legal_source',
+			'meta_value'  => 'contai_api',
+			'numberposts' => 20,
+			'orderby'     => 'title',
+			'order'       => 'ASC',
+		)
+	);
+    // phpcs:enable WordPress.DB.SlowDBQuery.slow_db_query_meta_key, WordPress.DB.SlowDBQuery.slow_db_query_meta_value
+
+	if ( empty( $legal_pages ) ) {
+		return;
+	}
+
+	// Get existing menu items to avoid duplicates
+	$existing_items = wp_get_nav_menu_items( $menu_id );
+	$existing_ids   = array();
+	if ( $existing_items ) {
+		foreach ( $existing_items as $item ) {
+			if ( $item->type === 'post_type' && $item->object === 'page' ) {
+				$existing_ids[] = (int) $item->object_id;
+			}
+		}
+	}
+
+	$position = count( $existing_ids ) + 1;
+	foreach ( $legal_pages as $page ) {
+		if ( in_array( $page->ID, $existing_ids, true ) ) {
+			continue;
+		}
+
+		wp_update_nav_menu_item( $menu_id, 0, array(
+			'menu-item-title'     => $page->post_title,
+			'menu-item-object'    => 'page',
+			'menu-item-object-id' => $page->ID,
+			'menu-item-type'      => 'post_type',
+			'menu-item-status'    => 'publish',
+			'menu-item-position'  => $position,
+		) );
+		$position++;
+	}
+
+	// Assign to footer menu location
+	$footer_locations = array( 'footer', 'footer-menu', 'footer_menu', 'footer-nav', 'footer_navigation' );
+	$theme            = get_option( 'contai_wordpress_theme', 'astra' );
+
+	// Theme-specific footer location overrides
+	$theme_footer_map = array(
+		'astra'         => 'footer_menu',
+		'generatepress' => 'secondary',
+		'neve'          => 'footer',
+		'oceanwp'       => 'footer_menu',
+		'blocksy'       => 'footer',
+		'kadence'       => 'footer_navigation',
+		'sydney'        => 'footer',
+		'newsmatic'     => 'footer-menu',
+		'colormag'      => 'footer-menu',
+	);
+
+	$locations     = get_nav_menu_locations();
+	$target        = $theme_footer_map[ $theme ] ?? null;
+
+	if ( $target ) {
+		$locations[ $target ] = $menu_id;
+		set_theme_mod( 'nav_menu_locations', $locations );
+		return;
+	}
+
+	// Fallback: try runtime-registered footer locations
+	$registered = get_registered_nav_menus();
+	foreach ( $footer_locations as $loc ) {
+		if ( isset( $registered[ $loc ] ) ) {
+			$locations[ $loc ] = $menu_id;
+			set_theme_mod( 'nav_menu_locations', $locations );
+			return;
+		}
 	}
 }
 
@@ -360,10 +579,8 @@ function contai_sideload_profile_image( string $profile_image_url, string $fulln
  * @return void
  */
 function contai_add_sidebar_widgets() {
-	$lang    = get_option( 'contai_site_language', 'spanish' );
-	$theme   = get_option( 'contai_site_theme', 'blog' );
-	$site_url = get_site_url();
-	$domain  = wp_parse_url( $site_url, PHP_URL_HOST );
+	$lang  = get_option( 'contai_site_language', 'spanish' );
+	$theme = get_option( 'contai_site_topic', get_option( 'contai_site_theme', 'blog' ) );
 
 	$labels = array(
 		'spanish' => array(
