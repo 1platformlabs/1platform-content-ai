@@ -368,74 +368,122 @@ class ContaiAdsManagerPanel {
 		<div class="contai-ads-tab-content active" id="tab-adsense-account" role="tabpanel">
 			<div id="contai-adsense-account-root">
 				<?php if ( ! $is_connected ) : ?>
-				<div class="contai-adsense-connect-section">
-					<div class="contai-ads-callout contai-ads-callout-info">
+				<div class="contai-adsense-empty">
+					<div class="contai-adsense-empty__icon">
 						<span class="dashicons dashicons-chart-area"></span>
-						<div>
-							<strong><?php esc_html_e( 'Connect Your AdSense Account', '1platform-content-ai' ); ?></strong>
-							<p><?php esc_html_e( 'Connect via OAuth to see earnings, site approval status, and policy alerts directly in your dashboard.', '1platform-content-ai' ); ?></p>
+					</div>
+					<h3><?php esc_html_e( 'Connect Your AdSense Account', '1platform-content-ai' ); ?></h3>
+					<p><?php esc_html_e( 'Connect via OAuth to see earnings, site approval status, and policy alerts directly in your WordPress dashboard.', '1platform-content-ai' ); ?></p>
+
+					<div class="contai-adsense-steps">
+						<div class="contai-adsense-step active">
+							<span class="contai-adsense-step__num">1</span>
+							<div>
+								<h4><?php esc_html_e( 'Authorize with Google', '1platform-content-ai' ); ?></h4>
+								<p><?php esc_html_e( 'Sign in with your Google account that has access to AdSense', '1platform-content-ai' ); ?></p>
+							</div>
+						</div>
+						<div class="contai-adsense-step">
+							<span class="contai-adsense-step__num">2</span>
+							<div>
+								<h4><?php esc_html_e( 'Select AdSense Account', '1platform-content-ai' ); ?></h4>
+								<p><?php esc_html_e( 'Choose which AdSense account to connect to this site', '1platform-content-ai' ); ?></p>
+							</div>
+						</div>
+						<div class="contai-adsense-step">
+							<span class="contai-adsense-step__num">3</span>
+							<div>
+								<h4><?php esc_html_e( 'Auto-Configure', '1platform-content-ai' ); ?></h4>
+								<p><?php esc_html_e( 'Earnings, approval status, and policy alerts set up automatically', '1platform-content-ai' ); ?></p>
+							</div>
 						</div>
 					</div>
-					<button type="button" id="contai-adsense-connect-btn" class="button button-primary">
+
+					<button type="button" id="contai-adsense-connect-btn" class="contai-btn-oauth">
 						<span class="dashicons dashicons-admin-links"></span>
 						<?php esc_html_e( 'Connect AdSense', '1platform-content-ai' ); ?>
 					</button>
 				</div>
 				<?php else : ?>
-				<div class="contai-adsense-status-section">
-					<div id="contai-adsense-status-loading">
-						<span class="spinner is-active" style="float:none;margin:0 8px 0 0;"></span>
+				<div class="contai-adsense-connected">
+					<div class="contai-adsense-header">
+						<div class="contai-adsense-header__left">
+							<span class="contai-adsense-badge">
+								<span class="dashicons dashicons-yes-alt"></span>
+								<?php esc_html_e( 'Connected', '1platform-content-ai' ); ?>
+							</span>
+							<span class="contai-adsense-mid" id="contai-adsense-publisher-id">&mdash;</span>
+						</div>
+					</div>
+					<div id="contai-adsense-status-loading" class="contai-adsense-loading">
+						<span class="spinner is-active"></span>
 						<?php esc_html_e( 'Loading AdSense data...', '1platform-content-ai' ); ?>
 					</div>
 					<div id="contai-adsense-status-data" style="display:none;">
-						<div class="contai-adsense-info-grid">
-							<div class="contai-adsense-info-item">
-								<span class="contai-adsense-label"><?php esc_html_e( 'Account', '1platform-content-ai' ); ?></span>
-								<span class="contai-adsense-value" id="contai-adsense-account-name">&mdash;</span>
+						<div class="contai-adsense-features">
+							<div class="contai-adsense-feature">
+								<div class="contai-adsense-feature__icon contai-adsense-feature__icon--blue"><span class="dashicons dashicons-businessperson"></span></div>
+								<div>
+									<h4><?php esc_html_e( 'Account', '1platform-content-ai' ); ?></h4>
+									<p id="contai-adsense-account-name">&mdash;</p>
+								</div>
 							</div>
-							<div class="contai-adsense-info-item">
-								<span class="contai-adsense-label"><?php esc_html_e( 'Publisher ID', '1platform-content-ai' ); ?></span>
-								<span class="contai-adsense-value" id="contai-adsense-publisher-id">&mdash;</span>
+							<div class="contai-adsense-feature">
+								<div class="contai-adsense-feature__icon contai-adsense-feature__icon--green"><span class="dashicons dashicons-admin-site-alt3"></span></div>
+								<div>
+									<h4><?php esc_html_e( 'Site State', '1platform-content-ai' ); ?></h4>
+									<p id="contai-adsense-site-state">&mdash;</p>
+								</div>
 							</div>
-							<div class="contai-adsense-info-item">
-								<span class="contai-adsense-label"><?php esc_html_e( 'Site State', '1platform-content-ai' ); ?></span>
-								<span class="contai-adsense-value" id="contai-adsense-site-state">&mdash;</span>
-							</div>
-							<div class="contai-adsense-info-item">
-								<span class="contai-adsense-label"><?php esc_html_e( 'Status', '1platform-content-ai' ); ?></span>
-								<span class="contai-adsense-value" id="contai-adsense-connection-status">&mdash;</span>
+							<div class="contai-adsense-feature">
+								<div class="contai-adsense-feature__icon contai-adsense-feature__icon--amber"><span class="dashicons dashicons-flag"></span></div>
+								<div>
+									<h4><?php esc_html_e( 'Status', '1platform-content-ai' ); ?></h4>
+									<p id="contai-adsense-connection-status">&mdash;</p>
+								</div>
 							</div>
 						</div>
 						<div class="contai-adsense-earnings-summary" id="contai-adsense-earnings" style="display:none;">
 							<h4><?php esc_html_e( 'Earnings (Last 7 Days)', '1platform-content-ai' ); ?></h4>
-							<div class="contai-adsense-info-grid">
-								<div class="contai-adsense-info-item">
-									<span class="contai-adsense-label"><?php esc_html_e( 'Earnings', '1platform-content-ai' ); ?></span>
-									<span class="contai-adsense-value contai-adsense-earnings-val" id="contai-adsense-est-earnings">$0.00</span>
+							<div class="contai-adsense-features">
+								<div class="contai-adsense-feature">
+									<div class="contai-adsense-feature__icon contai-adsense-feature__icon--green"><span class="dashicons dashicons-money-alt"></span></div>
+									<div>
+										<h4><?php esc_html_e( 'Earnings', '1platform-content-ai' ); ?></h4>
+										<p class="contai-adsense-earnings-val" id="contai-adsense-est-earnings">$0.00</p>
+									</div>
 								</div>
-								<div class="contai-adsense-info-item">
-									<span class="contai-adsense-label"><?php esc_html_e( 'Clicks', '1platform-content-ai' ); ?></span>
-									<span class="contai-adsense-value" id="contai-adsense-clicks">0</span>
+								<div class="contai-adsense-feature">
+									<div class="contai-adsense-feature__icon contai-adsense-feature__icon--blue"><span class="dashicons dashicons-pressthis"></span></div>
+									<div>
+										<h4><?php esc_html_e( 'Clicks', '1platform-content-ai' ); ?></h4>
+										<p id="contai-adsense-clicks">0</p>
+									</div>
 								</div>
-								<div class="contai-adsense-info-item">
-									<span class="contai-adsense-label"><?php esc_html_e( 'Impressions', '1platform-content-ai' ); ?></span>
-									<span class="contai-adsense-value" id="contai-adsense-impressions">0</span>
+								<div class="contai-adsense-feature">
+									<div class="contai-adsense-feature__icon contai-adsense-feature__icon--purple"><span class="dashicons dashicons-visibility"></span></div>
+									<div>
+										<h4><?php esc_html_e( 'Impressions', '1platform-content-ai' ); ?></h4>
+										<p id="contai-adsense-impressions">0</p>
+									</div>
 								</div>
-								<div class="contai-adsense-info-item">
-									<span class="contai-adsense-label"><?php esc_html_e( 'RPM', '1platform-content-ai' ); ?></span>
-									<span class="contai-adsense-value" id="contai-adsense-rpm">$0.00</span>
+								<div class="contai-adsense-feature">
+									<div class="contai-adsense-feature__icon contai-adsense-feature__icon--amber"><span class="dashicons dashicons-chart-line"></span></div>
+									<div>
+										<h4><?php esc_html_e( 'RPM', '1platform-content-ai' ); ?></h4>
+										<p id="contai-adsense-rpm">$0.00</p>
+									</div>
 								</div>
 							</div>
 						</div>
 					</div>
-					<div class="contai-adsense-actions" style="margin-top:16px;">
+					<div class="contai-adsense-disconnect">
 						<button type="button" id="contai-adsense-refresh-btn" class="button">
 							<span class="dashicons dashicons-update"></span>
 							<?php esc_html_e( 'Refresh', '1platform-content-ai' ); ?>
 						</button>
-						<button type="button" id="contai-adsense-disconnect-btn" class="button">
-							<span class="dashicons dashicons-dismiss"></span>
-							<?php esc_html_e( 'Disconnect', '1platform-content-ai' ); ?>
+						<button type="button" id="contai-adsense-disconnect-btn" class="contai-btn-disconnect">
+							<?php esc_html_e( 'Disconnect AdSense', '1platform-content-ai' ); ?>
 						</button>
 					</div>
 				</div>

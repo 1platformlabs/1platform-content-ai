@@ -113,11 +113,7 @@ class ContaiAdSenseRestController {
 		$api    = ContaiOnePlatformClient::create();
 		$result = $api->get( '/adsense/oauth/authorize', array( 'website_id' => $website_id ) );
 
-		if ( is_wp_error( $result ) ) {
-			return new \WP_REST_Response( array( 'success' => false, 'message' => $result->get_error_message() ), 502 );
-		}
-
-		return new \WP_REST_Response( array( 'success' => true, 'data' => $result ), 200 );
+		return $this->apiResponse( $result );
 	}
 
 	public function connect( \WP_REST_Request $request ): \WP_REST_Response {
@@ -129,11 +125,11 @@ class ContaiAdSenseRestController {
 		$api    = ContaiOnePlatformClient::create();
 		$result = $api->post( '/adsense/connect', array(), array( 'website_id' => $website_id ) );
 
-		if ( is_wp_error( $result ) ) {
-			return new \WP_REST_Response( array( 'success' => false, 'message' => $result->get_error_message() ), 502 );
+		if ( ! $result->isSuccess() ) {
+			return $this->apiResponse( $result );
 		}
 
-		$data = is_object( $result ) && method_exists( $result, 'getData' ) ? $result->getData() : $result;
+		$data = $result->getData();
 
 		if ( is_array( $data ) && ! empty( $data['publisher_id'] ) ) {
 			$this->sync_publisher_id( $data['publisher_id'] );
@@ -153,13 +149,11 @@ class ContaiAdSenseRestController {
 		$api    = ContaiOnePlatformClient::create();
 		$result = $api->delete( '/adsense/disconnect', array( 'website_id' => $website_id ) );
 
-		if ( is_wp_error( $result ) ) {
-			return new \WP_REST_Response( array( 'success' => false, 'message' => $result->get_error_message() ), 502 );
+		if ( $result->isSuccess() ) {
+			update_option( 'contai_adsense_connected', false, false );
 		}
 
-		update_option( 'contai_adsense_connected', false, false );
-
-		return new \WP_REST_Response( array( 'success' => true, 'data' => $result ), 200 );
+		return $this->apiResponse( $result );
 	}
 
 	public function revoke( \WP_REST_Request $request ): \WP_REST_Response {
@@ -171,13 +165,11 @@ class ContaiAdSenseRestController {
 		$api    = ContaiOnePlatformClient::create();
 		$result = $api->post( '/adsense/oauth/revoke', array(), array( 'website_id' => $website_id ) );
 
-		if ( is_wp_error( $result ) ) {
-			return new \WP_REST_Response( array( 'success' => false, 'message' => $result->get_error_message() ), 502 );
+		if ( $result->isSuccess() ) {
+			update_option( 'contai_adsense_connected', false, false );
 		}
 
-		update_option( 'contai_adsense_connected', false, false );
-
-		return new \WP_REST_Response( array( 'success' => true, 'data' => $result ), 200 );
+		return $this->apiResponse( $result );
 	}
 
 	public function status( \WP_REST_Request $request ): \WP_REST_Response {
@@ -189,11 +181,7 @@ class ContaiAdSenseRestController {
 		$api    = ContaiOnePlatformClient::create();
 		$result = $api->get( '/adsense/status', array( 'website_id' => $website_id ) );
 
-		if ( is_wp_error( $result ) ) {
-			return new \WP_REST_Response( array( 'success' => false, 'message' => $result->get_error_message() ), 502 );
-		}
-
-		return new \WP_REST_Response( array( 'success' => true, 'data' => $result ), 200 );
+		return $this->apiResponse( $result );
 	}
 
 	public function earnings( \WP_REST_Request $request ): \WP_REST_Response {
@@ -211,11 +199,7 @@ class ContaiAdSenseRestController {
 			'compare'    => 'true',
 		) );
 
-		if ( is_wp_error( $result ) ) {
-			return new \WP_REST_Response( array( 'success' => false, 'message' => $result->get_error_message() ), 502 );
-		}
-
-		return new \WP_REST_Response( array( 'success' => true, 'data' => $result ), 200 );
+		return $this->apiResponse( $result );
 	}
 
 	public function sites( \WP_REST_Request $request ): \WP_REST_Response {
@@ -227,11 +211,7 @@ class ContaiAdSenseRestController {
 		$api    = ContaiOnePlatformClient::create();
 		$result = $api->get( '/adsense/sites', array( 'website_id' => $website_id ) );
 
-		if ( is_wp_error( $result ) ) {
-			return new \WP_REST_Response( array( 'success' => false, 'message' => $result->get_error_message() ), 502 );
-		}
-
-		return new \WP_REST_Response( array( 'success' => true, 'data' => $result ), 200 );
+		return $this->apiResponse( $result );
 	}
 
 	public function sync_sites( \WP_REST_Request $request ): \WP_REST_Response {
@@ -243,11 +223,7 @@ class ContaiAdSenseRestController {
 		$api    = ContaiOnePlatformClient::create();
 		$result = $api->post( '/adsense/sites/sync', array(), array( 'website_id' => $website_id ) );
 
-		if ( is_wp_error( $result ) ) {
-			return new \WP_REST_Response( array( 'success' => false, 'message' => $result->get_error_message() ), 502 );
-		}
-
-		return new \WP_REST_Response( array( 'success' => true, 'data' => $result ), 200 );
+		return $this->apiResponse( $result );
 	}
 
 	public function alerts( \WP_REST_Request $request ): \WP_REST_Response {
@@ -259,11 +235,7 @@ class ContaiAdSenseRestController {
 		$api    = ContaiOnePlatformClient::create();
 		$result = $api->get( '/adsense/alerts', array( 'website_id' => $website_id ) );
 
-		if ( is_wp_error( $result ) ) {
-			return new \WP_REST_Response( array( 'success' => false, 'message' => $result->get_error_message() ), 502 );
-		}
-
-		return new \WP_REST_Response( array( 'success' => true, 'data' => $result ), 200 );
+		return $this->apiResponse( $result );
 	}
 
 	public function policy_issues( \WP_REST_Request $request ): \WP_REST_Response {
@@ -275,11 +247,7 @@ class ContaiAdSenseRestController {
 		$api    = ContaiOnePlatformClient::create();
 		$result = $api->get( '/adsense/policy-issues', array( 'website_id' => $website_id ) );
 
-		if ( is_wp_error( $result ) ) {
-			return new \WP_REST_Response( array( 'success' => false, 'message' => $result->get_error_message() ), 502 );
-		}
-
-		return new \WP_REST_Response( array( 'success' => true, 'data' => $result ), 200 );
+		return $this->apiResponse( $result );
 	}
 
 	public function oauth_status( \WP_REST_Request $request ): \WP_REST_Response {
@@ -291,20 +259,21 @@ class ContaiAdSenseRestController {
 		$api    = ContaiOnePlatformClient::create();
 		$result = $api->get( '/adsense/oauth/status', array( 'website_id' => $website_id ) );
 
-		if ( is_wp_error( $result ) ) {
-			return new \WP_REST_Response( array( 'success' => false, 'message' => $result->get_error_message() ), 502 );
-		}
-
-		return new \WP_REST_Response( array( 'success' => true, 'data' => $result ), 200 );
+		return $this->apiResponse( $result );
 	}
 
 	// ── Private Helpers ──
 
-	private function get_website_id() {
-		$website_id = sanitize_text_field( get_option( '1platform_website_id', '' ) );
-		if ( empty( $website_id ) ) {
-			$website_id = sanitize_text_field( get_option( 'contai_user_website', '' ) );
+	private function apiResponse( ContaiOnePlatformResponse $result ): \WP_REST_Response {
+		if ( ! $result->isSuccess() ) {
+			return new \WP_REST_Response( array( 'success' => false, 'message' => $result->getMessage() ), 502 );
 		}
+		return new \WP_REST_Response( array( 'success' => true, 'data' => $result->getData() ), 200 );
+	}
+
+	private function get_website_id() {
+		$provider   = new ContaiWebsiteProvider();
+		$website_id = $provider->getWebsiteId();
 		if ( empty( $website_id ) ) {
 			return new \WP_Error( 'no_website', 'No website configured. Complete the initial setup first.' );
 		}
