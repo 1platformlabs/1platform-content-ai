@@ -41,7 +41,7 @@ jobs:
         with:
           php-version: ${{ matrix.php }}
           extensions: ${{ env.PHP_EXTENSIONS }}
-          coverage: none
+          coverage: ${{ matrix.php == '8.3' && 'pcov' || 'none' }}
 
       - name: Cache Composer dependencies
         uses: actions/cache@v4
@@ -86,7 +86,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          vendor/bin/phpunit --testsuite=unit -v 2>&1 | tee test_output.txt
+          if [ "${{ matrix.php }}" = "8.3" ]; then
+            vendor/bin/phpunit --testsuite=unit --coverage-clover=coverage.xml -v 2>&1 | tee test_output.txt
+          else
+            vendor/bin/phpunit --testsuite=unit -v 2>&1 | tee test_output.txt
+          fi
           tail -30 test_output.txt > test_summary.txt || true
 
       - name: Validate version sync
@@ -109,6 +113,15 @@ jobs:
 
           echo "Version sync OK: $PLUGIN_VERSION"
 
+      - name: Upload coverage artifact
+        if: matrix.php == '8.3'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage.xml
+          if-no-files-found: ignore
+          retention-days: 1
+
       - name: Upload test artifacts
         if: always() && matrix.php == '8.3'
         uses: actions/upload-artifact@v4
@@ -124,6 +137,35 @@ jobs:
         if: always()
         shell: bash
         run: rm -f test_output.txt test_summary.txt || true
+
+  sonarcloud:
+    name: SonarCloud Analysis
+    needs: tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: QA
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Download coverage artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-report
+        continue-on-error: true
+
+      - name: SonarCloud Scan
+        if: env.SONAR_TOKEN != ''
+        uses: SonarSource/sonarcloud-github-action@v5
+        continue-on-error: true
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   code-review:
     name: Code Review (Claude AI)
