@@ -153,7 +153,11 @@ class ContaiAdsManagerPanel {
 		<div class="contai-ads-manager">
 			<!-- Tab Navigation -->
 			<nav class="contai-ads-tabs-nav" role="tablist">
-				<button type="button" class="contai-ads-tab active" data-tab="publishers" role="tab" aria-selected="true">
+				<button type="button" class="contai-ads-tab active" data-tab="adsense-account" role="tab" aria-selected="true">
+					<span class="dashicons dashicons-chart-area"></span>
+					<span class="contai-ads-tab-label"><?php esc_html_e( 'AdSense Account', '1platform-content-ai' ); ?></span>
+				</button>
+				<button type="button" class="contai-ads-tab" data-tab="publishers" role="tab" aria-selected="false">
 					<span class="dashicons dashicons-media-text"></span>
 					<span class="contai-ads-tab-label"><?php esc_html_e( 'Publisher List', '1platform-content-ai' ); ?></span>
 				</button>
@@ -165,16 +169,12 @@ class ContaiAdsManagerPanel {
 					<span class="dashicons dashicons-admin-generic"></span>
 					<span class="contai-ads-tab-label"><?php esc_html_e( 'Advanced', '1platform-content-ai' ); ?></span>
 				</button>
-				<button type="button" class="contai-ads-tab" data-tab="adsense-account" role="tab" aria-selected="false">
-					<span class="dashicons dashicons-chart-area"></span>
-					<span class="contai-ads-tab-label"><?php esc_html_e( 'AdSense Account', '1platform-content-ai' ); ?></span>
-				</button>
 			</nav>
 
+			<?php $this->renderAdSenseAccountTab(); ?>
 			<?php $this->renderPublishersTab(); ?>
 			<?php $this->renderCustomHeaderTab(); ?>
 			<?php $this->renderAdvancedTab(); ?>
-			<?php $this->renderAdSenseAccountTab(); ?>
 		</div>
 		<?php
 	}
@@ -187,7 +187,7 @@ class ContaiAdsManagerPanel {
 		}
 		$ads_txt_exists = file_exists( ABSPATH . 'ads.txt' );
 		?>
-		<div class="contai-ads-tab-content active" id="tab-publishers" role="tabpanel">
+		<div class="contai-ads-tab-content" id="tab-publishers" role="tabpanel">
 			<form method="post">
 				<?php wp_nonce_field( 'contai_adsense_injector_save', 'contai_settings_nonce' ); ?>
 				<input type="hidden" name="form_type" value="publishers">
@@ -365,7 +365,7 @@ class ContaiAdsManagerPanel {
 	private function renderAdSenseAccountTab(): void {
 		$is_connected = get_option( 'contai_adsense_connected', false );
 		?>
-		<div class="contai-ads-tab-content" id="tab-adsense-account" role="tabpanel">
+		<div class="contai-ads-tab-content active" id="tab-adsense-account" role="tabpanel">
 			<div id="contai-adsense-account-root">
 				<?php if ( ! $is_connected ) : ?>
 				<div class="contai-adsense-connect-section">
