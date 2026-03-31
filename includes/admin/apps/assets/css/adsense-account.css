@@ -1,0 +1,82 @@
+/* AdSense Account Tab Styles */
+
+.contai-adsense-connect-section {
+    padding: 24px 0;
+}
+
+.contai-adsense-connect-section .button-primary {
+    margin-top: 16px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.contai-adsense-status-section {
+    padding: 16px 0;
+}
+
+.contai-adsense-info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+    margin: 16px 0;
+}
+
+.contai-adsense-info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 12px 16px;
+    background: #f8fafc;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+}
+
+.contai-adsense-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.contai-adsense-value {
+    font-size: 16px;
+    font-weight: 600;
+    color: #0f172a;
+}
+
+.contai-adsense-earnings-val {
+    color: #059669;
+}
+
+.contai-adsense-earnings-summary {
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid #e2e8f0;
+}
+
+.contai-adsense-earnings-summary h4 {
+    margin: 0 0 4px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #334155;
+}
+
+.contai-adsense-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.contai-adsense-actions .button {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+#contai-adsense-status-loading {
+    display: flex;
+    align-items: center;
+    padding: 16px 0;
+    color: #64748b;
+}
