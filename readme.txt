@@ -4,7 +4,7 @@ Tags: ai content, seo, content generation, internal links, table of contents
 Requires at least: 5.9
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 2.15.0
+Stable tag: 2.15.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -159,6 +159,12 @@ The plugin sends your site URL, API key, and content generation parameters (keyw
 7. Tools — Google Analytics, Google Search Console, Publisuites, and Ads Manager integrations.
 
 == Changelog ==
+
+= 2.15.1 =
+* Fixed Site Wizard not generating complete navigation (menu, breadcrumbs, comments)
+* Integrated MainMenuManager to auto-create primary menu with Home + categories
+* Added breadcrumb configuration for 8 supported themes
+* Enabled comments on new posts by default
 
 = 2.14.0 =
 * Added breadcrumb defaults for 8 supported themes during site generation

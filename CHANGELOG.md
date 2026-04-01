@@ -4,6 +4,13 @@ All notable changes to Content AI are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [2.15.1] - 2026-04-01
+
+### Fixed
+- **Site Wizard navigation**: Integrated `MainMenuManager` (previously dead code) into the site generation flow as a new `setupNavigation` step — creates "Main Navigation" menu with Home + all generated categories assigned to the theme's primary menu location (#48)
+- **Breadcrumbs missing**: Added per-theme breadcrumb configuration in `contai_apply_theme_defaults()` for 8 supported themes (Astra, Neve, Blocksy, Kadence, OceanWP, Sydney, Newsmatic, ColorMag) (#48)
+- **Comments not enabled**: Set `default_comment_status` to `open` during site config setup so new posts accept comments by default (#48)
+
 ## [2.14.0] - 2026-04-01
 
 ### Added
