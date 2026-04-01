@@ -398,7 +398,8 @@ class ContaiAnalyticsPanel
                             });
                         }, 15000);
                     })
-                    .catch(function() {
+                    .catch(function(err) {
+                        alert(err.message || '<?php echo esc_js(__('Network error. Please check your connection and try again.', '1platform-content-ai')); ?>');
                         oauthBtn.disabled = false;
                         oauthBtn.innerHTML = '<span class="dashicons dashicons-google"></span> <?php echo esc_js(__('Connect with Google', '1platform-content-ai')); ?>';
                     });
