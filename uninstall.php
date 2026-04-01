@@ -62,6 +62,8 @@ $content_ai_options = array(
 	'contai_user_token_error',
 	// Site hardening.
 	'contai_adsense_approved',
+	'contai_adsense_connected',
+	'contai_adsense_publisher_id',
 	'contai_disable_feeds',
 	'contai_disable_author_pages',
 	'contai_redirect_404',

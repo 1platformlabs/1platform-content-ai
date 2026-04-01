@@ -4,7 +4,7 @@ Tags: ai content, seo, content generation, internal links, table of contents
 Requires at least: 5.9
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 2.12.5
+Stable tag: 2.15.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -159,6 +159,26 @@ The plugin sends your site URL, API key, and content generation parameters (keyw
 7. Tools — Google Analytics, Google Search Console, Publisuites, and Ads Manager integrations.
 
 == Changelog ==
+
+= 2.15.1 =
+* Fixed Site Wizard not generating complete navigation (menu, breadcrumbs, comments)
+* Integrated MainMenuManager to auto-create primary menu with Home + categories
+* Added breadcrumb configuration for 8 supported themes
+* Enabled comments on new posts by default
+
+= 2.14.0 =
+* Added breadcrumb defaults for 8 supported themes during site generation
+* Added navigation setup step in Site Wizard (auto-creates menu from categories)
+* Added default comment status set to open during site generation
+* Fix: Batch completion hang when total=0 (Site Wizard waitForPosts)
+
+= 2.13.0 =
+* Added AdSense Account management tab in Ads Manager with OAuth connect/disconnect flow
+* Added 11 REST endpoints for AdSense integration (earnings, sites, alerts, policy issues)
+* Added earnings overview display and publisher ID auto-sync
+* Fix: Delete confirmation dialog now works (was dead data-confirm attribute)
+* Fix: Period parameter validation on earnings endpoint
+* Fix: Graceful handling of non-JSON server error responses in JS
 
 = 2.12.2 =
 * Changed: Renamed "Link Building" to "Publisuites" in Tools sidebar menu, page title, apps panel, and logs adapter

@@ -13,6 +13,7 @@ require_once __DIR__ . '/../setup/PostGenerationSetupService.php';
 require_once __DIR__ . '/../setup/CommentsGenerationService.php';
 require_once __DIR__ . '/../setup/SearchConsoleSetupService.php';
 require_once __DIR__ . '/../setup/AdsenseSetupService.php';
+require_once __DIR__ . '/../menu/MainMenuManager.php';
 
 class ContaiSiteGenerationJob implements ContaiJobInterface
 {
@@ -30,7 +31,8 @@ class ContaiSiteGenerationJob implements ContaiJobInterface
         'waitForPosts',
         'generateComments',
         'setupSearchConsole',
-        'setupAdsManager'
+        'setupAdsManager',
+        'setupNavigation'
     ];
 
     public function __construct()
@@ -156,6 +158,14 @@ class ContaiSiteGenerationJob implements ContaiJobInterface
                     $this->setupAdsManager($config['adsense']['publisher_id'] ?? '');
                 } catch (Exception $e) {
                     contai_log("Optional step 'setupAdsManager' failed: " . $e->getMessage()); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+                }
+                break;
+
+            case 'setupNavigation':
+                try {
+                    $this->setupNavigation();
+                } catch (Exception $e) {
+                    contai_log("Optional step 'setupNavigation' failed: " . $e->getMessage()); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
                 }
                 break;
         }
@@ -330,6 +340,25 @@ class ContaiSiteGenerationJob implements ContaiJobInterface
         }
 
         $service->setupAdsense($publisherId);
+    }
+
+    private function setupNavigation(): void
+    {
+        $categories = get_categories([
+            'hide_empty' => false,
+            'exclude'    => [get_option('default_category')],
+        ]);
+
+        if (empty($categories)) {
+            return;
+        }
+
+        $category_names = array_map(function ($cat) {
+            return sanitize_text_field($cat->name);
+        }, $categories);
+
+        $menuManager = new ContaiMainMenuManager();
+        $menuManager->updateMainMenuWithCategories($category_names);
     }
 
     private function updateJobPayload(int $jobId, array $payload, int $currentStep, array $completedSteps): void

@@ -116,6 +116,15 @@ function contai_enqueue_apps_styles()
             );
         }
 
+        // AdSense Account tab CSS (loaded alongside ads-manager)
+        if ($section === 'ads-manager') {
+            contai_enqueue_style_with_version(
+                'contai-adsense-account',
+                $css_base_url . 'adsense-account.css',
+                ['contai-apps-base']
+            );
+        }
+
         $section_js_map = [
             'ads-manager' => 'publisher-panel.js',
         ];
@@ -128,6 +137,21 @@ function contai_enqueue_apps_styles()
                 [],
                 true
             );
+        }
+
+        // AdSense Account tab JS (loaded alongside ads-manager)
+        if ($section === 'ads-manager') {
+            $js_base_url = plugin_dir_url(__FILE__) . 'apps/assets/js/';
+            contai_enqueue_script_with_version(
+                'contai-adsense-account',
+                $js_base_url . 'adsense-account.js',
+                [],
+                true
+            );
+            wp_localize_script('contai-adsense-account', 'contaiAdsense', [
+                'restUrl' => esc_url_raw(rest_url('contai/v1/adsense/')),
+                'nonce'   => wp_create_nonce('wp_rest'),
+            ]);
         }
     }
 }
