@@ -4,7 +4,7 @@ All notable changes to Content AI are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [2.15.3] - 2026-04-01
+## [2.15.5] - 2026-04-01
 
 ### Fixed
 - **Site Wizard silent refresh on submit** (#54): "Launch Site Generation" refreshed the page without executing any action or showing feedback. Root cause: `check_admin_referer()` called `wp_die()` on expired nonces (swallowed silently on production), and error messages via URL parameters were lost when `wp_safe_redirect()` failed due to headers already sent
@@ -14,6 +14,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Changed
 - **Error messaging**: Migrated all Site Wizard handler messages from URL query parameters to WordPress transients (`contai_site_gen_notice`) for reliable delivery across redirects
 - **Error resilience**: Wrapped form processing in try/catch with `contai_log()` to surface unexpected errors instead of failing silently
+
+## [2.15.3] - 2026-04-01
+
+### Fixed
+- **API error messages lost**: `OnePlatformClient::createErrorResponse()` only checked `$json['msg']` for error messages, but FastAPI dependency/validation errors return `{"detail": "..."}` — all such errors silently became generic "Request failed". Added `$json['detail']` fallback (#53)
+- **Analytics OAuth silent network error**: JavaScript `.catch()` block in the Google Analytics panel silently reset the button on network errors without showing any message to the user (#53)
 
 ## [2.15.1] - 2026-04-01
 

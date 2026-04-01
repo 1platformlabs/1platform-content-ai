@@ -4,7 +4,7 @@ Tags: ai content, seo, content generation, internal links, table of contents
 Requires at least: 5.9
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 2.15.3
+Stable tag: 2.15.5
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -160,7 +160,7 @@ The plugin sends your site URL, API key, and content generation parameters (keyw
 
 == Changelog ==
 
-= 2.15.3 =
+= 2.15.5 =
 * Fix: Site Wizard "Launch Site Generation" silently refreshing without action (#54)
 * Fix: Nonce expiration now shows friendly "session expired" message instead of blank page
 * Changed: Error messages now use WordPress transients for reliable delivery

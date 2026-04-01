@@ -261,7 +261,7 @@ class ContaiOnePlatformClient {
     }
 
     private function createErrorResponse(?array $json, ContaiHTTPResponse $http_response, ?string $trace_id = null): ContaiOnePlatformResponse {
-        $error_message = $json['msg'] ?? $http_response->getError() ?? self::ERROR_REQUEST_FAILED;
+        $error_message = $json['msg'] ?? $json['detail'] ?? $http_response->getError() ?? self::ERROR_REQUEST_FAILED;
 
         return new ContaiOnePlatformResponse(
             false,
