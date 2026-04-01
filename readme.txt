@@ -4,7 +4,7 @@ Tags: ai content, seo, content generation, internal links, table of contents
 Requires at least: 5.9
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 2.15.6
+Stable tag: 2.16.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -159,6 +159,10 @@ The plugin sends your site URL, API key, and content generation parameters (keyw
 7. Tools — Google Analytics, Google Search Console, Publisuites, and Ads Manager integrations.
 
 == Changelog ==
+
+= 2.16.0 =
+* Added: Featured image deduplication — post generation avoids reusing the same featured image across posts
+* Added: Optimized dedup query scoped to candidate URLs for performance at scale
 
 = 2.15.5 =
 * Fix: Site Wizard "Launch Site Generation" silently refreshing without action (#54)
