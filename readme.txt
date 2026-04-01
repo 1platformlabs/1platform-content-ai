@@ -4,7 +4,7 @@ Tags: ai content, seo, content generation, internal links, table of contents
 Requires at least: 5.9
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 2.15.2
+Stable tag: 2.15.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -159,6 +159,10 @@ The plugin sends your site URL, API key, and content generation parameters (keyw
 7. Tools — Google Analytics, Google Search Console, Publisuites, and Ads Manager integrations.
 
 == Changelog ==
+
+= 2.15.3 =
+* Fixed API error messages being lost — "Request failed" now shows the actual error from the API
+* Fixed Google Analytics OAuth button silently failing on network errors
 
 = 2.15.1 =
 * Fixed Site Wizard not generating complete navigation (menu, breadcrumbs, comments)

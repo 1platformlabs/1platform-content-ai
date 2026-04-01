@@ -4,6 +4,12 @@ All notable changes to Content AI are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [2.15.3] - 2026-04-01
+
+### Fixed
+- **API error messages lost**: `OnePlatformClient::createErrorResponse()` only checked `$json['msg']` for error messages, but FastAPI dependency/validation errors return `{"detail": "..."}` — all such errors silently became generic "Request failed". Added `$json['detail']` fallback (#53)
+- **Analytics OAuth silent network error**: JavaScript `.catch()` block in the Google Analytics panel silently reset the button on network errors without showing any message to the user (#53)
+
 ## [2.15.1] - 2026-04-01
 
 ### Fixed
