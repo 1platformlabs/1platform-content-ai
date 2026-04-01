@@ -101,6 +101,15 @@ require_once __DIR__ . '/../includes/admin/licenses/WPContentAILicensePanel.php'
 // ── Category API ────────────────────────────────────────────────
 require_once __DIR__ . '/../includes/services/category-api/CategoryAPIService.php';
 
+// ── Post Generation ────────────────────────────────────────────
+require_once __DIR__ . '/../includes/services/post/WordPressPostCreator.php';
+require_once __DIR__ . '/../includes/services/post/ImageUploader.php';
+require_once __DIR__ . '/../includes/services/post/ContentImageProcessor.php';
+require_once __DIR__ . '/../includes/services/post/PostMetadataBuilder.php';
+require_once __DIR__ . '/../includes/services/category/CategoryService.php';
+require_once __DIR__ . '/../includes/services/content/ContentGeneratorService.php';
+require_once __DIR__ . '/../includes/services/post/PostGenerationOrchestrator.php';
+
 // ── Cron ────────────────────────────────────────────────────────
 require_once __DIR__ . '/../includes/cron/job-processor-cron.php';
 require_once __DIR__ . '/../includes/cron/agent-actions-cron.php';
