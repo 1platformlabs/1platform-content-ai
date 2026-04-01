@@ -4,6 +4,17 @@ All notable changes to Content AI are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [2.15.3] - 2026-04-01
+
+### Fixed
+- **Site Wizard silent refresh on submit** (#54): "Launch Site Generation" refreshed the page without executing any action or showing feedback. Root cause: `check_admin_referer()` called `wp_die()` on expired nonces (swallowed silently on production), and error messages via URL parameters were lost when `wp_safe_redirect()` failed due to headers already sent
+- **Nonce expiration UX**: Replaced `check_admin_referer()` (which `wp_die()`s) with `wp_verify_nonce()` that redirects with a user-friendly "session expired" transient notice
+- **Form action ambiguity**: Added explicit `action` attribute to the Site Wizard form to prevent browser URL resolution issues with HTTPS/redirect mismatches
+
+### Changed
+- **Error messaging**: Migrated all Site Wizard handler messages from URL query parameters to WordPress transients (`contai_site_gen_notice`) for reliable delivery across redirects
+- **Error resilience**: Wrapped form processing in try/catch with `contai_log()` to surface unexpected errors instead of failing silently
+
 ## [2.15.1] - 2026-04-01
 
 ### Fixed
