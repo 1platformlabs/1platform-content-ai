@@ -160,6 +160,12 @@ The plugin sends your site URL, API key, and content generation parameters (keyw
 
 == Changelog ==
 
+= 2.14.0 =
+* Added breadcrumb defaults for 8 supported themes during site generation
+* Added navigation setup step in Site Wizard (auto-creates menu from categories)
+* Added default comment status set to open during site generation
+* Fix: Batch completion hang when total=0 (Site Wizard waitForPosts)
+
 = 2.13.0 =
 * Added AdSense Account management tab in Ads Manager with OAuth connect/disconnect flow
 * Added 11 REST endpoints for AdSense integration (earnings, sites, alerts, policy issues)

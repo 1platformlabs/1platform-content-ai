@@ -4,6 +4,16 @@ All notable changes to Content AI are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [2.14.0] - 2026-04-01
+
+### Added
+- **Theme breadcrumb defaults**: Enabled breadcrumbs on 8 supported themes (Newsmatic, OceanWP, ColorMag, Astra, Neve, Blocksy, Kadence, Sydney) during site generation for better SEO and navigation
+- **Navigation setup step**: New `setupNavigation` step in Site Wizard that auto-creates a main menu from generated categories using `MainMenuManager`
+- **Default comment status**: Site generation now sets `default_comment_status` to `open` so new posts receive comments by default
+
+### Fixed
+- **Batch completion hang** (#55): Fixed `getBatchStatus()` where `total=0` (no posts enqueued) was never considered complete, causing the Site Wizard to hang at `waitForPosts`. Changed condition from `$total > 0 && $completed >= $total` to `$completed >= $total`
+
 ## [2.13.1] - 2026-03-31
 
 ### Fixed

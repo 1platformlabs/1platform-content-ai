@@ -55,7 +55,8 @@ class ContaiPostGenerationSetupService
             'batch_id' => $batchId,
             'total' => $total,
             'completed' => $completed,
-            'is_complete' => $total > 0 && $completed >= $total
+            // total=0 means no posts were enqueued — treat as complete to avoid hanging
+            'is_complete' => $completed >= $total
         ];
     }
 
