@@ -122,10 +122,12 @@ function contai_apply_theme_defaults( string $theme ): void {
 			if ( function_exists( 'contai_set_newsmatic_reading_defaults' ) ) {
 				contai_set_newsmatic_reading_defaults();
 			}
+			set_theme_mod( 'newsmatic_breadcrumb_option', true );
 			break;
 
 		case 'oceanwp':
 			set_theme_mod( 'ocean_blog_layout', 'right-sidebar' );
+			set_theme_mod( 'ocean_breadcrumbs', true );
 			break;
 
 		case 'generatepress':
@@ -134,6 +136,7 @@ function contai_apply_theme_defaults( string $theme ): void {
 
 		case 'colormag':
 			set_theme_mod( 'colormag_site_layout', 'right-sidebar' );
+			set_theme_mod( 'colormag_breadcrumb_display', true );
 			break;
 
 		case 'astra':
@@ -141,25 +144,32 @@ function contai_apply_theme_defaults( string $theme ): void {
 			set_theme_mod( 'site-sidebar-layout', 'right-sidebar' );
 			set_theme_mod( 'single-post-sidebar-layout', 'right-sidebar' );
 			set_theme_mod( 'archive-post-sidebar-layout', 'right-sidebar' );
+			// Enable breadcrumbs on single posts and archives
+			set_theme_mod( 'ast-breadcrumbs-position', 'astra_entry_top' );
+			set_theme_mod( 'ast-breadcrumbs-separator', '»' );
 			break;
 
 		case 'neve':
 			set_theme_mod( 'neve_default_sidebar_layout', 'right' );
 			set_theme_mod( 'neve_single_post_sidebar_layout', 'right' );
+			set_theme_mod( 'neve_breadcrumbs', true );
 			break;
 
 		case 'blocksy':
 			set_theme_mod( 'blog_has_sidebar', 'right' );
 			set_theme_mod( 'single_has_sidebar', 'right' );
+			set_theme_mod( 'breadcrumb_visibility', 'yes' );
 			break;
 
 		case 'kadence':
 			set_theme_mod( 'post_layout', 'right' );
 			set_theme_mod( 'archive_layout', 'right' );
+			set_theme_mod( 'breadcrumb_enable', true );
 			break;
 
 		case 'sydney':
 			set_theme_mod( 'sidebar_position', 'sidebar-right' );
+			set_theme_mod( 'enable_breadcrumbs', 1 );
 			break;
 	}
 }
@@ -279,6 +289,9 @@ function contai_delete_sample_content(): void {
 function contai_setup_site_config() {
 	update_option( 'permalink_structure', '/%postname%/' );
 	update_option( 'contai_flush_rewrite', true );
+
+	// Enable comments on new posts by default
+	update_option( 'default_comment_status', 'open' );
 
 	contai_delete_sample_content();
 }
