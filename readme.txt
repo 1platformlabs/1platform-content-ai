@@ -4,7 +4,7 @@ Tags: ai content, seo, content generation, internal links, table of contents
 Requires at least: 5.9
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 2.12.5
+Stable tag: 2.13.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -159,6 +159,14 @@ The plugin sends your site URL, API key, and content generation parameters (keyw
 7. Tools — Google Analytics, Google Search Console, Publisuites, and Ads Manager integrations.
 
 == Changelog ==
+
+= 2.13.0 =
+* Added AdSense Account management tab in Ads Manager with OAuth connect/disconnect flow
+* Added 11 REST endpoints for AdSense integration (earnings, sites, alerts, policy issues)
+* Added earnings overview display and publisher ID auto-sync
+* Fix: Delete confirmation dialog now works (was dead data-confirm attribute)
+* Fix: Period parameter validation on earnings endpoint
+* Fix: Graceful handling of non-JSON server error responses in JS
 
 = 2.12.2 =
 * Changed: Renamed "Link Building" to "Publisuites" in Tools sidebar menu, page title, apps panel, and logs adapter

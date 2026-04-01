@@ -4,6 +4,28 @@ All notable changes to Content AI are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [2.13.1] - 2026-03-31
+
+### Fixed
+- **AdSense website ID resolution**: Fixed `get_website_id()` to use `ContaiWebsiteProvider::getWebsiteId()` instead of raw `get_option()`, which returned an array instead of a string, causing "No website configured" errors on all AdSense endpoints
+- **AdSense API response serialization**: Fixed all REST handlers passing the raw `ContaiOnePlatformResponse` object instead of `getData()`, causing `{"data":{}}` empty responses (e.g., missing `authorization_url` on OAuth authorize)
+- **AdSense disconnect/revoke state sync**: Guarded `update_option('contai_adsense_connected')` behind `isSuccess()` check to prevent local state desync when the API call fails
+- **AdSense Account tab CSS**: Added complete styles for empty state, OAuth stepper, connect button, connected state, features grid, earnings summary, and disconnect area
+
+## [2.13.0] - 2026-03-31
+
+### Added
+- **AdSense Account management**: New "AdSense Account" tab in Ads Manager with OAuth popup flow for connecting/disconnecting Google AdSense, status display, and earnings overview
+- **AdSense REST controller**: 11 REST endpoints (`authorize`, `connect`, `disconnect`, `revoke`, `status`, `earnings`, `sites`, `sync_sites`, `alerts`, `policy_issues`, `oauth_status`) with admin capability checks and nonce verification
+- **OAuth popup flow**: Secure `postMessage` + origin validation for AdSense authorization with auto-sync of publisher ID after connect
+- **AdSense account JS/CSS**: `adsense-account.js` (OAuth flow, status loading, earnings display) and `adsense-account.css` (account tab styling)
+- **Policy notice**: Admin notice when AdSense policy issues are detected via API
+
+### Fixed
+- **Delete confirmation dialog**: Fixed dead `data-confirm` attribute on "Delete & Reset" button — now uses `onclick` confirm dialog
+- **Period parameter validation**: Added whitelist `validate_callback` for earnings report period parameter
+- **Non-JSON error handling**: JS `apiRequest()` now handles server errors (500 HTML, auth redirects) gracefully
+
 ## [2.12.4] - 2026-03-28
 
 ### Fixed
