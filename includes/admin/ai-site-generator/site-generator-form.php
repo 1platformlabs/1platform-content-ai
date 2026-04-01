@@ -63,7 +63,7 @@ function contai_render_full_site_generator_form() {
 		</div>
 	<?php endif; ?>
 
-	<form method="post" class="contai-site-generator-form">
+	<form method="post" action="<?php echo esc_url( admin_url( 'admin.php?page=contai-ai-site-generator' ) ); ?>" class="contai-site-generator-form">
 		<?php wp_nonce_field( 'contai_site_generator_nonce', 'contai_site_generator_nonce' ); ?>
 		<input type="hidden" name="contai_start_site_generation" value="1">
 		<input type="hidden" id="contai_wordpress_theme" name="contai_wordpress_theme" value="astra">
