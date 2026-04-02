@@ -68,6 +68,11 @@ class PostGenerationOrchestratorTest extends TestCase
         // Simulate that first image is already used as featured image
         $this->mockUsedFeaturedImageUrls(['https://images.example.com/image-already-used.jpg']);
 
+        // Claim the URL before uploading
+        WP_Mock::userFunction('update_post_meta')
+            ->once()
+            ->with(1, '_contai_featured_image_source', 'https://images.example.com/image-unique.jpg');
+
         // Expect the unique (second) image to be uploaded
         $this->image_uploader
             ->shouldReceive('uploadFromUrl')
@@ -80,14 +85,10 @@ class PostGenerationOrchestratorTest extends TestCase
             ->once()
             ->with(1, 42);
 
-        WP_Mock::userFunction('update_post_meta')
-            ->once()
-            ->with(1, '_contai_featured_image_source', 'https://images.example.com/image-unique.jpg');
-
         $this->executeCreatePostFromApiResult($images);
     }
 
-    public function test_featured_image_falls_back_to_first_when_all_already_used(): void
+    public function test_featured_image_skipped_when_all_candidates_already_used(): void
     {
         $images = [
             ['url' => 'https://images.example.com/image-a.jpg'],
@@ -102,21 +103,9 @@ class PostGenerationOrchestratorTest extends TestCase
             'https://images.example.com/image-b.jpg',
         ]);
 
-        // Falls back to first image
-        $this->image_uploader
-            ->shouldReceive('uploadFromUrl')
-            ->once()
-            ->with('https://images.example.com/image-a.jpg', Mockery::any())
-            ->andReturn(10);
-
-        $this->post_creator
-            ->shouldReceive('setFeaturedImage')
-            ->once()
-            ->with(1, 10);
-
-        WP_Mock::userFunction('update_post_meta')
-            ->once()
-            ->with(1, '_contai_featured_image_source', 'https://images.example.com/image-a.jpg');
+        // Should NOT attempt upload or set featured image — avoids duplication
+        $this->image_uploader->shouldNotReceive('uploadFromUrl');
+        $this->post_creator->shouldNotReceive('setFeaturedImage');
 
         $this->executeCreatePostFromApiResult($images);
     }
@@ -133,6 +122,11 @@ class PostGenerationOrchestratorTest extends TestCase
         // No images used yet
         $this->mockUsedFeaturedImageUrls([]);
 
+        // Claim the URL before uploading
+        WP_Mock::userFunction('update_post_meta')
+            ->once()
+            ->with(1, '_contai_featured_image_source', 'https://images.example.com/fresh-image.jpg');
+
         $this->image_uploader
             ->shouldReceive('uploadFromUrl')
             ->once()
@@ -144,9 +138,40 @@ class PostGenerationOrchestratorTest extends TestCase
             ->once()
             ->with(1, 5);
 
+        $this->executeCreatePostFromApiResult($images);
+    }
+
+    public function test_featured_image_claim_cleaned_up_on_upload_failure(): void
+    {
+        $images = [
+            ['url' => 'https://images.example.com/will-fail.jpg'],
+            ['url' => 'https://images.example.com/another.jpg'],
+        ];
+
+        $this->setupPostCreation();
+
+        // First image is unused
+        $this->mockUsedFeaturedImageUrls([]);
+
+        // Claim the URL before uploading
         WP_Mock::userFunction('update_post_meta')
             ->once()
-            ->with(1, '_contai_featured_image_source', 'https://images.example.com/fresh-image.jpg');
+            ->with(1, '_contai_featured_image_source', 'https://images.example.com/will-fail.jpg');
+
+        // Upload fails
+        $this->image_uploader
+            ->shouldReceive('uploadFromUrl')
+            ->once()
+            ->with('https://images.example.com/will-fail.jpg', Mockery::any())
+            ->andReturn(null);
+
+        // Should NOT set featured image
+        $this->post_creator->shouldNotReceive('setFeaturedImage');
+
+        // Should clean up the claim
+        WP_Mock::userFunction('delete_post_meta')
+            ->once()
+            ->with(1, '_contai_featured_image_source');
 
         $this->executeCreatePostFromApiResult($images);
     }

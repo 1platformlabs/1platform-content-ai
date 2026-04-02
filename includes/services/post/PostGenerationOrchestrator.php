@@ -203,11 +203,15 @@ class ContaiPostGenerationOrchestrator {
             return;
         }
 
+        // Claim the URL before uploading to prevent concurrent jobs from selecting the same image.
+        update_post_meta($post_id, self::META_FEATURED_IMAGE_SOURCE, $selected_url);
+
         $attachment_id = $this->image_uploader->uploadFromUrl($selected_url, $alt_text);
 
         if ($attachment_id !== null) {
             $this->post_creator->setFeaturedImage($post_id, $attachment_id);
-            update_post_meta($post_id, self::META_FEATURED_IMAGE_SOURCE, $selected_url);
+        } else {
+            delete_post_meta($post_id, self::META_FEATURED_IMAGE_SOURCE);
         }
     }
 
@@ -219,8 +223,8 @@ class ContaiPostGenerationOrchestrator {
             }
         }
 
-        contai_log('All candidate featured images already used on this site, falling back to first image');
-        return $images[0]['url'] ?? null;
+        contai_log('All candidate featured images already used on this site, skipping featured image to avoid duplication');
+        return null;
     }
 
     private function getUsedFeaturedImageUrls(array $candidate_urls): array {

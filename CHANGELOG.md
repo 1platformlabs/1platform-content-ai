@@ -13,6 +13,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Auto-generated post excerpts**: `WordPressPostCreator` now sets `post_excerpt` on all generated posts for meta description and WordPress excerpt support
 - **14 new tests**: ImageUploader (2), ContentImageProcessor (4), WordPressPostCreator (2), SeoHeadService (6)
 
+## [2.17.3] - 2026-04-01
+
+### Fixed
+- **Featured image dedup fallback guarantees duplication** (#47): When all candidate images from the API were already used as featured images, `selectUniqueImageUrl()` fell back to `$images[0]['url']` — always the same first image. In batch generation with similar keywords, this caused every post beyond the initial set to share the same cover image. Now returns `null` (no featured image) instead of duplicating
+- **Featured image dedup race window**: `_contai_featured_image_source` meta was saved after the (potentially slow) image upload, leaving a window where concurrent jobs could select the same URL. Meta is now claimed before upload and cleaned up on failure
+
+### Added
+- **Upload failure cleanup test**: New regression test verifying that the meta claim is removed when image upload fails
+
 ## [2.17.1] - 2026-04-01
 
 ### Fixed

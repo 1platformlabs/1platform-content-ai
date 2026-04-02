@@ -166,6 +166,11 @@ The plugin sends your site URL, API key, and content generation parameters (keyw
 * Added: SEO title tag override using AI-generated metatitle (#49)
 * Added: Auto-generated post excerpts for meta description support
 
+= 2.17.3 =
+* Fix: Featured image dedup no longer falls back to first image when all candidates are used — skips featured image to avoid duplication (#47)
+* Fix: Featured image source URL claimed before upload to prevent race conditions in concurrent jobs
+* Added: Regression test for upload failure cleanup
+
 = 2.17.1 =
 * Fix: Site Wizard re-execution now shows failed job error details instead of silently returning to form (#55)
 * Fix: Website record ensured before API-dependent steps (tagline, theme tracking) (#55)
