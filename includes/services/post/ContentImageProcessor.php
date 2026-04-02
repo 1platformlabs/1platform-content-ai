@@ -12,17 +12,20 @@ class ContaiContentImageProcessor {
         $this->uploader = $uploader;
     }
 
-    public function process(string $content, array $images): string {
-        if (empty($images)) {
-            return $content;
+    public function process(string $content, array $images, string $alt_text = ''): string {
+        if (!empty($images)) {
+            $url_map = $this->buildUrlMap($content, $images, $alt_text);
+            $content = $this->replaceUrls($content, $url_map);
         }
 
-        $url_map = $this->buildUrlMap($content, $images);
+        if ($alt_text !== '') {
+            $content = $this->ensureImgAltAttributes($content, $alt_text);
+        }
 
-        return $this->replaceUrls($content, $url_map);
+        return $content;
     }
 
-    private function buildUrlMap(string $content, array $images): array {
+    private function buildUrlMap(string $content, array $images, string $alt_text): array {
         $url_map = [];
 
         foreach ($images as $image) {
@@ -32,7 +35,8 @@ class ContaiContentImageProcessor {
                 continue;
             }
 
-            $attachment_id = $this->uploader->uploadFromUrl($external_url);
+            $image_alt = !empty($image['alt_text']) ? $image['alt_text'] : $alt_text;
+            $attachment_id = $this->uploader->uploadFromUrl($external_url, $image_alt);
 
             if ($attachment_id === null) {
                 continue;
@@ -56,6 +60,26 @@ class ContaiContentImageProcessor {
         foreach ($url_map as $external_url => $local_url) {
             $content = str_replace($external_url, $local_url, $content);
         }
+
+        return $content;
+    }
+
+    private function ensureImgAltAttributes(string $content, string $alt_text): string {
+        $escaped_alt = esc_attr($alt_text);
+
+        // Replace empty alt attributes with the keyword-based alt text
+        $content = preg_replace(
+            '/<img([^>]*)\salt=["\']["\']/',
+            '<img$1 alt="' . $escaped_alt . '"',
+            $content
+        );
+
+        // Add alt attribute to <img> tags missing it entirely
+        $content = preg_replace(
+            '/<img((?![^>]*\salt=)[^>]*)\s*\/?>/',
+            '<img$1 alt="' . $escaped_alt . '">',
+            $content
+        );
 
         return $content;
     }

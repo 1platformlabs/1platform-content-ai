@@ -5,13 +5,17 @@ if (!defined('ABSPATH')) exit;
 class ContaiWordPressPostCreator {
 
     private const CUSTOM_FIELD_METATITLE = '_contai_metatitle';
+    private const META_DESCRIPTION_LENGTH = 155;
 
-    public function create(string $title, string $content, ?string $slug = null, ?string $post_date = null, ?string $metatitle = null): int {
+    public function create(string $title, string $content, ?string $slug = null, ?string $post_date = null, ?string $metatitle = null, ?string $meta_description = null): int {
+        $excerpt = !empty($meta_description) ? $meta_description : $this->generateExcerpt($content);
+
         $post_data = [
             'post_title' => sanitize_text_field($title),
             'post_content' => $content,
             'post_status' => 'publish',
-            'post_type' => 'post'
+            'post_type' => 'post',
+            'post_excerpt' => sanitize_text_field($excerpt),
         ];
 
         if ($slug !== null) {
@@ -49,6 +53,24 @@ class ContaiWordPressPostCreator {
 
     private function saveMetatitle(int $post_id, string $metatitle): void {
         update_post_meta($post_id, self::CUSTOM_FIELD_METATITLE, sanitize_text_field($metatitle));
+    }
+
+    private function generateExcerpt(string $content): string {
+        $text = wp_strip_all_tags($content);
+        $text = preg_replace('/\s+/', ' ', trim($text));
+
+        if (mb_strlen($text) <= self::META_DESCRIPTION_LENGTH) {
+            return $text;
+        }
+
+        $truncated = mb_substr($text, 0, self::META_DESCRIPTION_LENGTH);
+        $last_space = mb_strrpos($truncated, ' ');
+
+        if ($last_space !== false) {
+            $truncated = mb_substr($truncated, 0, $last_space);
+        }
+
+        return $truncated . '...';
     }
 
     public function assignCategory(int $post_id, int $category_id): void {

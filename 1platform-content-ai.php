@@ -4,7 +4,7 @@
  * Plugin Name: 1Platform Content AI
  * Plugin URI: https://1platform.pro/
  * Description: SaaS client for AI-powered content generation, SEO optimization, and site management. All AI processing happens on 1Platform external servers. Includes free local tools: Table of Contents and Internal Links.
- * Version: 2.15.6
+ * Version: 2.16.0
  * Author: 1Platform
  * License: GPLv2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -60,6 +60,11 @@ require_once plugin_dir_path( __FILE__ ) . 'includes/services/agents/ContaiAgent
 require_once plugin_dir_path( __FILE__ ) . 'includes/services/agents/ContaiAgentRestController.php';
 require_once plugin_dir_path( __FILE__ ) . 'includes/admin/agents/ContaiAgentsAdminPage.php';
 require_once plugin_dir_path( __FILE__ ) . 'includes/cron/agent-actions-cron.php';
+
+// SEO domain
+require_once plugin_dir_path(__FILE__) . 'includes/services/seo/SeoHeadService.php';
+$contai_seo_head = new ContaiSeoHeadService();
+$contai_seo_head->register();
 
 // Analytics domain
 require_once plugin_dir_path(__FILE__) . 'includes/analytics/class-analytics-tag.php';

@@ -4,6 +4,15 @@ All notable changes to Content AI are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [2.16.0] - 2026-04-01
+
+### Added
+- **SEO alt text on images** (#49): All images uploaded via the content pipeline now receive descriptive alt text. Uses per-image AI-generated alt text from the API when available, falls back to the keyword. Sets `_wp_attachment_image_alt` post meta and fixes empty/missing `alt` attributes in HTML content
+- **SEO meta description output** (#49): New `ContaiSeoHeadService` outputs `<meta name="description">` tag on singular posts via `wp_head` hook. Uses AI-generated meta description from the API when available, falls back to auto-generated 155-char excerpt from content
+- **SEO title tag override** (#49): Hooks `document_title_parts` to use the API-generated `metatitle` (stored in `_contai_metatitle`) for the document `<title>` tag on singular posts
+- **Auto-generated post excerpts**: `WordPressPostCreator` now sets `post_excerpt` on all generated posts for meta description and WordPress excerpt support
+- **14 new tests**: ImageUploader (2), ContentImageProcessor (4), WordPressPostCreator (2), SeoHeadService (6)
+
 ## [2.15.5] - 2026-04-01
 
 ### Fixed

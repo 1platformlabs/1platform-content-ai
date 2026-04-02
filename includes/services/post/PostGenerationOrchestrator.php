@@ -114,6 +114,7 @@ class ContaiPostGenerationOrchestrator {
             $api_result['category'] ?? null,
             $api_result['url'] ?? null,
             $seo_metadata['metatitle'] ?? null,
+            $seo_metadata['meta_description'] ?? null,
             $seo_metadata['post_date'] ?? null
         );
 
@@ -125,9 +126,12 @@ class ContaiPostGenerationOrchestrator {
     }
 
     private function buildPost(ContaiKeyword $keyword, array $params, ContaiContentGenerationResult $content_result): ContaiPostGenerationResult {
+        $alt_text = $keyword->getTitle() ?: $keyword->getKeyword();
+
         $processed_content = $this->image_processor->process(
             $content_result->getContent(),
-            $content_result->getImages()
+            $content_result->getImages(),
+            $alt_text
         );
 
         $title = $content_result->getTitle() ?: $keyword->getKeyword();
@@ -136,14 +140,15 @@ class ContaiPostGenerationOrchestrator {
             $processed_content,
             $content_result->getSlug(),
             $content_result->getPostDate(),
-            $content_result->getMetatitle()
+            $content_result->getMetatitle(),
+            $content_result->getMetaDescription()
         );
 
         $category_id = $this->assignCategoryIfExists($post_id, $content_result->getCategory());
 
         $this->saveMetadata($post_id, $keyword, $params);
 
-        $this->setFeaturedImageIfExists($post_id, $content_result->getImages());
+        $this->setFeaturedImageIfExists($post_id, $content_result->getImages(), $alt_text);
 
         return new ContaiPostGenerationResult(
             $post_id,
@@ -183,7 +188,7 @@ class ContaiPostGenerationOrchestrator {
         $this->post_creator->saveMetadata($post_id, $metadata);
     }
 
-    private function setFeaturedImageIfExists(int $post_id, array $images): void {
+    private function setFeaturedImageIfExists(int $post_id, array $images, string $alt_text = ''): void {
         if (empty($images)) {
             return;
         }
@@ -194,7 +199,7 @@ class ContaiPostGenerationOrchestrator {
             return;
         }
 
-        $attachment_id = $this->image_uploader->uploadFromUrl($first_image_url);
+        $attachment_id = $this->image_uploader->uploadFromUrl($first_image_url, $alt_text);
 
         if ($attachment_id !== null) {
             $this->post_creator->setFeaturedImage($post_id, $attachment_id);
