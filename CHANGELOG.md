@@ -4,6 +4,18 @@ All notable changes to Content AI are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [2.17.1] - 2026-04-01
+
+### Fixed
+- **Site Wizard re-execution invisible failures** (#55): Re-running the Site Wizard after a failed generation showed the form with no error feedback — the user had no way to know the previous run failed or why. Root cause: `findActiveSiteGenerationJob()` only returned PENDING/PROCESSING jobs, so FAILED jobs were invisible
+- **Missing website record blocks API operations** (#55): The `activateLicense` step did not call `ensureWebsiteExists()`, causing downstream API operations (tagline generation, theme tracking, site config sync) to silently fail when no website record existed
+- **Stale profile cache prevents widget regeneration** (#55): `contai_fetch_generated_profile_from_api()` cached profiles for 6 hours via transient. Re-execution within that window reused stale/empty data instead of fetching a fresh profile for the "About Me" widget
+
+### Added
+- **Failed job error notice**: New `contai_render_last_job_notice()` function shows a detailed error box (failed step, error message, completed step count) above the re-run form when the last site generation failed
+- **`findLastSiteGenerationJob()` repository method**: Returns the most recent site generation job regardless of status, enabling visibility into failed/completed jobs
+- **8 regression tests**: `SiteGeneratorReExecutionTest` validates failed job visibility, `ensureWebsiteExists()` integration, and profile cache clearing
+
 ## [2.16.0] - 2026-04-01
 
 ### Added
