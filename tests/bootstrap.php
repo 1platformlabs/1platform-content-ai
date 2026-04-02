@@ -6,6 +6,18 @@ define('ARRAY_A', 'ARRAY_A');
 define('DAY_IN_SECONDS', 86400);
 define('HOUR_IN_SECONDS', 3600);
 
+// Create dummy WP admin files so ImageUploader::ensureMediaFunctionsLoaded() doesn't fatal
+$wp_admin_includes = ABSPATH . 'wp-admin/includes/';
+if (!is_dir($wp_admin_includes)) {
+    mkdir($wp_admin_includes, 0777, true);
+}
+foreach (['file.php', 'media.php', 'image.php'] as $stub) {
+    $path = $wp_admin_includes . $stub;
+    if (!file_exists($path)) {
+        file_put_contents($path, "<?php\n");
+    }
+}
+
 require_once __DIR__ . '/../vendor/autoload.php';
 
 WP_Mock::bootstrap();
