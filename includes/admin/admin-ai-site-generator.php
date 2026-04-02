@@ -33,30 +33,61 @@ function contai_enqueue_ai_site_generator_styles() {
 add_action( 'admin_enqueue_scripts', 'contai_enqueue_ai_site_generator_styles', 20 );
 
 function contai_handle_ai_site_generator_submission() {
-    // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce is verified below via check_admin_referer().
+    // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce is verified below via wp_verify_nonce().
 	if ( ! isset( $_POST['contai_start_site_generation'] ) ) {
 		return;
 	}
 
-	check_admin_referer( 'contai_site_generator_nonce', 'contai_site_generator_nonce' );
+	$redirect_url = admin_url( 'admin.php?page=contai-ai-site-generator' );
+
+	// Verify nonce — redirect with error instead of wp_die() to avoid silent refresh (#54)
+	$nonce_value = isset( $_POST['contai_site_generator_nonce'] )
+		? sanitize_key( wp_unslash( $_POST['contai_site_generator_nonce'] ) )
+		: '';
+
+	if ( ! wp_verify_nonce( $nonce_value, 'contai_site_generator_nonce' ) ) {
+		set_transient( 'contai_site_gen_notice', array(
+			'type'    => 'error',
+			'message' => __( 'Your session has expired. Please reload the page and try again.', '1platform-content-ai' ),
+		), 30 );
+		wp_safe_redirect( $redirect_url );
+		exit;
+	}
 
 	if ( ! current_user_can( 'manage_options' ) ) {
 		wp_die( esc_html__( 'You do not have permission to perform this action.', '1platform-content-ai' ) );
 	}
 
+	try {
+		contai_process_site_generation_submission( $redirect_url );
+	} catch ( \Throwable $e ) {
+		contai_log( 'Site generation submission failed: ' . $e->getMessage() ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+		set_transient( 'contai_site_gen_notice', array(
+			'type'    => 'error',
+			'message' => __( 'An unexpected error occurred while starting site generation. Please try again.', '1platform-content-ai' ),
+		), 30 );
+		wp_safe_redirect( $redirect_url );
+		exit;
+	}
+}
+
+/**
+ * Process the site generation form submission.
+ *
+ * Extracted from the handler to enable try/catch wrapping.
+ * All validation errors redirect with a transient notice (#54).
+ *
+ * @param string $redirect_url The URL to redirect to after processing.
+ */
+function contai_process_site_generation_submission( string $redirect_url ) {
 	// Validate that category is configured
 	$site_category = sanitize_text_field( wp_unslash( $_POST['contai_site_category'] ?? '' ) );
 	if ( empty( $site_category ) ) {
-		wp_safe_redirect(
-			add_query_arg(
-				array(
-					'page' => 'contai-ai-site-generator',
-					'error' => 1,
-					'message' => 'Please select a category before starting the site generation process.',
-				),
-				admin_url( 'admin.php' )
-			)
-		);
+		set_transient( 'contai_site_gen_notice', array(
+			'type'    => 'error',
+			'message' => __( 'Please select a category before starting the site generation process.', '1platform-content-ai' ),
+		), 30 );
+		wp_safe_redirect( $redirect_url );
 		exit;
 	}
 
@@ -66,16 +97,11 @@ function contai_handle_ai_site_generator_submission() {
 	$creditCheck = $creditGuard->validateCredits();
 
 	if ( ! $creditCheck['has_credits'] ) {
-		wp_safe_redirect(
-			add_query_arg(
-				array(
-					'page'    => 'contai-ai-site-generator',
-					'error'   => 1,
-					'message' => $creditCheck['message'],
-				),
-				admin_url( 'admin.php' )
-			)
-		);
+		set_transient( 'contai_site_gen_notice', array(
+			'type'    => 'error',
+			'message' => $creditCheck['message'],
+		), 30 );
+		wp_safe_redirect( $redirect_url );
 		exit;
 	}
 
@@ -83,16 +109,11 @@ function contai_handle_ai_site_generator_submission() {
 	$activeJob = $jobRepository->findActiveSiteGenerationJob();
 
 	if ( $activeJob ) {
-		wp_safe_redirect(
-			add_query_arg(
-				array(
-					'page' => 'contai-ai-site-generator',
-					'error' => 1,
-					'message' => 'There is already an active site generation process running.',
-				),
-				admin_url( 'admin.php' )
-			)
-		);
+		set_transient( 'contai_site_gen_notice', array(
+			'type'    => 'error',
+			'message' => __( 'There is already an active site generation process running.', '1platform-content-ai' ),
+		), 30 );
+		wp_safe_redirect( $redirect_url );
 		exit;
 	}
 
@@ -145,16 +166,11 @@ function contai_handle_ai_site_generator_submission() {
 	$created = $jobRepository->create( $job );
 
 	if ( ! $created ) {
-		wp_safe_redirect(
-			add_query_arg(
-				array(
-					'page' => 'contai-ai-site-generator',
-					'error' => 1,
-					'message' => 'Failed to start site generation process.',
-				),
-				admin_url( 'admin.php' )
-			)
-		);
+		set_transient( 'contai_site_gen_notice', array(
+			'type'    => 'error',
+			'message' => __( 'Failed to start site generation process.', '1platform-content-ai' ),
+		), 30 );
+		wp_safe_redirect( $redirect_url );
 		exit;
 	}
 
@@ -174,16 +190,11 @@ function contai_handle_ai_site_generator_submission() {
 		}
 	}
 
-	wp_safe_redirect(
-		add_query_arg(
-			array(
-				'page' => 'contai-ai-site-generator',
-				'success' => 1,
-				'message' => urlencode( 'Site generation process has been started successfully!' ),
-			),
-			admin_url( 'admin.php' )
-		)
-	);
+	set_transient( 'contai_site_gen_notice', array(
+		'type'    => 'success',
+		'message' => __( 'Site generation process has been started successfully!', '1platform-content-ai' ),
+	), 30 );
+	wp_safe_redirect( $redirect_url );
 	exit;
 }
 add_action( 'admin_init', 'contai_handle_ai_site_generator_submission' );
@@ -197,18 +208,19 @@ function contai_ai_site_generator_page() {
 	$activeJob = $jobRepository->findActiveSiteGenerationJob();
 	$hasActiveJob = ! empty( $activeJob );
 
-    // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display-only read of GET params after redirect.
-	if ( isset( $_GET['success'] ) ) {
-        // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$msg = isset( $_GET['message'] ) ? sanitize_text_field( wp_unslash( $_GET['message'] ) ) : 'Success';
-		echo '<div class="notice notice-success is-dismissible"><p>' . esc_html( $msg ) . '</p></div>';
-	}
-
-    // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display-only read of GET params after redirect.
-	if ( isset( $_GET['error'] ) ) {
-        // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$msg = isset( $_GET['message'] ) ? sanitize_text_field( wp_unslash( $_GET['message'] ) ) : 'Error';
-		echo '<div class="notice notice-error is-dismissible"><p>' . esc_html( $msg ) . '</p></div>';
+	// Display transient-based notices (primary — survives redirects reliably)
+	$notice = get_transient( 'contai_site_gen_notice' );
+	if ( ! empty( $notice ) && is_array( $notice ) ) {
+		delete_transient( 'contai_site_gen_notice' );
+		$type = in_array( $notice['type'], array( 'success', 'error', 'warning', 'info' ), true ) ? $notice['type'] : 'info';
+		$msg  = $notice['message'] ?? '';
+		if ( ! empty( $msg ) ) {
+			printf(
+				'<div class="notice notice-%s is-dismissible"><p>%s</p></div>',
+				esc_attr( $type ),
+				esc_html( $msg )
+			);
+		}
 	}
 
 	?>
@@ -228,10 +240,70 @@ function contai_ai_site_generator_page() {
 		<?php if ( $hasActiveJob ) : ?>
 			<?php contai_render_active_job_status( $activeJob ); ?>
 		<?php else : ?>
+			<?php contai_render_last_job_notice( $jobRepository ); ?>
 			<?php contai_render_site_generator_form(); ?>
 		<?php endif; ?>
 	</div>
 	<?php
+}
+
+/**
+ * Render a notice about the last site generation job (failed or completed).
+ *
+ * Shows error details for failed jobs so the user understands what went wrong
+ * before re-running the wizard. Without this, failed jobs are invisible (#55).
+ *
+ * @param ContaiJobRepository $jobRepository The job repository instance.
+ */
+function contai_render_last_job_notice( ContaiJobRepository $jobRepository ) {
+	$lastJob = $jobRepository->findLastSiteGenerationJob();
+
+	if ( ! $lastJob ) {
+		return;
+	}
+
+	$status = $lastJob->getStatus();
+
+	if ( $status === 'failed' ) {
+		$errorMessage = $lastJob->getErrorMessage() ?? __( 'Unknown error', '1platform-content-ai' );
+		$completedSteps = $lastJob->getPayload()['progress']['completed_steps'] ?? array();
+		$totalSteps     = $lastJob->getPayload()['progress']['total_steps'] ?? 0;
+		$failedStep     = $lastJob->getPayload()['progress']['current_step_name'] ?? '';
+
+		?>
+		<div class="contai-info-box contai-info-box-error" style="margin-bottom: 20px;">
+			<div class="contai-info-box-icon">
+				<span class="dashicons dashicons-warning"></span>
+			</div>
+			<div class="contai-info-box-content">
+				<h4><?php esc_html_e( 'Previous Generation Failed', '1platform-content-ai' ); ?></h4>
+				<p>
+					<?php
+					printf(
+						/* translators: %1$d: completed steps, %2$d: total steps */
+						esc_html__( 'The last site generation failed after completing %1$d of %2$d steps.', '1platform-content-ai' ),
+						count( $completedSteps ),
+						intval( $totalSteps )
+					);
+					?>
+				</p>
+				<?php if ( ! empty( $failedStep ) ) : ?>
+					<p>
+						<strong><?php esc_html_e( 'Failed at:', '1platform-content-ai' ); ?></strong>
+						<?php echo esc_html( ucwords( str_replace( '_', ' ', $failedStep ) ) ); ?>
+					</p>
+				<?php endif; ?>
+				<p>
+					<strong><?php esc_html_e( 'Error:', '1platform-content-ai' ); ?></strong>
+					<?php echo esc_html( $errorMessage ); ?>
+				</p>
+				<p style="margin-top: 10px; color: #666;">
+					<?php esc_html_e( 'You can re-run the wizard below to retry. Previously completed steps will be re-applied.', '1platform-content-ai' ); ?>
+				</p>
+			</div>
+		</div>
+		<?php
+	}
 }
 
 function contai_render_active_job_status( $job ) {

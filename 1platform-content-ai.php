@@ -4,7 +4,7 @@
  * Plugin Name: 1Platform Content AI
  * Plugin URI: https://1platform.pro/
  * Description: SaaS client for AI-powered content generation, SEO optimization, and site management. All AI processing happens on 1Platform external servers. Includes free local tools: Table of Contents and Internal Links.
- * Version: 2.12.6
+ * Version: 2.17.2
  * Author: 1Platform
  * License: GPLv2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -186,6 +186,10 @@ add_action( 'admin_menu', 'contai_register_admin_menus' );
 add_action( 'rest_api_init', function() {
     $controller = new ContaiAgentRestController();
     $controller->register_routes();
+
+    require_once plugin_dir_path( __FILE__ ) . 'includes/services/adsense/ContaiAdSenseRestController.php';
+    $adsense_controller = new ContaiAdSenseRestController();
+    $adsense_controller->register_routes();
 } );
 
 /**
@@ -342,3 +346,27 @@ function contai_display_migration_error_notice(): void {
     );
 }
 add_action('admin_notices', 'contai_display_migration_error_notice');
+
+/**
+ * Display AdSense policy issue notices.
+ */
+function contai_display_adsense_policy_notice() {
+    if ( ! current_user_can( 'manage_options' ) ) {
+        return;
+    }
+
+    $policy_count = get_transient( 'contai_adsense_policy_count' );
+    if ( $policy_count === false || (int) $policy_count === 0 ) {
+        return;
+    }
+
+    printf(
+        '<div class="notice notice-warning"><p>%s</p></div>',
+        esc_html( sprintf(
+            /* translators: %d: number of policy issues */
+            __( '%d AdSense policy issue(s) detected. Review in Tools > Ads Manager.', '1platform-content-ai' ),
+            (int) $policy_count
+        ) )
+    );
+}
+add_action( 'admin_notices', 'contai_display_adsense_policy_notice' );

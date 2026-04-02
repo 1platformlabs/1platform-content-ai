@@ -55,7 +55,7 @@ class ContaiPostGenerationSetupService
             'batch_id' => $batchId,
             'total' => $total,
             'completed' => $completed,
-            'is_complete' => $total > 0 && $completed >= $total
+            'is_complete' => $completed >= $total
         ];
     }
 

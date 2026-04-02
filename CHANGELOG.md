@@ -4,14 +4,80 @@ All notable changes to Content AI are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [2.12.6] - 2026-03-31
+## [2.17.1] - 2026-04-01
+
+### Fixed
+- **Site Wizard re-execution invisible failures** (#55): Re-running the Site Wizard after a failed generation showed the form with no error feedback — the user had no way to know the previous run failed or why. Root cause: `findActiveSiteGenerationJob()` only returned PENDING/PROCESSING jobs, so FAILED jobs were invisible
+- **Missing website record blocks API operations** (#55): The `activateLicense` step did not call `ensureWebsiteExists()`, causing downstream API operations (tagline generation, theme tracking, site config sync) to silently fail when no website record existed
+- **Stale profile cache prevents widget regeneration** (#55): `contai_fetch_generated_profile_from_api()` cached profiles for 6 hours via transient. Re-execution within that window reused stale/empty data instead of fetching a fresh profile for the "About Me" widget
 
 ### Added
-- **SonarCloud integration**: Added SonarCloud static analysis to QA and PROD CI pipelines with `pcov` coverage on PHP 8.3, separate `sonarcloud` job in QA, and `continue-on-error: true` to keep scans informational
-- **`sonar-project.properties`**: Project configuration for SonarCloud (PHP 8.3, `includes/` sources, `tests/` exclusions)
+- **Failed job error notice**: New `contai_render_last_job_notice()` function shows a detailed error box (failed step, error message, completed step count) above the re-run form when the last site generation failed
+- **`findLastSiteGenerationJob()` repository method**: Returns the most recent site generation job regardless of status, enabling visibility into failed/completed jobs
+- **8 regression tests**: `SiteGeneratorReExecutionTest` validates failed job visibility, `ensureWebsiteExists()` integration, and profile cache clearing
+
+## [2.16.0] - 2026-04-01
+
+### Added
+- **Featured image deduplication**: Post generation now avoids reusing the same featured image across posts. The orchestrator queries `_contai_featured_image_source` post meta to find which candidate URLs are already in use and selects the first unused one, falling back to the first image only when all candidates are exhausted
+- **Optimized dedup query**: Uses a scoped `IN` clause limited to candidate URLs instead of fetching all used URLs site-wide, keeping the query performant regardless of site size
+- **Unit tests**: 4 new tests covering featured image selection (skip used, fallback, fresh site, empty images)
+
+## [2.15.5] - 2026-04-01
+
+### Fixed
+- **Site Wizard silent refresh on submit** (#54): "Launch Site Generation" refreshed the page without executing any action or showing feedback. Root cause: `check_admin_referer()` called `wp_die()` on expired nonces (swallowed silently on production), and error messages via URL parameters were lost when `wp_safe_redirect()` failed due to headers already sent
+- **Nonce expiration UX**: Replaced `check_admin_referer()` (which `wp_die()`s) with `wp_verify_nonce()` that redirects with a user-friendly "session expired" transient notice
+- **Form action ambiguity**: Added explicit `action` attribute to the Site Wizard form to prevent browser URL resolution issues with HTTPS/redirect mismatches
 
 ### Changed
-- **QA workflow**: PHP 8.3 now generates coverage via `pcov` (faster than xdebug), uploads artifact for SonarCloud job
+- **Error messaging**: Migrated all Site Wizard handler messages from URL query parameters to WordPress transients (`contai_site_gen_notice`) for reliable delivery across redirects
+- **Error resilience**: Wrapped form processing in try/catch with `contai_log()` to surface unexpected errors instead of failing silently
+
+## [2.15.3] - 2026-04-01
+
+### Fixed
+- **API error messages lost**: `OnePlatformClient::createErrorResponse()` only checked `$json['msg']` for error messages, but FastAPI dependency/validation errors return `{"detail": "..."}` — all such errors silently became generic "Request failed". Added `$json['detail']` fallback (#53)
+- **Analytics OAuth silent network error**: JavaScript `.catch()` block in the Google Analytics panel silently reset the button on network errors without showing any message to the user (#53)
+
+## [2.15.1] - 2026-04-01
+
+### Fixed
+- **Site Wizard navigation**: Integrated `MainMenuManager` (previously dead code) into the site generation flow as a new `setupNavigation` step — creates "Main Navigation" menu with Home + all generated categories assigned to the theme's primary menu location (#48)
+- **Breadcrumbs missing**: Added per-theme breadcrumb configuration in `contai_apply_theme_defaults()` for 8 supported themes (Astra, Neve, Blocksy, Kadence, OceanWP, Sydney, Newsmatic, ColorMag) (#48)
+- **Comments not enabled**: Set `default_comment_status` to `open` during site config setup so new posts accept comments by default (#48)
+
+## [2.14.0] - 2026-04-01
+
+### Added
+- **Theme breadcrumb defaults**: Enabled breadcrumbs on 8 supported themes (Newsmatic, OceanWP, ColorMag, Astra, Neve, Blocksy, Kadence, Sydney) during site generation for better SEO and navigation
+- **Navigation setup step**: New `setupNavigation` step in Site Wizard that auto-creates a main menu from generated categories using `MainMenuManager`
+- **Default comment status**: Site generation now sets `default_comment_status` to `open` so new posts receive comments by default
+
+### Fixed
+- **Batch completion hang** (#55): Fixed `getBatchStatus()` where `total=0` (no posts enqueued) was never considered complete, causing the Site Wizard to hang at `waitForPosts`. Changed condition from `$total > 0 && $completed >= $total` to `$completed >= $total`
+
+## [2.13.1] - 2026-03-31
+
+### Fixed
+- **AdSense website ID resolution**: Fixed `get_website_id()` to use `ContaiWebsiteProvider::getWebsiteId()` instead of raw `get_option()`, which returned an array instead of a string, causing "No website configured" errors on all AdSense endpoints
+- **AdSense API response serialization**: Fixed all REST handlers passing the raw `ContaiOnePlatformResponse` object instead of `getData()`, causing `{"data":{}}` empty responses (e.g., missing `authorization_url` on OAuth authorize)
+- **AdSense disconnect/revoke state sync**: Guarded `update_option('contai_adsense_connected')` behind `isSuccess()` check to prevent local state desync when the API call fails
+- **AdSense Account tab CSS**: Added complete styles for empty state, OAuth stepper, connect button, connected state, features grid, earnings summary, and disconnect area
+
+## [2.13.0] - 2026-03-31
+
+### Added
+- **AdSense Account management**: New "AdSense Account" tab in Ads Manager with OAuth popup flow for connecting/disconnecting Google AdSense, status display, and earnings overview
+- **AdSense REST controller**: 11 REST endpoints (`authorize`, `connect`, `disconnect`, `revoke`, `status`, `earnings`, `sites`, `sync_sites`, `alerts`, `policy_issues`, `oauth_status`) with admin capability checks and nonce verification
+- **OAuth popup flow**: Secure `postMessage` + origin validation for AdSense authorization with auto-sync of publisher ID after connect
+- **AdSense account JS/CSS**: `adsense-account.js` (OAuth flow, status loading, earnings display) and `adsense-account.css` (account tab styling)
+- **Policy notice**: Admin notice when AdSense policy issues are detected via API
+
+### Fixed
+- **Delete confirmation dialog**: Fixed dead `data-confirm` attribute on "Delete & Reset" button — now uses `onclick` confirm dialog
+- **Period parameter validation**: Added whitelist `validate_callback` for earnings report period parameter
+- **Non-JSON error handling**: JS `apiRequest()` now handles server errors (500 HTML, auth redirects) gracefully
 
 ## [2.12.4] - 2026-03-28
 
