@@ -53,6 +53,8 @@ class ContaiContentGenerationException extends RuntimeException {
 
 class ContaiPostGenerationOrchestrator {
 
+    private const META_FEATURED_IMAGE_SOURCE = '_contai_featured_image_source';
+
     private ContaiContentGeneratorService $content_generator;
     private ContaiCategoryService $category_service;
     private ContaiWordPressPostCreator $post_creator;
@@ -193,17 +195,53 @@ class ContaiPostGenerationOrchestrator {
             return;
         }
 
-        $first_image_url = $images[0]['url'] ?? null;
+        $candidate_urls = array_filter(array_column($images, 'url'));
+        $used_urls = $this->getUsedFeaturedImageUrls($candidate_urls);
+        $selected_url = $this->selectUniqueImageUrl($images, $used_urls);
 
-        if (empty($first_image_url)) {
+        if ($selected_url === null) {
             return;
         }
 
-        $attachment_id = $this->image_uploader->uploadFromUrl($first_image_url, $alt_text);
+        $attachment_id = $this->image_uploader->uploadFromUrl($selected_url, $alt_text);
 
         if ($attachment_id !== null) {
             $this->post_creator->setFeaturedImage($post_id, $attachment_id);
+            update_post_meta($post_id, self::META_FEATURED_IMAGE_SOURCE, $selected_url);
         }
+    }
+
+    private function selectUniqueImageUrl(array $images, array $used_urls): ?string {
+        foreach ($images as $image) {
+            $url = $image['url'] ?? null;
+            if (!empty($url) && !in_array($url, $used_urls, true)) {
+                return $url;
+            }
+        }
+
+        contai_log('All candidate featured images already used on this site, falling back to first image');
+        return $images[0]['url'] ?? null;
+    }
+
+    private function getUsedFeaturedImageUrls(array $candidate_urls): array {
+        if (empty($candidate_urls)) {
+            return [];
+        }
+
+        global $wpdb;
+
+        $placeholders = implode(', ', array_fill(0, count($candidate_urls), '%s'));
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- One-time dedup lookup scoped to candidate URLs only.
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $placeholders is generated from array_fill, not user input.
+        $results = $wpdb->get_col(
+            $wpdb->prepare(
+                "SELECT meta_value FROM {$wpdb->postmeta} WHERE meta_key = %s AND meta_value IN ($placeholders)",
+                array_merge([self::META_FEATURED_IMAGE_SOURCE], array_values($candidate_urls))
+            )
+        );
+
+        return is_array($results) ? $results : [];
     }
 }
 

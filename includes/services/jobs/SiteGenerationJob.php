@@ -8,6 +8,7 @@ require_once __DIR__ . '/../user-profile/UserProfileService.php';
 require_once __DIR__ . '/../setup/SiteConfigService.php';
 require_once __DIR__ . '/../setup/LegalInfoService.php';
 require_once __DIR__ . '/../setup/WebsiteGenerationService.php';
+require_once __DIR__ . '/../../providers/WebsiteProvider.php';
 require_once __DIR__ . '/../keyword/KeywordExtractorService.php';
 require_once __DIR__ . '/../setup/PostGenerationSetupService.php';
 require_once __DIR__ . '/../setup/CommentsGenerationService.php';
@@ -203,6 +204,16 @@ class ContaiSiteGenerationJob implements ContaiJobInterface
         if (!$result['success']) {
             // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
             throw new Exception('License activation failed: ' . $result['message']);
+        }
+
+        // Ensure website record exists in API — required for theme tracking,
+        // tagline generation, and API sync in subsequent steps (#55)
+        $websiteProvider = new ContaiWebsiteProvider();
+        $websiteResult = $websiteProvider->ensureWebsiteExists();
+
+        if (!$websiteResult['success']) {
+            // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+            throw new Exception('Website registration failed: ' . ($websiteResult['message'] ?? 'Unknown error'));
         }
     }
 

@@ -360,4 +360,20 @@ class ContaiJobRepository
         $row = $this->db->getRow($sql, ARRAY_A);
         return $row ? $this->hydrate($row) : null;
     }
+
+    public function findLastSiteGenerationJob()
+    {
+        $table = $this->db->getTableName($this->table);
+
+        $sql = $this->db->prepare(
+            "SELECT * FROM {$table}
+             WHERE job_type = %s
+             ORDER BY created_at DESC
+             LIMIT 1",
+            'site_generation'
+        );
+
+        $row = $this->db->getRow($sql, ARRAY_A);
+        return $row ? $this->hydrate($row) : null;
+    }
 }

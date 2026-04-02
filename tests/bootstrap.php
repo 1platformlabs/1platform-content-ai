@@ -98,10 +98,14 @@ require_once __DIR__ . '/../includes/admin/content-generator/handlers/PostGenera
 require_once __DIR__ . '/../includes/services/user-profile/UserProfileService.php';
 require_once __DIR__ . '/../includes/admin/licenses/WPContentAILicensePanel.php';
 
-// ── Post Pipeline ──────────────────────────────────────────────
+// ── Post Pipeline & Generation ─────────────────────────────────
 require_once __DIR__ . '/../includes/services/post/ImageUploader.php';
 require_once __DIR__ . '/../includes/services/post/ContentImageProcessor.php';
 require_once __DIR__ . '/../includes/services/post/WordPressPostCreator.php';
+require_once __DIR__ . '/../includes/services/post/PostMetadataBuilder.php';
+require_once __DIR__ . '/../includes/services/category/CategoryService.php';
+require_once __DIR__ . '/../includes/services/content/ContentGeneratorService.php';
+require_once __DIR__ . '/../includes/services/post/PostGenerationOrchestrator.php';
 
 // ── SEO ────────────────────────────────────────────────────────
 require_once __DIR__ . '/../includes/services/seo/SeoHeadService.php';

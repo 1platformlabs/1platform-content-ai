@@ -4,7 +4,7 @@ Tags: ai content, seo, content generation, internal links, table of contents
 Requires at least: 5.9
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 2.16.0
+Stable tag: 2.18.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -160,11 +160,21 @@ The plugin sends your site URL, API key, and content generation parameters (keyw
 
 == Changelog ==
 
-= 2.16.0 =
+= 2.18.0 =
 * Added: SEO alt text on all images uploaded by the content pipeline (#49)
 * Added: Meta description output via wp_head for generated posts (#49)
 * Added: SEO title tag override using AI-generated metatitle (#49)
 * Added: Auto-generated post excerpts for meta description support
+
+= 2.17.1 =
+* Fix: Site Wizard re-execution now shows failed job error details instead of silently returning to form (#55)
+* Fix: Website record ensured before API-dependent steps (tagline, theme tracking) (#55)
+* Fix: Profile cache cleared on re-execution for fresh widget generation (#55)
+* Added: 8 regression tests for re-execution visibility
+
+= 2.16.0 =
+* Added: Featured image deduplication — post generation avoids reusing the same featured image across posts
+* Added: Optimized dedup query scoped to candidate URLs for performance at scale
 
 = 2.15.5 =
 * Fix: Site Wizard "Launch Site Generation" silently refreshing without action (#54)
