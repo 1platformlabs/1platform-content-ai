@@ -240,10 +240,70 @@ function contai_ai_site_generator_page() {
 		<?php if ( $hasActiveJob ) : ?>
 			<?php contai_render_active_job_status( $activeJob ); ?>
 		<?php else : ?>
+			<?php contai_render_last_job_notice( $jobRepository ); ?>
 			<?php contai_render_site_generator_form(); ?>
 		<?php endif; ?>
 	</div>
 	<?php
+}
+
+/**
+ * Render a notice about the last site generation job (failed or completed).
+ *
+ * Shows error details for failed jobs so the user understands what went wrong
+ * before re-running the wizard. Without this, failed jobs are invisible (#55).
+ *
+ * @param ContaiJobRepository $jobRepository The job repository instance.
+ */
+function contai_render_last_job_notice( ContaiJobRepository $jobRepository ) {
+	$lastJob = $jobRepository->findLastSiteGenerationJob();
+
+	if ( ! $lastJob ) {
+		return;
+	}
+
+	$status = $lastJob->getStatus();
+
+	if ( $status === 'failed' ) {
+		$errorMessage = $lastJob->getErrorMessage() ?? __( 'Unknown error', '1platform-content-ai' );
+		$completedSteps = $lastJob->getPayload()['progress']['completed_steps'] ?? array();
+		$totalSteps     = $lastJob->getPayload()['progress']['total_steps'] ?? 0;
+		$failedStep     = $lastJob->getPayload()['progress']['current_step_name'] ?? '';
+
+		?>
+		<div class="contai-info-box contai-info-box-error" style="margin-bottom: 20px;">
+			<div class="contai-info-box-icon">
+				<span class="dashicons dashicons-warning"></span>
+			</div>
+			<div class="contai-info-box-content">
+				<h4><?php esc_html_e( 'Previous Generation Failed', '1platform-content-ai' ); ?></h4>
+				<p>
+					<?php
+					printf(
+						/* translators: %1$d: completed steps, %2$d: total steps */
+						esc_html__( 'The last site generation failed after completing %1$d of %2$d steps.', '1platform-content-ai' ),
+						count( $completedSteps ),
+						intval( $totalSteps )
+					);
+					?>
+				</p>
+				<?php if ( ! empty( $failedStep ) ) : ?>
+					<p>
+						<strong><?php esc_html_e( 'Failed at:', '1platform-content-ai' ); ?></strong>
+						<?php echo esc_html( ucwords( str_replace( '_', ' ', $failedStep ) ) ); ?>
+					</p>
+				<?php endif; ?>
+				<p>
+					<strong><?php esc_html_e( 'Error:', '1platform-content-ai' ); ?></strong>
+					<?php echo esc_html( $errorMessage ); ?>
+				</p>
+				<p style="margin-top: 10px; color: #666;">
+					<?php esc_html_e( 'You can re-run the wizard below to retry. Previously completed steps will be re-applied.', '1platform-content-ai' ); ?>
+				</p>
+			</div>
+		</div>
+		<?php
+	}
 }
 
 function contai_render_active_job_status( $job ) {

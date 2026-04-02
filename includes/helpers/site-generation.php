@@ -595,6 +595,13 @@ function contai_add_sidebar_widgets() {
 	$lang  = get_option( 'contai_site_language', 'spanish' );
 	$theme = get_option( 'contai_site_topic', get_option( 'contai_site_theme', 'blog' ) );
 
+	// Clear cached profile so re-execution fetches a fresh one (#55)
+	$legal_info_pre = contai_get_legal_info();
+	$owner_pre      = sanitize_text_field( $legal_info_pre['owner'] ?? '' );
+	$lang_code_pre  = ( $lang === 'english' ? 'en' : 'es' );
+	$cache_key      = 'contai_profile_' . md5( $owner_pre . sanitize_text_field( $theme ) . sanitize_text_field( $lang_code_pre ) );
+	delete_transient( $cache_key );
+
 	$labels = array(
 		'spanish' => array(
 			'search'          => 'Búsqueda',
