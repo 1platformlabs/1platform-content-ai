@@ -4,6 +4,13 @@ All notable changes to Content AI are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [2.16.0] - 2026-04-01
+
+### Added
+- **Featured image deduplication**: Post generation now avoids reusing the same featured image across posts. The orchestrator queries `_contai_featured_image_source` post meta to find which candidate URLs are already in use and selects the first unused one, falling back to the first image only when all candidates are exhausted
+- **Optimized dedup query**: Uses a scoped `IN` clause limited to candidate URLs instead of fetching all used URLs site-wide, keeping the query performant regardless of site size
+- **Unit tests**: 4 new tests covering featured image selection (skip used, fallback, fresh site, empty images)
+
 ## [2.15.5] - 2026-04-01
 
 ### Fixed
