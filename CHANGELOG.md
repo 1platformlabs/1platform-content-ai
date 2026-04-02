@@ -4,6 +4,15 @@ All notable changes to Content AI are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [2.17.3] - 2026-04-01
+
+### Added
+- **SonarCloud integration**: Added SonarCloud static analysis to QA and PROD CI pipelines with `pcov` coverage on PHP 8.3, separate `sonarcloud` job in QA, and `continue-on-error: true` to keep scans informational
+- **`sonar-project.properties`**: Project configuration for SonarCloud (PHP 8.3, `includes/` sources, `tests/` exclusions)
+
+### Changed
+- **QA workflow**: PHP 8.3 now generates coverage via `pcov` (faster than xdebug), uploads artifact for SonarCloud job
+
 ## [2.17.1] - 2026-04-01
 
 ### Fixed
