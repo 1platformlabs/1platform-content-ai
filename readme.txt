@@ -4,7 +4,7 @@ Tags: ai content, seo, content generation, internal links, table of contents
 Requires at least: 5.9
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 2.17.4
+Stable tag: 2.18.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -159,6 +159,12 @@ The plugin sends your site URL, API key, and content generation parameters (keyw
 7. Tools — Google Analytics, Google Search Console, Publisuites, and Ads Manager integrations.
 
 == Changelog ==
+
+= 2.18.0 =
+* Added: SEO alt text on all images uploaded by the content pipeline (#49)
+* Added: Meta description output via wp_head for generated posts (#49)
+* Added: SEO title tag override using AI-generated metatitle (#49)
+* Added: Auto-generated post excerpts for meta description support
 
 = 2.17.3 =
 * Fix: Featured image dedup no longer falls back to first image when all candidates are used — skips featured image to avoid duplication (#47)

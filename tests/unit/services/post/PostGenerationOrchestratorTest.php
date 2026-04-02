@@ -77,7 +77,7 @@ class PostGenerationOrchestratorTest extends TestCase
         $this->image_uploader
             ->shouldReceive('uploadFromUrl')
             ->once()
-            ->with('https://images.example.com/image-unique.jpg')
+            ->with('https://images.example.com/image-unique.jpg', Mockery::any())
             ->andReturn(42);
 
         $this->post_creator
@@ -130,7 +130,7 @@ class PostGenerationOrchestratorTest extends TestCase
         $this->image_uploader
             ->shouldReceive('uploadFromUrl')
             ->once()
-            ->with('https://images.example.com/fresh-image.jpg')
+            ->with('https://images.example.com/fresh-image.jpg', Mockery::any())
             ->andReturn(5);
 
         $this->post_creator
@@ -162,7 +162,7 @@ class PostGenerationOrchestratorTest extends TestCase
         $this->image_uploader
             ->shouldReceive('uploadFromUrl')
             ->once()
-            ->with('https://images.example.com/will-fail.jpg')
+            ->with('https://images.example.com/will-fail.jpg', Mockery::any())
             ->andReturn(null);
 
         // Should NOT set featured image

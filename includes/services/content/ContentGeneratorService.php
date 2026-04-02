@@ -166,6 +166,7 @@ class ContaiContentGeneratorService {
             $data['category'] ?? null,
             $data['url'] ?? null,
             $seo_metadata['metatitle'] ?? null,
+            $seo_metadata['meta_description'] ?? null,
             $seo_metadata['post_date'] ?? null
         );
     }
@@ -188,6 +189,7 @@ class ContaiContentGenerationResult {
     private ?string $category;
     private ?string $slug;
     private ?string $metatitle;
+    private ?string $meta_description;
     private ?string $post_date;
 
     private function __construct(
@@ -198,6 +200,7 @@ class ContaiContentGenerationResult {
         ?string $category = null,
         ?string $slug = null,
         ?string $metatitle = null,
+        ?string $meta_description = null,
         ?string $post_date = null,
         ?string $error_message = null,
         ?int $status_code = null
@@ -209,6 +212,7 @@ class ContaiContentGenerationResult {
         $this->category = $category;
         $this->slug = $slug;
         $this->metatitle = $metatitle;
+        $this->meta_description = $meta_description;
         $this->post_date = $post_date;
         $this->error_message = $error_message;
         $this->status_code = $status_code;
@@ -221,13 +225,14 @@ class ContaiContentGenerationResult {
         ?string $category = null,
         ?string $slug = null,
         ?string $metatitle = null,
+        ?string $meta_description = null,
         ?string $post_date = null
     ): self {
-        return new self(true, $title, $content, $images, $category, $slug, $metatitle, $post_date, null, 200);
+        return new self(true, $title, $content, $images, $category, $slug, $metatitle, $meta_description, $post_date, null, 200);
     }
 
     public static function failure(string $error_message, ?int $status_code = null): self {
-        return new self(false, '', '', [], null, null, null, null, $error_message, $status_code);
+        return new self(false, '', '', [], null, null, null, null, null, $error_message, $status_code);
     }
 
     public function isSuccess(): bool {
@@ -262,6 +267,10 @@ class ContaiContentGenerationResult {
         return $this->metatitle;
     }
 
+    public function getMetaDescription(): ?string {
+        return $this->meta_description;
+    }
+
     public function getPostDate(): ?string {
         return $this->post_date;
     }
@@ -279,6 +288,7 @@ class ContaiContentGenerationResult {
             'category' => $this->category,
             'slug' => $this->slug,
             'metatitle' => $this->metatitle,
+            'meta_description' => $this->meta_description,
             'post_date' => $this->post_date,
             'error_message' => $this->error_message,
             'status_code' => $this->status_code,

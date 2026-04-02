@@ -8,7 +8,7 @@ class ContaiImageUploader {
         $this->ensureMediaFunctionsLoaded();
     }
 
-    public function uploadFromUrl(string $image_url): ?int {
+    public function uploadFromUrl(string $image_url, string $alt_text = ''): ?int {
         $temp_file = download_url($image_url);
 
         if (is_wp_error($temp_file)) {
@@ -19,6 +19,10 @@ class ContaiImageUploader {
         $attachment_id = $this->createAttachment($temp_file, $image_url);
 
         $this->cleanupTempFile($temp_file);
+
+        if ($attachment_id !== null && $alt_text !== '') {
+            update_post_meta($attachment_id, '_wp_attachment_image_alt', sanitize_text_field($alt_text));
+        }
 
         return $attachment_id;
     }

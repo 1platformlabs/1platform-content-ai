@@ -6,6 +6,18 @@ define('ARRAY_A', 'ARRAY_A');
 define('DAY_IN_SECONDS', 86400);
 define('HOUR_IN_SECONDS', 3600);
 
+// Create dummy WP admin files so ImageUploader::ensureMediaFunctionsLoaded() doesn't fatal
+$wp_admin_includes = ABSPATH . 'wp-admin/includes/';
+if (!is_dir($wp_admin_includes)) {
+    mkdir($wp_admin_includes, 0777, true);
+}
+foreach (['file.php', 'media.php', 'image.php'] as $stub) {
+    $path = $wp_admin_includes . $stub;
+    if (!file_exists($path)) {
+        file_put_contents($path, "<?php\n");
+    }
+}
+
 require_once __DIR__ . '/../vendor/autoload.php';
 
 WP_Mock::bootstrap();
@@ -98,17 +110,20 @@ require_once __DIR__ . '/../includes/admin/content-generator/handlers/PostGenera
 require_once __DIR__ . '/../includes/services/user-profile/UserProfileService.php';
 require_once __DIR__ . '/../includes/admin/licenses/WPContentAILicensePanel.php';
 
-// ── Category API ────────────────────────────────────────────────
-require_once __DIR__ . '/../includes/services/category-api/CategoryAPIService.php';
-
-// ── Post Generation ────────────────────────────────────────────
-require_once __DIR__ . '/../includes/services/post/WordPressPostCreator.php';
+// ── Post Pipeline & Generation ─────────────────────────────────
 require_once __DIR__ . '/../includes/services/post/ImageUploader.php';
 require_once __DIR__ . '/../includes/services/post/ContentImageProcessor.php';
+require_once __DIR__ . '/../includes/services/post/WordPressPostCreator.php';
 require_once __DIR__ . '/../includes/services/post/PostMetadataBuilder.php';
 require_once __DIR__ . '/../includes/services/category/CategoryService.php';
 require_once __DIR__ . '/../includes/services/content/ContentGeneratorService.php';
 require_once __DIR__ . '/../includes/services/post/PostGenerationOrchestrator.php';
+
+// ── SEO ────────────────────────────────────────────────────────
+require_once __DIR__ . '/../includes/services/seo/SeoHeadService.php';
+
+// ── Category API ────────────────────────────────────────────────
+require_once __DIR__ . '/../includes/services/category-api/CategoryAPIService.php';
 
 // ── Cron ────────────────────────────────────────────────────────
 require_once __DIR__ . '/../includes/cron/job-processor-cron.php';
