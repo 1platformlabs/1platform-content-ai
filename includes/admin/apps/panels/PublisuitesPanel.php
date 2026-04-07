@@ -110,7 +110,7 @@ class ContaiPublisuitesPanel
                         'secondary_cta_action' => 'contai_disconnect_publisuites',
                     ]);
 
-                    $page = isset($_GET['ps_page']) ? absint($_GET['ps_page']) : 1;
+                    $page = isset($_GET['ps_page']) ? absint($_GET['ps_page']) : 1; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
                     $ordersResponse = $this->service->getOrders($page);
                     if ($ordersResponse->isSuccess()) {
                         $ordersData = $ordersResponse->getData();
@@ -293,6 +293,18 @@ class ContaiPublisuitesPanel
                 ['jquery'],
                 filemtime($jsFile),
                 true
+            );
+        }
+
+        $cssFile = $baseDir . '/assets/css/publisuites.css';
+        $cssUrl  = plugins_url('assets/css/publisuites.css', $baseDir . '/dummy.php');
+
+        if (file_exists($cssFile)) {
+            wp_enqueue_style(
+                'contai-publisuites',
+                $cssUrl,
+                [],
+                filemtime($cssFile)
             );
         }
     }
