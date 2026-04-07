@@ -113,6 +113,7 @@ require_once __DIR__ . '/../includes/services/jobs/KeywordExtractionJob.php';
 require_once __DIR__ . '/../includes/admin/content-generator/handlers/KeywordExtractionHandler.php';
 require_once __DIR__ . '/../includes/services/jobs/QueueManager.php';
 require_once __DIR__ . '/../includes/admin/content-generator/handlers/PostGenerationQueueHandler.php';
+require_once __DIR__ . '/../includes/admin/content-generator/panels/post-maintenance.php';
 
 // ── User Profile & License ─────────────────────────────────────
 require_once __DIR__ . '/../includes/services/user-profile/UserProfileService.php';
@@ -138,7 +139,7 @@ require_once __DIR__ . '/../includes/cron/job-processor-cron.php';
 require_once __DIR__ . '/../includes/cron/agent-actions-cron.php';
 
 // ── Plugin version & upgrade routines ──────────────────────────
-define('CONTAI_VERSION', '2.21.4');
+define('CONTAI_VERSION', '2.21.8');
 
 require_once __DIR__ . '/../includes/database/migrations/CreateKeywordsTable.php';
 require_once __DIR__ . '/../includes/database/migrations/CreateAPILogsTable.php';

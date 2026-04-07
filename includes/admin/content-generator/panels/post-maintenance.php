@@ -4,7 +4,42 @@ if (!defined('ABSPATH')) exit;
 
 class ContaiPostMaintenancePanel {
 
+    private int $dates_randomized = 0;
+    private int $thumbnails_updated = 0;
+    private bool $action_executed = false;
+    private string $action_type = '';
+    private string $error_message = '';
+
+    public function __construct() {
+        $this->handle_form_submissions();
+    }
+
+    private function handle_form_submissions(): void {
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce is verified below via check_admin_referer().
+        if (!isset($_POST['contai_randomize_dates']) && !isset($_POST['contai_update_thumbnails'])) {
+            return;
+        }
+
+        check_admin_referer('contai_post_maintenance', 'contai_maintenance_nonce');
+
+        if (!current_user_can('manage_options')) {
+            return;
+        }
+
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified above.
+        if (isset($_POST['contai_randomize_dates'])) {
+            $this->action_type = 'randomize_dates';
+            $this->randomize_post_dates();
+        } else {
+            $this->action_type = 'update_thumbnails';
+            $this->update_all_post_thumbnails();
+        }
+
+        $this->action_executed = true;
+    }
+
     public function render(): void {
+        $this->render_notices();
         ?>
         <div class="contai-settings-panel contai-panel-maintenance">
             <div class="contai-panel-body">
@@ -45,24 +80,45 @@ class ContaiPostMaintenancePanel {
                 </div>
             </div>
         </div>
-
-        <?php $this->process_actions(); ?>
         <?php
     }
 
-    private function process_actions(): void {
-        if (isset($_POST['contai_randomize_dates']) || isset($_POST['contai_update_thumbnails'])) {
-            check_admin_referer('contai_post_maintenance', 'contai_maintenance_nonce');
+    private function render_notices(): void {
+        if (!$this->action_executed) {
+            return;
+        }
 
-            if (!current_user_can('manage_options')) {
-                return;
-            }
+        if (!empty($this->error_message)) {
+            ?>
+            <div class="notice notice-error is-dismissible">
+                <p><?php echo esc_html($this->error_message); ?></p>
+            </div>
+            <?php
+            return;
+        }
 
-            if (isset($_POST['contai_randomize_dates'])) {
-                $this->randomize_post_dates();
-            } elseif (isset($_POST['contai_update_thumbnails'])) {
-                $this->update_all_post_thumbnails();
-            }
+        if ($this->action_type === 'randomize_dates') {
+            ?>
+            <div class="notice notice-success is-dismissible">
+                <p><?php
+                printf(
+                    /* translators: %d: number of posts with randomized dates */
+                    esc_html__('Successfully randomized dates for %d posts.', '1platform-content-ai'),
+                    intval($this->dates_randomized)
+                ); ?></p>
+            </div>
+            <?php
+        } elseif ($this->action_type === 'update_thumbnails') {
+            ?>
+            <div class="notice notice-success is-dismissible">
+                <p><?php
+                printf(
+                    /* translators: %d: number of posts with updated thumbnails */
+                    esc_html__('Successfully updated thumbnails for %d posts.', '1platform-content-ai'),
+                    intval($this->thumbnails_updated)
+                ); ?></p>
+            </div>
+            <?php
         }
     }
 
@@ -76,38 +132,39 @@ class ContaiPostMaintenancePanel {
         ");
 
         if (empty($post_ids)) {
-            $this->render_info(__('No published posts found to randomize.', '1platform-content-ai'));
+            $this->error_message = __('No published posts found to randomize.', '1platform-content-ai');
             return;
         }
 
         foreach ($post_ids as $post_id) {
             $days_ago = wp_rand(0, 365);
+            $hours = wp_rand(0, 23);
+            $minutes = wp_rand(0, 59);
+            $seconds = wp_rand(0, 59);
             $timestamp = strtotime("-{$days_ago} days");
-            $random_date = gmdate('Y-m-d H:i:s', $timestamp);
-            $random_date_gmt = get_gmt_from_date($random_date);
+            $timestamp = mktime($hours, $minutes, $seconds, (int) gmdate('n', $timestamp), (int) gmdate('j', $timestamp), (int) gmdate('Y', $timestamp));
+
+            $local_date = wp_date('Y-m-d H:i:s', $timestamp);
+            $gmt_date = get_gmt_from_date($local_date);
 
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
             $wpdb->update(
                 $wpdb->posts,
                 [
-                    'post_date' => $random_date,
-                    'post_date_gmt' => $random_date_gmt,
-                    'post_modified' => $random_date,
-                    'post_modified_gmt' => $random_date_gmt,
+                    'post_date'         => $local_date,
+                    'post_date_gmt'     => $gmt_date,
+                    'post_modified'     => $local_date,
+                    'post_modified_gmt' => $gmt_date,
                 ],
                 ['ID' => $post_id],
                 ['%s', '%s', '%s', '%s'],
                 ['%d']
             );
+
+            clean_post_cache((int) $post_id);
         }
 
-        $this->render_success(
-            sprintf(
-                /* translators: %d: number of posts with randomized dates */
-                __('✓ Successfully randomized dates for %d posts.', '1platform-content-ai'),
-                count($post_ids)
-            )
-        );
+        $this->dates_randomized = count($post_ids);
     }
 
     private function update_all_post_thumbnails(): void {
@@ -120,24 +177,15 @@ class ContaiPostMaintenancePanel {
         ");
 
         if (empty($post_ids)) {
-            $this->render_info(__('No published posts found to update.', '1platform-content-ai'));
+            $this->error_message = __('No published posts found to update.', '1platform-content-ai');
             return;
         }
 
-        $updated_count = 0;
         foreach ($post_ids as $post_id) {
-            if ($this->set_random_image_as_thumbnail($post_id)) {
-                $updated_count++;
+            if ($this->set_random_image_as_thumbnail((int) $post_id)) {
+                $this->thumbnails_updated++;
             }
         }
-
-        $this->render_success(
-            sprintf(
-                /* translators: %d: number of posts with updated thumbnails */
-                __('✓ Successfully updated thumbnails for %d posts.', '1platform-content-ai'),
-                $updated_count
-            )
-        );
     }
 
     private function set_random_image_as_thumbnail(int $post_id): bool {
@@ -157,6 +205,11 @@ class ContaiPostMaintenancePanel {
             return false;
         }
 
+        $random_image_url = esc_url_raw($random_image_url);
+        if (empty($random_image_url) || !wp_http_validate_url($random_image_url)) {
+            return false;
+        }
+
         $attachment_id = media_sideload_image($random_image_url, $post_id, null, 'id');
         if (is_wp_error($attachment_id)) {
             return false;
@@ -164,23 +217,5 @@ class ContaiPostMaintenancePanel {
 
         set_post_thumbnail($post_id, $attachment_id);
         return true;
-    }
-
-    private function render_success(string $message): void {
-        ?>
-        <div class="contai-notice contai-notice-success">
-            <span class="dashicons dashicons-yes-alt"></span>
-            <p><?php echo wp_kses_post($message); ?></p>
-        </div>
-        <?php
-    }
-
-    private function render_info(string $message): void {
-        ?>
-        <div class="contai-notice contai-notice-info">
-            <span class="dashicons dashicons-info"></span>
-            <p><?php echo wp_kses_post($message); ?></p>
-        </div>
-        <?php
     }
 }
