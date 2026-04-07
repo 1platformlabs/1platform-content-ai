@@ -297,6 +297,9 @@ class ContaiSiteGenerationJob implements ContaiJobInterface
         $status = $service->getBatchStatus($batchId);
 
         if ($status['is_complete']) {
+            if ($status['failed'] > 0) {
+                contai_log("Site generation batch {$batchId} completed with {$status['failed']} failed posts out of {$status['total']} total.");
+            }
             unset($payload['wait_start_time']);
             unset($payload['_wait_and_retry']);
             unset($payload['_wait_message']);
@@ -309,12 +312,13 @@ class ContaiSiteGenerationJob implements ContaiJobInterface
 
         if ($elapsedTime > $maxWaitSeconds) {
             // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
-            throw new Exception('Timeout waiting for posts to complete after ' . round($elapsedTime / 60) . ' minutes');
+            throw new Exception('Timeout waiting for posts to complete after ' . round($elapsedTime / 60) . ' minutes. Progress: ' . $status['finished'] . '/' . $status['total'] . ' finished (' . $status['failed'] . ' failed).');
         }
 
+        $failedInfo = $status['failed'] > 0 ? " ({$status['failed']} failed)" : '';
         $payload['wait_start_time'] = $waitStartTime;
         $payload['_wait_and_retry'] = true;
-        $payload['_wait_message'] = "Waiting for posts: {$status['completed']}/{$status['total']} completed. Elapsed: " . round($elapsedTime / 60) . " min.";
+        $payload['_wait_message'] = "Waiting for posts: {$status['finished']}/{$status['total']} finished{$failedInfo}. Elapsed: " . round($elapsedTime / 60) . " min.";
 
         return $payload;
     }

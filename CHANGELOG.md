@@ -4,6 +4,14 @@ All notable changes to Content AI are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [2.21.6] - 2026-04-07
+
+### Fixed
+- **Site Wizard stuck at 58% on waitForPosts** (#69): `getBatchStatus()` only counted `done` post generation jobs — any job that failed (API timeout, credit issue, etc.) was permanently marked `failed` but never counted as "finished", so the batch never completed and `waitForPosts` looped indefinitely until the 2-hour timeout. Now counts both `done` and `failed` jobs as finished, allowing the wizard to advance with partial success
+
+### Added
+- **4 regression tests**: Comprehensive test coverage for batch status with failed jobs, all-failed batches, and partial failure scenarios
+
 ## [2.21.4] - 2026-04-07
 
 ### Fixed
