@@ -50,6 +50,32 @@ class ContaiPublisuitesFormHandler
 
         if (isset($_POST['contai_create_verification_file'])) {
             $this->handleCreateVerificationFile();
+            return;
+        }
+
+        if (isset($_POST['contai_sync_publisuites'])) {
+            $this->handleSync();
+            return;
+        }
+
+        if (isset($_POST['contai_accept_order'])) {
+            $this->handleAcceptOrder();
+            return;
+        }
+
+        if (isset($_POST['contai_reject_order'])) {
+            $this->handleRejectOrder();
+            return;
+        }
+
+        if (isset($_POST['contai_reopen_order'])) {
+            $this->handleReopenOrder();
+            return;
+        }
+
+        if (isset($_POST['contai_send_url'])) {
+            $this->handleSendUrl();
+            return;
         }
     }
 
@@ -138,6 +164,101 @@ class ContaiPublisuitesFormHandler
         }
 
         $this->redirectWithMessage('success', $result['message']);
+    }
+
+    private function handleSync(): void
+    {
+        $response = $this->service->triggerSync();
+
+        if (!$response->isSuccess()) {
+            $this->redirectWithMessage('error', $response->getMessage(), $response->getTraceId());
+            return;
+        }
+
+        $this->redirectWithMessage('success', __('Orders synced successfully', '1platform-content-ai'));
+    }
+
+    private function handleAcceptOrder(): void
+    {
+        $orderId = isset($_POST['contai_order_id']) ? absint($_POST['contai_order_id']) : 0;
+
+        if ($orderId <= 0) {
+            $this->redirectWithMessage('error', __('Invalid order ID', '1platform-content-ai'));
+            return;
+        }
+
+        $response = $this->service->acceptOrder($orderId);
+
+        if (!$response->isSuccess()) {
+            $this->redirectWithMessage('error', $response->getMessage(), $response->getTraceId());
+            return;
+        }
+
+        $this->redirectWithMessage('success', __('Order accepted', '1platform-content-ai'));
+    }
+
+    private function handleRejectOrder(): void
+    {
+        $orderId = isset($_POST['contai_order_id']) ? absint($_POST['contai_order_id']) : 0;
+
+        if ($orderId <= 0) {
+            $this->redirectWithMessage('error', __('Invalid order ID', '1platform-content-ai'));
+            return;
+        }
+
+        $response = $this->service->rejectOrder($orderId);
+
+        if (!$response->isSuccess()) {
+            $this->redirectWithMessage('error', $response->getMessage(), $response->getTraceId());
+            return;
+        }
+
+        $this->redirectWithMessage('success', __('Order rejected', '1platform-content-ai'));
+    }
+
+    private function handleReopenOrder(): void
+    {
+        $orderId = isset($_POST['contai_order_id']) ? absint($_POST['contai_order_id']) : 0;
+
+        if ($orderId <= 0) {
+            $this->redirectWithMessage('error', __('Invalid order ID', '1platform-content-ai'));
+            return;
+        }
+
+        $response = $this->service->reopenOrder($orderId);
+
+        if (!$response->isSuccess()) {
+            $this->redirectWithMessage('error', $response->getMessage(), $response->getTraceId());
+            return;
+        }
+
+        $this->redirectWithMessage('success', __('Reopen request sent', '1platform-content-ai'));
+    }
+
+    private function handleSendUrl(): void
+    {
+        $orderId = isset($_POST['contai_order_id']) ? absint($_POST['contai_order_id']) : 0;
+
+        if ($orderId <= 0) {
+            $this->redirectWithMessage('error', __('Invalid order ID', '1platform-content-ai'));
+            return;
+        }
+
+        $url = isset($_POST['contai_delivery_url']) ? esc_url_raw(wp_unslash($_POST['contai_delivery_url'])) : '';
+
+        if (empty($url) || strpos($url, 'http') !== 0) {
+            $this->redirectWithMessage('error', __('Please provide a valid URL starting with http', '1platform-content-ai'));
+            return;
+        }
+
+        $response = $this->service->sendUrl($orderId, $url);
+
+        if (!$response->isSuccess()) {
+            $this->redirectWithMessage('error', $response->getMessage(), $response->getTraceId());
+            return;
+        }
+
+        $this->redirectWithMessage('success', __('URL submitted successfully', '1platform-content-ai'));
     }
 
     private function redirectWithMessage(string $type, string $message, ?string $trace_id = null): void

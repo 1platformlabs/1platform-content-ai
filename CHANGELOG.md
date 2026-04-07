@@ -4,6 +4,20 @@ All notable changes to Content AI are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [2.20.0] - 2026-04-06
+
+### Added
+- **Sponsored post orders management**: New orders table in the Publisuites panel showing order ID, type, sale date, deadline, earnings, and status with color-coded badges
+- **Order actions**: Accept, reject, reopen orders, and submit delivery URLs directly from the WordPress admin panel
+- **Orders sync**: Manual sync button fetches latest orders from the marketplace API with stale-data warnings
+- **Paginated order list**: Server-side pagination for large order lists
+- **New `OrdersSection.php`**: Dedicated UI component for the orders table with full i18n support
+- **6 new service methods**: `getOrders()`, `viewOrder()`, `triggerSync()`, `acceptOrder()`, `rejectOrder()`, `reopenOrder()`, `sendUrl()` in `PublisuitesService`
+- **5 new form handlers**: Sync, accept, reject, reopen, and send URL actions with nonce verification and input sanitization
+
+### Removed
+- **Publisuites one-click setup plan doc**: `docs/PLAN_PUBLISUITES_ONE_CLICK_SETUP.md` — implemented and no longer needed
+
 ## [2.18.0] - 2026-04-01
 
 ### Added

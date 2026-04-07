@@ -7,6 +7,7 @@ require_once __DIR__ . '/../../../helpers/license-helper.php';
 require_once __DIR__ . '/publisuites/ConnectSection.php';
 require_once __DIR__ . '/publisuites/VerificationSection.php';
 require_once __DIR__ . '/publisuites/ConnectedSection.php';
+require_once __DIR__ . '/publisuites/OrdersSection.php';
 
 /**
  * Publisuites Panel Controller.
@@ -99,7 +100,7 @@ class ContaiPublisuitesPanel
 
             case 'configured':
                 if ($this->service->isVerified($config)) {
-                    return array_merge($base, [
+                    $view_data = array_merge($base, [
                         'status_key'           => 'connected',
                         'status_label'         => __('Connected', '1platform-content-ai'),
                         'status_class'         => 'contai-badge--success',
@@ -108,6 +109,27 @@ class ContaiPublisuitesPanel
                         'secondary_cta_label'  => __('Disconnect', '1platform-content-ai'),
                         'secondary_cta_action' => 'contai_disconnect_publisuites',
                     ]);
+
+                    $page = isset($_GET['ps_page']) ? absint($_GET['ps_page']) : 1;
+                    $ordersResponse = $this->service->getOrders($page);
+                    if ($ordersResponse->isSuccess()) {
+                        $ordersData = $ordersResponse->getData();
+                        $view_data['orders'] = $ordersData['orders'] ?? [];
+                        $view_data['total'] = $ordersData['total'] ?? 0;
+                        $view_data['page'] = $ordersData['page'] ?? 1;
+                        $view_data['page_size'] = $ordersData['page_size'] ?? 20;
+                        $view_data['last_synced_at'] = $ordersData['last_synced_at'] ?? null;
+                        $view_data['stale'] = $ordersData['stale'] ?? false;
+                    } else {
+                        $view_data['orders'] = [];
+                        $view_data['total'] = 0;
+                        $view_data['page'] = 1;
+                        $view_data['page_size'] = 20;
+                        $view_data['last_synced_at'] = null;
+                        $view_data['stale'] = true;
+                    }
+
+                    return $view_data;
                 }
 
                 return array_merge($base, [
@@ -170,6 +192,8 @@ class ContaiPublisuitesPanel
             case 'connected':
                 $section = new ContaiPublisuitesConnectedSection($view_data);
                 $section->render();
+                $ordersSection = new ContaiPublisuitesOrdersSection($view_data);
+                $ordersSection->render();
                 break;
 
             case 'website_required':
