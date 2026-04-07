@@ -481,7 +481,7 @@ jobs:
   auto-fix:
     name: Auto-Fix Critical Issues (PR separado)
     needs: [tests, code-review]
-    if: always() && needs.tests.result == 'success' && needs.code-review.outputs.verdict == 'changes_required'
+    if: false  # Disabled — auto-fix is now handled manually
     runs-on: ubuntu-latest
     timeout-minutes: 15
     environment: QA
