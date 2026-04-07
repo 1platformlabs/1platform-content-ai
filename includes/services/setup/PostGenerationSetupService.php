@@ -41,21 +41,37 @@ class ContaiPostGenerationSetupService
         $total = (int) get_option("contai_batch_{$batchId}_total", 0);
 
         $table = $wpdb->prefix . 'contai_jobs';
+        $likePattern = '%"batch_id":"' . $wpdb->esc_like($batchId) . '"%';
+
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter -- $table is from $wpdb->prefix, safe.
-        $completed = (int) $wpdb->get_var($wpdb->prepare(
+        $done = (int) $wpdb->get_var($wpdb->prepare(
             // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
             "SELECT COUNT(*) FROM {$table}
              WHERE job_type = 'post_generation'
              AND status = 'done'
              AND payload LIKE %s",
-            '%"batch_id":"' . $wpdb->esc_like($batchId) . '"%'
+            $likePattern
         ));
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter
+        $failed = (int) $wpdb->get_var($wpdb->prepare(
+            // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+            "SELECT COUNT(*) FROM {$table}
+             WHERE job_type = 'post_generation'
+             AND status = 'failed'
+             AND payload LIKE %s",
+            $likePattern
+        ));
+
+        $finished = $done + $failed;
 
         return [
             'batch_id' => $batchId,
             'total' => $total,
-            'completed' => $completed,
-            'is_complete' => $completed >= $total
+            'completed' => $done,
+            'failed' => $failed,
+            'finished' => $finished,
+            'is_complete' => $finished >= $total
         ];
     }
 
