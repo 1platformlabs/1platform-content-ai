@@ -4,6 +4,19 @@ All notable changes to Content AI are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [2.22.0] - 2026-04-07
+
+### Added
+- **Publisuites order management**: Tab-based UI for managing sponsored post orders — "Action Required" (accept/reject), "In Progress" (monitoring), "History" (completed/cancelled)
+- **Expandable order details**: Click the eye icon to view briefing, suggested title, required links, and minimum word count inline without leaving the page
+- **Sync integration**: "Sync Now" button fetches latest orders from the API. Last sync timestamp shown in the header
+- **Order actions**: Accept, reject, send URL, and reopen orders directly from the plugin — each action updates the order status in real-time
+- **Connection settings collapsed**: Integration details (Marketplace ID, Site URL, Disconnect) moved to a collapsible section, keeping focus on actionable orders
+
+### Changed
+- **Service layer extended**: 7 new API methods (getOrders, viewOrder, triggerSync, acceptOrder, rejectOrder, reopenOrder, sendUrl)
+- **Form handler extended**: 5 new handlers for sync and order actions with nonce verification and capability checks
+
 ## [2.21.8] - 2026-04-07
 
 ### Fixed

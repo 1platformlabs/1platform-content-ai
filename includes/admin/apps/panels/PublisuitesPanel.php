@@ -190,10 +190,10 @@ class ContaiPublisuitesPanel
                 break;
 
             case 'connected':
-                $section = new ContaiPublisuitesConnectedSection($view_data);
-                $section->render();
                 $ordersSection = new ContaiPublisuitesOrdersSection($view_data);
                 $ordersSection->render();
+                $section = new ContaiPublisuitesConnectedSection($view_data);
+                $section->render();
                 break;
 
             case 'website_required':
