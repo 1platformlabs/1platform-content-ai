@@ -134,6 +134,25 @@ class ContaiQueueManager
             return $b->getVolume() - $a->getVolume();
         });
 
-        return $availableKeywords[0];
+        // Skip keywords that already have generated posts (re-execution deduplication)
+        foreach ($availableKeywords as $keyword) {
+            $existing_post = get_posts([
+                'meta_key'    => '_1platform_keyword',
+                'meta_value'  => $keyword->getKeyword(),
+                'post_type'   => 'post',
+                'post_status' => ['publish', 'draft'],
+                'numberposts' => 1,
+            ]);
+
+            if (empty($existing_post)) {
+                return $keyword;
+            }
+
+            // Mark keyword as done so it's not re-checked
+            $this->keywordRepository->updateStatus($keyword->getId(), 'done');
+            error_log("[ContAI] Keyword '{$keyword->getKeyword()}' already has a post — marked as done");
+        }
+
+        return null;
     }
 }
