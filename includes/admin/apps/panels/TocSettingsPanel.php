@@ -266,6 +266,7 @@ class ContaiTocSettingsPanel {
 
         if (isset($_POST['reset_settings'])) {
             $this->config->reset();
+            $this->purgePageCaches();
             $this->showNotice(__('Settings reset to defaults successfully.', '1platform-content-ai'), 'success');
             return;
         }
@@ -292,9 +293,47 @@ class ContaiTocSettingsPanel {
         ];
 
         if ($this->config->update($data)) {
+            $this->purgePageCaches();
             $this->showNotice(__('Settings saved successfully.', '1platform-content-ai'), 'success');
         } else {
             $this->showNotice(__('Failed to save settings.', '1platform-content-ai'), 'error');
+        }
+    }
+
+    private function purgePageCaches(): void {
+        // LiteSpeed Cache
+        if (has_action('litespeed_purge_all')) {
+            do_action('litespeed_purge_all');
+        }
+
+        // WP Rocket
+        if (function_exists('rocket_clean_domain')) {
+            rocket_clean_domain();
+        }
+
+        // WP Super Cache
+        if (function_exists('wp_cache_clear_cache')) {
+            wp_cache_clear_cache();
+        }
+
+        // W3 Total Cache
+        if (function_exists('w3tc_flush_posts')) {
+            w3tc_flush_posts();
+        }
+
+        // Cachify
+        if (has_action('cachify_flush_cache')) {
+            do_action('cachify_flush_cache');
+        }
+
+        // WP Fastest Cache
+        if (function_exists('wpfc_clear_all_cache')) {
+            wpfc_clear_all_cache();
+        }
+
+        // Autoptimize
+        if (class_exists('autoptimizeCache') && method_exists('autoptimizeCache', 'clearall')) {
+            \autoptimizeCache::clearall();
         }
     }
 
