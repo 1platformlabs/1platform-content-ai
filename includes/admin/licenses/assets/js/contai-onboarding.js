@@ -14,6 +14,7 @@
     var pollTimer     = null;
     var pollStart     = 0;
     var selectedAmount = 10;
+    var API_KEY_PATTERN = /^sk-[a-zA-Z0-9]{20,}$/;
 
     // ── DOM refs ──
 
@@ -124,8 +125,8 @@
                     var sessionId = data.session_id;
                     var paymentUrl = data.payment_url;
 
-                    // Open payment in new tab
-                    if (paymentUrl) {
+                    // Open payment in new tab (only allow https URLs)
+                    if (paymentUrl && /^https:\/\//.test(paymentUrl)) {
                         window.open(paymentUrl, '_blank');
                     }
 
@@ -176,11 +177,11 @@
                     }
                 })
                 .catch(function (err) {
-                    // 410 = already claimed, treat as needing refresh
                     if (err.status === 410) {
                         clearInterval(pollTimer);
                         showForm();
-                        showError('API key was already retrieved. Please enter it below.');
+                        showError(contaiOnboarding.i18n.alreadyClaimed ||
+                            'API key was already retrieved. Please enter it below.');
                     }
                 });
         }, POLL_INTERVAL);
@@ -189,14 +190,18 @@
     // ── Activate API key ──
 
     function activateKey(apiKey) {
-        // Fill the existing license field and trigger form submit
+        if (!apiKey || !API_KEY_PATTERN.test(apiKey)) {
+            showForm();
+            showError(contaiOnboarding.i18n.invalidKey || 'Invalid API key received. Please enter it manually.');
+            return;
+        }
+
         var licenseInput = document.querySelector('input[name="contai_api_key"]');
         var licenseForm = licenseInput ? licenseInput.closest('form') : null;
         if (licenseInput && licenseForm) {
             licenseInput.value = apiKey;
             licenseForm.submit();
         } else {
-            // Fallback: reload with a message
             window.location.reload();
         }
     }
@@ -234,6 +239,15 @@
             errorBox.style.display = 'none';
         }
     }
+
+    // ── Cleanup on page unload ──
+
+    document.addEventListener('visibilitychange', function () {
+        if (document.visibilityState === 'hidden' && pollTimer) {
+            clearInterval(pollTimer);
+            pollTimer = null;
+        }
+    });
 
     // ── Session recovery (from transient) ──
 

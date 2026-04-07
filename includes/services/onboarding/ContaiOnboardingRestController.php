@@ -44,7 +44,7 @@ class ContaiOnboardingRestController {
                     'required'          => true,
                     'sanitize_callback' => 'floatval',
                     'validate_callback' => function( $value ) {
-                        return is_numeric( $value ) && floatval( $value ) > 0;
+                        return is_numeric( $value ) && floatval( $value ) > 0 && floatval( $value ) <= 10000;
                     },
                 ),
                 'currency' => array(
@@ -97,10 +97,10 @@ class ContaiOnboardingRestController {
             ), 400 );
         }
 
-        if ( $amount < 5.0 ) {
+        if ( $amount < 5.0 || $amount > 10000.0 ) {
             return new WP_REST_Response( array(
                 'success' => false,
-                'message' => esc_html__( 'Minimum amount is $5.00 USD.', '1platform-content-ai' ),
+                'message' => esc_html__( 'Amount must be between $5.00 and $10,000.00 USD.', '1platform-content-ai' ),
             ), 400 );
         }
 
@@ -110,14 +110,20 @@ class ContaiOnboardingRestController {
             $data = $response->getData();
             $session_id = isset( $data->session_id ) ? $data->session_id : ( isset( $data['session_id'] ) ? $data['session_id'] : '' );
 
-            // Save session_id in transient for recovery after tab close
+            // Save session_id in transient for recovery after tab close (scoped per user)
             if ( $session_id ) {
-                set_transient( 'contai_onboarding_session', sanitize_text_field( $session_id ), DAY_IN_SECONDS );
+                $transient_key = 'contai_onboarding_session_' . get_current_user_id();
+                set_transient( $transient_key, sanitize_text_field( $session_id ), DAY_IN_SECONDS );
             }
+
+            $payment_url = isset( $data->payment_url ) ? $data->payment_url : ( isset( $data['payment_url'] ) ? $data['payment_url'] : '' );
 
             return new WP_REST_Response( array(
                 'success' => true,
-                'data'    => $data,
+                'data'    => array(
+                    'session_id'  => sanitize_text_field( $session_id ),
+                    'payment_url' => esc_url_raw( $payment_url ),
+                ),
                 'message' => wp_kses_post( $response->getMessage() ),
             ), 201 );
         }
@@ -127,7 +133,7 @@ class ContaiOnboardingRestController {
 
         return new WP_REST_Response( array(
             'success' => false,
-            'message' => $response->getMessage() ?: esc_html__( 'Registration failed. Please try again.', '1platform-content-ai' ),
+            'message' => wp_kses_post( $response->getMessage() ) ?: esc_html__( 'Registration failed. Please try again.', '1platform-content-ai' ),
         ), $http_code );
     }
 
@@ -141,10 +147,15 @@ class ContaiOnboardingRestController {
 
         if ( $response->isSuccess() ) {
             $data = $response->getData();
+            $status  = isset( $data->status )  ? sanitize_text_field( $data->status )  : ( isset( $data['status'] )  ? sanitize_text_field( $data['status'] )  : '' );
+            $api_key = isset( $data->api_key ) ? sanitize_text_field( $data->api_key ) : ( isset( $data['api_key'] ) ? sanitize_text_field( $data['api_key'] ) : '' );
 
             return new WP_REST_Response( array(
                 'success' => true,
-                'data'    => $data,
+                'data'    => array(
+                    'status'  => $status,
+                    'api_key' => $api_key,
+                ),
                 'message' => wp_kses_post( $response->getMessage() ),
             ), 200 );
         }
@@ -154,7 +165,7 @@ class ContaiOnboardingRestController {
 
         return new WP_REST_Response( array(
             'success' => false,
-            'message' => $response->getMessage() ?: esc_html__( 'Failed to check status.', '1platform-content-ai' ),
+            'message' => wp_kses_post( $response->getMessage() ) ?: esc_html__( 'Failed to check status.', '1platform-content-ai' ),
         ), $http_code );
     }
 }

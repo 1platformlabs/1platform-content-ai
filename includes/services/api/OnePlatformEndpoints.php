@@ -79,6 +79,9 @@ class ContaiOnePlatformEndpoints {
     const ONBOARDING_REGISTER = '/onboarding/register';
 
     public static function onboardingStatus(string $session_id): string {
+        if (!preg_match('/^[a-f0-9\-]{36}$/', $session_id)) {
+            return '/onboarding/status/invalid';
+        }
         return sprintf('/onboarding/status/%s', $session_id);
     }
 

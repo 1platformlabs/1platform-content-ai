@@ -7,7 +7,6 @@ require_once __DIR__ . '/../../services/api/OnePlatformAuthService.php';
 require_once __DIR__ . '/../../providers/WebsiteProvider.php';
 require_once __DIR__ . '/components/ActivateLicenseSection.php';
 require_once __DIR__ . '/components/UserProfileSection.php';
-require_once __DIR__ . '/components/BetaVipNotice.php';
 require_once __DIR__ . '/components/CreateAccountSection.php';
 
 class WPContentAILicensePanel
@@ -89,8 +88,8 @@ class WPContentAILicensePanel
 
         if ($status['status'] === 'no_license') {
             $this->enqueueOnboardingAssets();
-            $pending_session = get_transient('contai_onboarding_session');
-            ContaiCreateAccountSection::render($pending_session ?: null);
+            $pending_session = $this->getValidOnboardingSession();
+            ContaiCreateAccountSection::render($pending_session);
             $section = new ContaiActivateLicenseSection(self::NONCE_ACTION, self::NONCE_FIELD);
             $section->render();
             return;
@@ -117,8 +116,8 @@ class WPContentAILicensePanel
         }
 
         $this->enqueueOnboardingAssets();
-        $pending_session = get_transient('contai_onboarding_session');
-        ContaiCreateAccountSection::render($pending_session ?: null);
+        $pending_session = $this->getValidOnboardingSession();
+        ContaiCreateAccountSection::render($pending_session);
         $section = new ContaiActivateLicenseSection(self::NONCE_ACTION, self::NONCE_FIELD);
         $section->render();
     }
@@ -408,6 +407,18 @@ class WPContentAILicensePanel
         <?php
     }
 
+    private function getValidOnboardingSession(): ?string
+    {
+        $transient_key = 'contai_onboarding_session_' . get_current_user_id();
+        $session = get_transient($transient_key);
+
+        if (!$session || !preg_match('/^[a-f0-9\-]{36}$/', $session)) {
+            return null;
+        }
+
+        return $session;
+    }
+
     private function enqueueStyles(): void
     {
         $cssFile = __DIR__ . '/assets/css/license.css';
@@ -446,6 +457,8 @@ class WPContentAILicensePanel
                 'minAmount'     => esc_html__('Minimum amount is $5.00 USD.', '1platform-content-ai'),
                 'existingKey'   => esc_html__('Already have an API key? Click here', '1platform-content-ai'),
                 'createNew'     => esc_html__('Create a new account instead', '1platform-content-ai'),
+                'alreadyClaimed' => esc_html__('API key was already retrieved. Please enter it below.', '1platform-content-ai'),
+                'invalidKey'    => esc_html__('Invalid API key received. Please enter it manually.', '1platform-content-ai'),
             ),
         ));
     }
