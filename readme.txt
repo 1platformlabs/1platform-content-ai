@@ -4,7 +4,7 @@ Tags: ai content, seo, content generation, internal links, table of contents
 Requires at least: 5.9
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 2.21.5
+Stable tag: 2.21.6
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -159,6 +159,10 @@ The plugin sends your site URL, API key, and content generation parameters (keyw
 7. Tools — Google Analytics, Google Search Console, Publisuites, and Ads Manager integrations.
 
 == Changelog ==
+
+= 2.21.6 =
+* Fixed: Site Wizard stuck at 58% on waitForPosts — failed jobs now count as finished (#69)
+* Added: 4 regression tests for batch status with failed jobs
 
 = 2.21.4 =
 * Fixed: TOC theme selection not applied on frontend — added page cache purging on settings save (#71)
