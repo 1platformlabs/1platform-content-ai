@@ -202,4 +202,129 @@ class ContaiPublisuitesService
     {
         return !$this->isVerified($config);
     }
+
+    public function getOrders(int $page = 1, ?string $statusFilter = null): ContaiOnePlatformResponse
+    {
+        $config = $this->getPublisuitesConfig();
+        $websiteId = $config['websiteId'] ?? null;
+
+        if (!$websiteId) {
+            return new ContaiOnePlatformResponse(false, null, 'Website not configured', 400);
+        }
+
+        $payload = [
+            'action' => 'orders',
+            'page'   => absint($page),
+        ];
+
+        if ($statusFilter !== null) {
+            $payload['status_filter'] = sanitize_text_field($statusFilter);
+        }
+
+        $endpoint = ContaiOnePlatformEndpoints::websitePublisuites($websiteId);
+
+        return $this->client->post($endpoint, $payload);
+    }
+
+    public function viewOrder(int $orderId): ContaiOnePlatformResponse
+    {
+        $config = $this->getPublisuitesConfig();
+        $websiteId = $config['websiteId'] ?? null;
+
+        if (!$websiteId) {
+            return new ContaiOnePlatformResponse(false, null, 'Website not configured', 400);
+        }
+
+        $endpoint = ContaiOnePlatformEndpoints::websitePublisuites($websiteId);
+
+        return $this->client->post($endpoint, [
+            'action'   => 'view_order',
+            'order_id' => absint($orderId),
+        ]);
+    }
+
+    public function triggerSync(): ContaiOnePlatformResponse
+    {
+        $config = $this->getPublisuitesConfig();
+        $websiteId = $config['websiteId'] ?? null;
+
+        if (!$websiteId) {
+            return new ContaiOnePlatformResponse(false, null, 'Website not configured', 400);
+        }
+
+        $endpoint = ContaiOnePlatformEndpoints::websitePublisuites($websiteId);
+
+        return $this->client->post($endpoint, [
+            'action' => 'sync',
+        ]);
+    }
+
+    public function acceptOrder(int $orderId): ContaiOnePlatformResponse
+    {
+        $config = $this->getPublisuitesConfig();
+        $websiteId = $config['websiteId'] ?? null;
+
+        if (!$websiteId) {
+            return new ContaiOnePlatformResponse(false, null, 'Website not configured', 400);
+        }
+
+        $endpoint = ContaiOnePlatformEndpoints::websitePublisuites($websiteId);
+
+        return $this->client->post($endpoint, [
+            'action'   => 'accept_order',
+            'order_id' => absint($orderId),
+        ]);
+    }
+
+    public function rejectOrder(int $orderId): ContaiOnePlatformResponse
+    {
+        $config = $this->getPublisuitesConfig();
+        $websiteId = $config['websiteId'] ?? null;
+
+        if (!$websiteId) {
+            return new ContaiOnePlatformResponse(false, null, 'Website not configured', 400);
+        }
+
+        $endpoint = ContaiOnePlatformEndpoints::websitePublisuites($websiteId);
+
+        return $this->client->post($endpoint, [
+            'action'   => 'reject_order',
+            'order_id' => absint($orderId),
+        ]);
+    }
+
+    public function reopenOrder(int $orderId): ContaiOnePlatformResponse
+    {
+        $config = $this->getPublisuitesConfig();
+        $websiteId = $config['websiteId'] ?? null;
+
+        if (!$websiteId) {
+            return new ContaiOnePlatformResponse(false, null, 'Website not configured', 400);
+        }
+
+        $endpoint = ContaiOnePlatformEndpoints::websitePublisuites($websiteId);
+
+        return $this->client->post($endpoint, [
+            'action'   => 'reopen_order',
+            'order_id' => absint($orderId),
+        ]);
+    }
+
+    public function sendUrl(int $orderId, string $url): ContaiOnePlatformResponse
+    {
+        $config = $this->getPublisuitesConfig();
+        $websiteId = $config['websiteId'] ?? null;
+
+        if (!$websiteId) {
+            return new ContaiOnePlatformResponse(false, null, 'Website not configured', 400);
+        }
+
+        $endpoint = ContaiOnePlatformEndpoints::websitePublisuites($websiteId);
+
+        return $this->client->post($endpoint, [
+            'action'   => 'send_url',
+            'order_id' => absint($orderId),
+            'url'      => esc_url_raw($url),
+        ]);
+    }
 }
