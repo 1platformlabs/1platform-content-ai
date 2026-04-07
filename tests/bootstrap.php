@@ -119,6 +119,7 @@ require_once __DIR__ . '/../includes/admin/content-generator/panels/post-mainten
 require_once __DIR__ . '/../includes/services/user-profile/UserProfileService.php';
 require_once __DIR__ . '/../includes/admin/licenses/WPContentAILicensePanel.php';
 
+<<<<<<< Updated upstream
 // ── Post Pipeline & Generation ─────────────────────────────────
 require_once __DIR__ . '/../includes/services/post/ImageUploader.php';
 require_once __DIR__ . '/../includes/services/post/ContentImageProcessor.php';
@@ -219,3 +220,7 @@ if (!function_exists('contai_activate_plugin')) {
         update_option('contai_plugin_version', CONTAI_VERSION, false);
     }
 }
+=======
+// ── Category API ────────────────────────────────────────────────
+require_once __DIR__ . '/../includes/services/category-api/CategoryAPIService.php';
+>>>>>>> Stashed changes
