@@ -17,6 +17,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Changed
 - **License panel**: Replaced `ContaiBetaVipNotice` with `ContaiCreateAccountSection` for unlicensed users, providing a direct onboarding path instead of a passive notice
 
+### Security
+- **REST response sanitization**: Whitelisted API response fields with `sanitize_text_field()` and `esc_url_raw()` instead of passing raw API data through
+- **Error message escaping**: Applied `wp_kses_post()` on error-path messages for consistency with success paths
+- **URL scheme validation**: Added `https://` prefix check before `window.open()` for payment URLs
+- **Dead code removal**: Removed unused `BetaVipNotice` require and ~140 lines of orphaned CSS
+
 ## [2.23.1] - 2026-04-07
 
 ### Changed
