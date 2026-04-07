@@ -4,6 +4,17 @@ All notable changes to Content AI are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [2.21.8] - 2026-04-07
+
+### Fixed
+- **Post Maintenance actions not working** (#72): Both "Randomize Dates" and "Update Thumbnails" actions in Content > Post Maintenance appeared to do nothing — no feedback, no changes applied. Root cause: `process_actions()` was called inside `render()` after HTML output, unlike all other working panels (Comments, Legal) which process form submissions in the constructor. Refactored to match the established pattern: form processing in `__construct()`, state stored in instance variables, WordPress admin notices rendered before forms
+- **Wrong timezone on randomized dates**: `gmdate()` was producing UTC dates for `post_date` (which should be local time). Switched to `wp_date()` for correct WordPress-aware local dates
+- **Stale post cache after date randomization**: Direct `$wpdb->update()` calls were not invalidating WordPress object cache, so the Posts list could show stale dates. Added `clean_post_cache()` after each update
+- **SSRF risk in thumbnail extraction**: URLs extracted from post content were passed directly to `media_sideload_image()` without validation. Added `esc_url_raw()` + `wp_http_validate_url()` to reject non-HTTP URLs
+
+### Added
+- **14 regression tests**: Comprehensive test coverage for both maintenance actions — success, empty posts, empty content, no images, sideload failures, invalid URLs, capability checks, and notice rendering order
+
 ## [2.21.6] - 2026-04-07
 
 ### Fixed
