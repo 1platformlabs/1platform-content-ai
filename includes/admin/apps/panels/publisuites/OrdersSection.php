@@ -135,26 +135,39 @@ class ContaiPublisuitesOrdersSection
         <?php
     }
 
-    private function renderRow(object $order): void
+    private function renderRow($order): void
     {
-        $order_id = $order->id ?? '';
-        $status   = $order->status ?? 'pending';
+        if (is_array($order)) {
+            $order_id = isset($order['id']) ? (string) $order['id'] : '';
+            $status   = isset($order['status']) ? (string) $order['status'] : 'pending';
+            $type     = isset($order['type']) ? (string) $order['type'] : '';
+            $sale_date = isset($order['sale_date']) ? (string) $order['sale_date'] : '';
+            $deadline  = isset($order['deadline']) ? (string) $order['deadline'] : '';
+            $earnings  = isset($order['earnings']) ? $order['earnings'] : 0;
+        } else {
+            $order_id  = isset($order->id) ? (string) $order->id : '';
+            $status    = isset($order->status) ? (string) $order->status : 'pending';
+            $type      = isset($order->type) ? (string) $order->type : '';
+            $sale_date = isset($order->sale_date) ? (string) $order->sale_date : '';
+            $deadline  = isset($order->deadline) ? (string) $order->deadline : '';
+            $earnings  = isset($order->earnings) ? $order->earnings : 0;
+        }
         ?>
         <tr class="contai-ps-orders__row">
             <td class="contai-ps-orders__cell-id contai-ps-mono">
                 #<?php echo esc_html($order_id); ?>
             </td>
             <td class="contai-ps-orders__cell-type">
-                <?php echo esc_html($this->formatType($order->type ?? '')); ?>
+                <?php echo esc_html($this->formatType($type)); ?>
             </td>
             <td class="contai-ps-orders__cell-sale-date">
-                <?php echo esc_html($this->formatDate($order->sale_date ?? '')); ?>
+                <?php echo esc_html($this->formatDate($sale_date)); ?>
             </td>
             <td class="contai-ps-orders__cell-deadline">
-                <?php echo esc_html($this->formatDate($order->deadline ?? '')); ?>
+                <?php echo esc_html($this->formatDate($deadline)); ?>
             </td>
             <td class="contai-ps-orders__cell-earnings">
-                <?php echo esc_html($this->formatEarnings($order->earnings ?? 0)); ?>
+                <?php echo esc_html($this->formatEarnings($earnings)); ?>
             </td>
             <td class="contai-ps-orders__cell-status">
                 <?php $this->renderStatusBadge($status); ?>
@@ -188,7 +201,7 @@ class ContaiPublisuitesOrdersSection
        Row actions
        ------------------------------------------------------------------ */
 
-    private function renderActions(string $order_id, string $status): void
+    private function renderActions($order_id, string $status): void
     {
         ?>
         <div class="contai-ps-orders__actions">
@@ -202,7 +215,7 @@ class ContaiPublisuitesOrdersSection
         <?php
     }
 
-    private function renderAcceptRejectForms(string $order_id): void
+    private function renderAcceptRejectForms($order_id): void
     {
         ?>
         <form method="post" class="contai-ps-orders__action-form contai-ps-orders__action-form--inline">
@@ -225,7 +238,7 @@ class ContaiPublisuitesOrdersSection
         <?php
     }
 
-    private function renderSendUrlForm(string $order_id): void
+    private function renderSendUrlForm($order_id): void
     {
         ?>
         <form method="post" class="contai-ps-orders__action-form contai-ps-orders__action-form--url">
@@ -247,7 +260,7 @@ class ContaiPublisuitesOrdersSection
         <?php
     }
 
-    private function renderViewLink(string $order_id): void
+    private function renderViewLink($order_id): void
     {
         ?>
         <button
