@@ -46,7 +46,7 @@ class ContaiAdminJobMonitor {
 		);
 
 		$cssUrl = plugin_dir_url( __FILE__ ) . 'assets/css/admin-job-monitor.css';
-		wp_enqueue_style( 'contai-job-monitor', $cssUrl, array( 'contai-content-generator-base' ), '1.0.0' );
+		wp_enqueue_style( 'contai-job-monitor', $cssUrl, array( 'contai-content-generator-base' ), CONTAI_VERSION );
 	}
 
 	private function handleRecovery(): void {

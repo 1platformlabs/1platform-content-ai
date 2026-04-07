@@ -4,7 +4,7 @@
  * Plugin Name: 1Platform Content AI
  * Plugin URI: https://1platform.pro/
  * Description: SaaS client for AI-powered content generation, SEO optimization, and site management. All AI processing happens on 1Platform external servers. Includes free local tools: Table of Contents and Internal Links.
- * Version: 2.21.0
+ * Version: 2.21.2
  * Author: 1Platform
  * License: GPLv2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -17,6 +17,8 @@
  */
 
 if (!defined('ABSPATH')) exit;
+
+define('CONTAI_VERSION', '2.21.2');
 
 require_once plugin_dir_path(__FILE__) . 'includes/helpers/security.php';
 require_once plugin_dir_path(__FILE__) . 'includes/helpers/crypto.php';
@@ -121,11 +123,62 @@ function contai_activate_plugin() {
     add_option('contai_disable_feeds', '1');
     add_option('contai_disable_author_pages', '1');
     add_option('contai_redirect_404', '1');
+
+    // Store version so contai_maybe_upgrade() can detect future updates
+    update_option('contai_plugin_version', CONTAI_VERSION, false);
 }
 register_activation_hook(__FILE__, 'contai_activate_plugin');
 
 register_deactivation_hook(__FILE__, 'contai_unregister_job_processor_cron');
 register_deactivation_hook( __FILE__, 'contai_unregister_agent_actions_cron' );
+
+/**
+ * Run upgrade routines when the plugin version changes.
+ *
+ * WordPress does NOT fire register_activation_hook on updates — only on
+ * first activation. This hook detects version changes on every page load
+ * and runs pending migrations, re-registers crons, and invalidates caches
+ * so that updates take effect without reinstalling.
+ */
+function contai_maybe_upgrade() {
+    $stored_version = get_option('contai_plugin_version', '0');
+
+    if (version_compare($stored_version, CONTAI_VERSION, '>=')) {
+        return;
+    }
+
+    // Run pending database migrations
+    $runner = contai_build_migration_runner();
+    $result = $runner->run();
+
+    if (!$result['success']) {
+        contai_log('Upgrade migration failed: ' . $result['message']);
+    }
+
+    // Re-register cron events (may have been lost during update)
+    contai_register_job_processor_cron();
+    contai_register_agent_actions_cron();
+
+    // Invalidate OPcache so PHP serves the new files
+    if (function_exists('opcache_reset')) {
+        opcache_reset();
+    }
+
+    // Flush plugin-related transients so stale cached data is not served
+    global $wpdb;
+    // phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.DirectQuery
+    $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", '_transient_contai_%'));
+    // phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.DirectQuery
+    $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", '_transient_timeout_contai_%'));
+
+    // Always bump version even on migration failure to prevent infinite retry
+    // loops. MigrationRunner stores its own error in contai_migration_error
+    // and an admin notice alerts the user to investigate.
+    update_option('contai_plugin_version', CONTAI_VERSION, false);
+
+    contai_log(sprintf('Plugin upgraded from %s to %s', $stored_version, CONTAI_VERSION));
+}
+add_action('plugins_loaded', 'contai_maybe_upgrade', 5);
 
 $toc_integration = ContaiTocFactory::create();
 $toc_integration->register();
@@ -208,8 +261,8 @@ add_action( 'admin_enqueue_scripts', function( $hook ) {
     if ( strpos( $hook, 'contai-agents' ) === false ) {
         return;
     }
-    wp_enqueue_style( 'contai-agents-admin', plugin_dir_url( __FILE__ ) . 'includes/admin/agents/contai-agents-admin.css', array(), '2.3.6' );
-    wp_enqueue_script( 'contai-agents-admin', plugin_dir_url( __FILE__ ) . 'includes/admin/agents/contai-agents-admin.js', array(), '2.3.6', true );
+    wp_enqueue_style( 'contai-agents-admin', plugin_dir_url( __FILE__ ) . 'includes/admin/agents/contai-agents-admin.css', array(), CONTAI_VERSION );
+    wp_enqueue_script( 'contai-agents-admin', plugin_dir_url( __FILE__ ) . 'includes/admin/agents/contai-agents-admin.js', array(), CONTAI_VERSION, true );
     wp_localize_script( 'contai-agents-admin', 'contaiAgents', array(
         'restUrl'  => rest_url( 'contai/v1/' ),
         'nonce'    => wp_create_nonce( 'wp_rest' ),
