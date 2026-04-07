@@ -75,6 +75,16 @@ class ContaiOnePlatformEndpoints {
     const ANALYTICS_STATUS          = '/analytics/status';
     const ANALYTICS_MP_EVENT        = '/analytics/mp-event';
 
+    // ── Onboarding ─────────────────────────────────────────────
+    const ONBOARDING_REGISTER = '/onboarding/register';
+
+    public static function onboardingStatus(string $session_id): string {
+        if (!preg_match('/^[a-f0-9\-]{36}$/', $session_id)) {
+            return '/onboarding/status/invalid';
+        }
+        return sprintf('/onboarding/status/%s', $session_id);
+    }
+
     // ── Businesses ──────────────────────────────────────────────
     const BUSINESSES = '/businesses';
 

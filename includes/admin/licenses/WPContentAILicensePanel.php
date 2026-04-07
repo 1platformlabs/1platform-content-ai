@@ -7,7 +7,7 @@ require_once __DIR__ . '/../../services/api/OnePlatformAuthService.php';
 require_once __DIR__ . '/../../providers/WebsiteProvider.php';
 require_once __DIR__ . '/components/ActivateLicenseSection.php';
 require_once __DIR__ . '/components/UserProfileSection.php';
-require_once __DIR__ . '/components/BetaVipNotice.php';
+require_once __DIR__ . '/components/CreateAccountSection.php';
 
 class WPContentAILicensePanel
 {
@@ -87,7 +87,9 @@ class WPContentAILicensePanel
         }
 
         if ($status['status'] === 'no_license') {
-            ContaiBetaVipNotice::render();
+            $this->enqueueOnboardingAssets();
+            $pending_session = $this->getValidOnboardingSession();
+            ContaiCreateAccountSection::render($pending_session);
             $section = new ContaiActivateLicenseSection(self::NONCE_ACTION, self::NONCE_FIELD);
             $section->render();
             return;
@@ -113,7 +115,9 @@ class WPContentAILicensePanel
             return;
         }
 
-        ContaiBetaVipNotice::render();
+        $this->enqueueOnboardingAssets();
+        $pending_session = $this->getValidOnboardingSession();
+        ContaiCreateAccountSection::render($pending_session);
         $section = new ContaiActivateLicenseSection(self::NONCE_ACTION, self::NONCE_FIELD);
         $section->render();
     }
@@ -403,6 +407,18 @@ class WPContentAILicensePanel
         <?php
     }
 
+    private function getValidOnboardingSession(): ?string
+    {
+        $transient_key = 'contai_onboarding_session_' . get_current_user_id();
+        $session = get_transient($transient_key);
+
+        if (!$session || !preg_match('/^[a-f0-9\-]{36}$/', $session)) {
+            return null;
+        }
+
+        return $session;
+    }
+
     private function enqueueStyles(): void
     {
         $cssFile = __DIR__ . '/assets/css/license.css';
@@ -414,5 +430,36 @@ class WPContentAILicensePanel
             array('contai-admin-licenses'),
             file_exists($cssFile) ? filemtime($cssFile) : '1.0.0'
         );
+    }
+
+    private function enqueueOnboardingAssets(): void
+    {
+        $jsFile = __DIR__ . '/assets/js/contai-onboarding.js';
+        $jsUrl  = plugins_url('assets/js/contai-onboarding.js', __FILE__);
+
+        wp_enqueue_script(
+            'contai-onboarding',
+            $jsUrl,
+            array(),
+            file_exists($jsFile) ? filemtime($jsFile) : '1.0.0',
+            true
+        );
+
+        wp_localize_script('contai-onboarding', 'contaiOnboarding', array(
+            'restUrl' => esc_url_raw(rest_url('contai/v1/onboarding/')),
+            'nonce'   => wp_create_nonce('wp_rest'),
+            'i18n'    => array(
+                'processing'    => esc_html__('Processing your payment...', '1platform-content-ai'),
+                'timeout'       => esc_html__('Payment is being processed. You can close this tab and return later.', '1platform-content-ai'),
+                'failed'        => esc_html__('Payment was not completed. Please try again.', '1platform-content-ai'),
+                'success'       => esc_html__('Account created! Activating your license...', '1platform-content-ai'),
+                'emailRequired' => esc_html__('Please enter your email address.', '1platform-content-ai'),
+                'minAmount'     => esc_html__('Minimum amount is $5.00 USD.', '1platform-content-ai'),
+                'existingKey'   => esc_html__('Already have an API key? Click here', '1platform-content-ai'),
+                'createNew'     => esc_html__('Create a new account instead', '1platform-content-ai'),
+                'alreadyClaimed' => esc_html__('API key was already retrieved. Please enter it below.', '1platform-content-ai'),
+                'invalidKey'    => esc_html__('Invalid API key received. Please enter it manually.', '1platform-content-ai'),
+            ),
+        ));
     }
 }
