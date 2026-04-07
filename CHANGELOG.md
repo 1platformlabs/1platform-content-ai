@@ -4,6 +4,16 @@ All notable changes to Content AI are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [2.21.4] - 2026-04-07
+
+### Fixed
+- **TOC theme not applied on frontend** (#71): Saved theme selection (e.g., "Black") was not reflected on the frontend because page caches served stale HTML with the old theme CSS class. Added automatic cache purging for LiteSpeed, WP Rocket, WP Super Cache, W3 Total Cache, Cachify, WP Fastest Cache, and Autoptimize when TOC settings are saved or reset
+- **Misleading "Failed to save" error**: `update_option()` returns false when settings haven't changed, causing a false error message. The `update()` method now returns true when the config is already current
+- **Broken CSS cache busting**: `getAssetVersion()` calculated the wrong file path (double `includes/` directory), causing the CSS version to always be `1.0.0` instead of the file's modification timestamp
+
+### Added
+- **19 unit tests**: Comprehensive test coverage for `TocSettingsPanel` (6 tests), `TocWordPressIntegration` (10 tests), and `TocConfiguration` update scenarios (3 tests)
+
 ## [2.21.2] - 2026-04-06
 
 ### Fixed

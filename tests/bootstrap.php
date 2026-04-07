@@ -58,6 +58,10 @@ require_once __DIR__ . '/../includes/services/toc/HeadingParser.php';
 require_once __DIR__ . '/../includes/services/toc/AnchorGenerator.php';
 require_once __DIR__ . '/../includes/services/toc/TocBuilder.php';
 require_once __DIR__ . '/../includes/services/toc/TocConfiguration.php';
+require_once __DIR__ . '/../includes/services/toc/ContentInjector.php';
+require_once __DIR__ . '/../includes/services/toc/TocGenerator.php';
+require_once __DIR__ . '/../includes/services/toc/TocWordPressIntegration.php';
+require_once __DIR__ . '/../includes/admin/apps/panels/TocSettingsPanel.php';
 require_once __DIR__ . '/../includes/services/internal-links/KeywordMatcher.php';
 require_once __DIR__ . '/../includes/services/internal-links/ContentLinkInjector.php';
 require_once __DIR__ . '/../includes/services/http/RateLimiter.php';
@@ -67,6 +71,10 @@ class_alias('ContaiHeadingParser', 'HeadingParser');
 class_alias('ContaiAnchorGenerator', 'AnchorGenerator');
 class_alias('ContaiTocBuilder', 'TocBuilder');
 class_alias('ContaiTocConfiguration', 'TocConfiguration');
+class_alias('ContaiContentInjector', 'ContentInjector');
+class_alias('ContaiTocGenerator', 'TocGenerator');
+class_alias('ContaiTocWordPressIntegration', 'TocWordPressIntegration');
+class_alias('ContaiTocSettingsPanel', 'TocSettingsPanel');
 class_alias(WPContentAI\Services\InternalLinks\ContaiKeywordMatcher::class, 'WPContentAI\Services\InternalLinks\KeywordMatcher');
 class_alias(WPContentAI\Services\InternalLinks\ContaiContentLinkInjector::class, 'WPContentAI\Services\InternalLinks\ContentLinkInjector');
 class_alias('ContaiRateLimiter', 'RateLimiter');
@@ -130,7 +138,7 @@ require_once __DIR__ . '/../includes/cron/job-processor-cron.php';
 require_once __DIR__ . '/../includes/cron/agent-actions-cron.php';
 
 // ── Plugin version & upgrade routines ──────────────────────────
-define('CONTAI_VERSION', '2.21.2');
+define('CONTAI_VERSION', '2.21.4');
 
 require_once __DIR__ . '/../includes/database/migrations/CreateKeywordsTable.php';
 require_once __DIR__ . '/../includes/database/migrations/CreateAPILogsTable.php';

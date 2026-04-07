@@ -83,7 +83,8 @@ final class ContaiTocWordPressIntegration {
     }
 
     private function getAssetVersion(string $file): string {
-        $full_path = dirname(dirname(dirname(__FILE__))) . '/' . $file;
+        $plugin_root = dirname(dirname(dirname(dirname(__FILE__))));
+        $full_path = $plugin_root . '/' . $file;
 
         if (file_exists($full_path)) {
             return (string) filemtime($full_path);

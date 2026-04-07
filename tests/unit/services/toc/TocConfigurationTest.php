@@ -150,4 +150,105 @@ class TocConfigurationTest extends TestCase {
 
         $this->assertSame(['TOC*', 'References'], $this->config->getExcludePatterns());
     }
+
+    public function test_update_returns_true_when_no_changes(): void {
+        $saved_config = [
+            'enabled' => true,
+            'post_types' => ['post', 'page'],
+            'heading_levels' => [2, 3, 4],
+            'min_headings' => 4,
+            'position' => 'before_first_heading',
+            'title' => 'Table of Contents',
+            'show_title' => true,
+            'show_toggle' => true,
+            'initial_state' => 'show',
+            'show_hierarchy' => true,
+            'numbered_list' => true,
+            'exclude_patterns' => [],
+            'theme' => 'black',
+            'lowercase_anchors' => true,
+            'hyphenate_anchors' => true,
+            'smooth_scroll' => true,
+        ];
+
+        WP_Mock::userFunction('get_option')
+            ->andReturn($saved_config);
+
+        WP_Mock::userFunction('sanitize_text_field')
+            ->andReturnArg(0);
+
+        WP_Mock::userFunction('get_post_types')
+            ->with(['public' => true], 'names')
+            ->andReturn(['post' => 'post', 'page' => 'page']);
+
+        WP_Mock::userFunction('update_option')->never();
+
+        $result = $this->config->update(['theme' => 'black']);
+
+        $this->assertTrue($result);
+    }
+
+    public function test_update_persists_theme_change(): void {
+        $old_config = [
+            'enabled' => true,
+            'post_types' => ['post', 'page'],
+            'heading_levels' => [2, 3, 4],
+            'min_headings' => 4,
+            'position' => 'before_first_heading',
+            'title' => 'Table of Contents',
+            'show_title' => true,
+            'show_toggle' => true,
+            'initial_state' => 'show',
+            'show_hierarchy' => true,
+            'numbered_list' => true,
+            'exclude_patterns' => [],
+            'theme' => 'light-blue',
+            'lowercase_anchors' => true,
+            'hyphenate_anchors' => true,
+            'smooth_scroll' => true,
+        ];
+
+        // First call: getAll() merges defaults with stored
+        // Second call: existing value check
+        WP_Mock::userFunction('get_option')
+            ->andReturn($old_config);
+
+        WP_Mock::userFunction('sanitize_text_field')
+            ->andReturnArg(0);
+
+        WP_Mock::userFunction('get_post_types')
+            ->with(['public' => true], 'names')
+            ->andReturn(['post' => 'post', 'page' => 'page']);
+
+        WP_Mock::userFunction('update_option')
+            ->once()
+            ->with('contai_toc_config', \Mockery::on(function ($arg) {
+                return is_array($arg) && $arg['theme'] === 'black';
+            }))
+            ->andReturn(true);
+
+        $result = $this->config->update(['theme' => 'black']);
+
+        $this->assertTrue($result);
+    }
+
+    public function test_update_returns_false_on_db_failure(): void {
+        WP_Mock::userFunction('get_option')
+            ->andReturn([]);
+
+        WP_Mock::userFunction('sanitize_text_field')
+            ->andReturnArg(0);
+
+        WP_Mock::userFunction('get_post_types')
+            ->with(['public' => true], 'names')
+            ->andReturn(['post' => 'post', 'page' => 'page']);
+
+        WP_Mock::userFunction('update_option')
+            ->once()
+            ->andReturn(false);
+
+        $result = $this->config->update(['theme' => 'black']);
+
+        $this->assertFalse($result);
+    }
 }

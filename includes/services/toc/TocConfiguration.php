@@ -44,6 +44,11 @@ final class ContaiTocConfiguration {
         $merged = array_merge($current, $data);
         $sanitized = $this->sanitize($merged);
 
+        $existing = get_option(self::OPTION_KEY, []);
+        if ($existing === $sanitized) {
+            return true;
+        }
+
         return update_option(self::OPTION_KEY, $sanitized);
     }
 
