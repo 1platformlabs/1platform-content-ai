@@ -44,7 +44,7 @@ class ContaiOnboardingRestController {
                     'required'          => true,
                     'sanitize_callback' => 'floatval',
                     'validate_callback' => function( $value ) {
-                        return is_numeric( $value ) && floatval( $value ) > 0 && floatval( $value ) <= 10000;
+                        return is_numeric( $value ) && floatval( $value ) >= 5 && floatval( $value ) <= 10000;
                     },
                 ),
                 'currency' => array(

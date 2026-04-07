@@ -13,6 +13,7 @@
     var POLL_TIMEOUT  = 300000; // 5 minutes
     var pollTimer     = null;
     var pollStart     = 0;
+    var pollSessionId = null;
     var selectedAmount = 10;
     var API_KEY_PATTERN = /^sk-[a-zA-Z0-9]{20,}$/;
 
@@ -148,10 +149,13 @@
     // ── Polling ──
 
     function startPolling(sessionId) {
+        pollSessionId = sessionId;
         pollStart = Date.now();
         pollTimer = setInterval(function () {
             if (Date.now() - pollStart > POLL_TIMEOUT) {
                 clearInterval(pollTimer);
+                pollTimer = null;
+                pollSessionId = null;
                 if (statusText) {
                     statusText.textContent = contaiOnboarding.i18n.timeout ||
                         'Payment is being processed. You can close this tab and return later.';
@@ -167,10 +171,14 @@
 
                     if (data.status === 'completed' && data.api_key) {
                         clearInterval(pollTimer);
+                        pollTimer = null;
+                        pollSessionId = null;
                         showSuccess();
                         activateKey(data.api_key);
                     } else if (data.status === 'failed') {
                         clearInterval(pollTimer);
+                        pollTimer = null;
+                        pollSessionId = null;
                         showForm();
                         showError(contaiOnboarding.i18n.failed ||
                             'Payment was not completed. Please try again.');
@@ -179,6 +187,8 @@
                 .catch(function (err) {
                     if (err.status === 410) {
                         clearInterval(pollTimer);
+                        pollTimer = null;
+                        pollSessionId = null;
                         showForm();
                         showError(contaiOnboarding.i18n.alreadyClaimed ||
                             'API key was already retrieved. Please enter it below.');
@@ -240,12 +250,14 @@
         }
     }
 
-    // ── Cleanup on page unload ──
+    // ── Pause/resume polling on tab visibility ──
 
     document.addEventListener('visibilitychange', function () {
         if (document.visibilityState === 'hidden' && pollTimer) {
             clearInterval(pollTimer);
             pollTimer = null;
+        } else if (document.visibilityState === 'visible' && !pollTimer && pollSessionId) {
+            startPolling(pollSessionId);
         }
     });
 
@@ -254,13 +266,8 @@
     if (recovery) {
         var recoverSessionId = recovery.getAttribute('data-session-id');
         if (recoverSessionId) {
+            showPolling();
             startPolling(recoverSessionId);
-            // After a short delay, if still pending, show recovery + form
-            setTimeout(function () {
-                if (pollTimer) {
-                    showPolling();
-                }
-            }, 1000);
         }
     }
 })();

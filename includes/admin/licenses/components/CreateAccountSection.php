@@ -67,6 +67,7 @@ class ContaiCreateAccountSection {
                                min="5"
                                max="10000"
                                step="0.01"
+                               aria-label="<?php esc_attr_e( 'Custom amount', '1platform-content-ai' ); ?>"
                                placeholder="<?php esc_attr_e( 'Custom', '1platform-content-ai' ); ?>" />
                     </div>
                 </div>
