@@ -254,13 +254,11 @@ class ContaiPublisuitesOrdersSection
             type="button"
             class="button contai-ps-orders__btn-view"
             data-order-id="<?php echo esc_attr($order_id); ?>"
-            aria-label="<?php
-                printf(
+            aria-label="<?php echo esc_attr(sprintf(
                     /* translators: %s: order ID */
-                    esc_attr__('View order #%s', '1platform-content-ai'),
-                    esc_attr($order_id)
-                );
-            ?>"
+                    __('View order #%s', '1platform-content-ai'),
+                    $order_id
+                )); ?>"
         >
             <span class="dashicons dashicons-visibility" aria-hidden="true"></span>
         </button>
