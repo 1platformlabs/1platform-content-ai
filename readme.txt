@@ -4,7 +4,7 @@ Tags: ai content, seo, content generation, internal links, table of contents
 Requires at least: 5.9
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 2.21.0
+Stable tag: 2.21.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -159,6 +159,11 @@ The plugin sends your site URL, API key, and content generation parameters (keyw
 7. Tools — Google Analytics, Google Search Console, Publisuites, and Ads Manager integrations.
 
 == Changelog ==
+
+= 2.21.2 =
+* Fixed: Plugin updates not applying until uninstall and reinstall (#68)
+* Fixed: Stale browser cache after updates — assets now use dynamic version
+* Added: Automatic upgrade routine that runs migrations and re-registers crons on update
 
 = 2.20.0 =
 * Added: Sponsored post orders management — view, accept, reject, reopen orders from the admin panel
