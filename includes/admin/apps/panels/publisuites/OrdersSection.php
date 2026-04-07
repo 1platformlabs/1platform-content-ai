@@ -127,6 +127,7 @@ class ContaiPublisuitesOrdersSection
                 </thead>
                 <tbody>
                     <?php foreach ($orders as $order) : ?>
+                        <?php if (!is_object($order)) continue; ?>
                         <?php $this->renderRow($order); ?>
                     <?php endforeach; ?>
                 </tbody>
@@ -137,7 +138,8 @@ class ContaiPublisuitesOrdersSection
 
     private function renderRow(object $order): void
     {
-        $order_id = $order->id ?? '';
+        $raw_id   = $order->id ?? '';
+        $order_id = $raw_id !== '' ? (string) absint($raw_id) : '';
         $status   = $order->status ?? 'pending';
         ?>
         <tr class="contai-ps-orders__row">

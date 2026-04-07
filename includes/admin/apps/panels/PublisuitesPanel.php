@@ -110,7 +110,19 @@ class ContaiPublisuitesPanel
                         'secondary_cta_action' => 'contai_disconnect_publisuites',
                     ]);
 
+                    if (!current_user_can('manage_options')) {
+                        $view_data['orders'] = [];
+                        $view_data['total'] = 0;
+                        $view_data['page'] = 1;
+                        $view_data['page_size'] = 20;
+                        $view_data['last_synced_at'] = null;
+                        $view_data['stale'] = true;
+                        return $view_data;
+                    }
                     $page = isset($_GET['ps_page']) ? absint($_GET['ps_page']) : 1;
+                    if ($page < 1) {
+                        $page = 1;
+                    }
                     $ordersResponse = $this->service->getOrders($page);
                     if ($ordersResponse->isSuccess()) {
                         $ordersData = $ordersResponse->getData();
