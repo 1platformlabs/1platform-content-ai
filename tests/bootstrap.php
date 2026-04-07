@@ -128,3 +128,85 @@ require_once __DIR__ . '/../includes/services/category-api/CategoryAPIService.ph
 // ── Cron ────────────────────────────────────────────────────────
 require_once __DIR__ . '/../includes/cron/job-processor-cron.php';
 require_once __DIR__ . '/../includes/cron/agent-actions-cron.php';
+
+// ── Plugin version & upgrade routines ──────────────────────────
+define('CONTAI_VERSION', '2.21.2');
+
+require_once __DIR__ . '/../includes/database/migrations/CreateKeywordsTable.php';
+require_once __DIR__ . '/../includes/database/migrations/CreateAPILogsTable.php';
+require_once __DIR__ . '/../includes/database/migrations/CreateJobsTable.php';
+require_once __DIR__ . '/../includes/database/migrations/UpdateKeywordsTableStatus.php';
+require_once __DIR__ . '/../includes/database/migrations/CreateInternalLinksTable.php';
+require_once __DIR__ . '/../includes/database/migrations/BackfillAnalyticsMeta.php';
+
+/**
+ * Build the migration runner — mirrors the function in the main plugin file.
+ */
+if (!function_exists('contai_build_migration_runner')) {
+    function contai_build_migration_runner(): ContaiMigrationRunner {
+        $runner = new ContaiMigrationRunner();
+        $runner->register(1, new ContaiCreateKeywordsTable());
+        $runner->register(2, new ContaiCreateAPILogsTable());
+        $runner->register(3, new ContaiCreateJobsTable());
+        $runner->register(4, new ContaiUpdateKeywordsTableStatus());
+        $runner->register(5, new ContaiCreateInternalLinksTable());
+        $runner->register(6, new ContaiBackfillAnalyticsMeta());
+        return $runner;
+    }
+}
+
+/**
+ * Upgrade routine — mirrors the function in the main plugin file.
+ */
+if (!function_exists('contai_maybe_upgrade')) {
+    function contai_maybe_upgrade() {
+        $stored_version = get_option('contai_plugin_version', '0');
+        if (version_compare($stored_version, CONTAI_VERSION, '>=')) {
+            return;
+        }
+        $runner = contai_build_migration_runner();
+        $result = $runner->run();
+        if (!$result['success']) {
+            contai_log('Upgrade migration failed: ' . $result['message']);
+        }
+        contai_register_job_processor_cron();
+        contai_register_agent_actions_cron();
+        if (function_exists('opcache_reset')) {
+            opcache_reset();
+        }
+        global $wpdb;
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.DirectQuery
+        $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", '_transient_contai_%'));
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.DirectQuery
+        $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", '_transient_timeout_contai_%'));
+        update_option('contai_plugin_version', CONTAI_VERSION, false);
+        contai_log(sprintf('Plugin upgraded from %s to %s', $stored_version, CONTAI_VERSION));
+    }
+}
+
+/**
+ * Activation routine — mirrors the function in the main plugin file.
+ */
+if (!function_exists('contai_activate_plugin')) {
+    function contai_activate_plugin() {
+        $runner = contai_build_migration_runner();
+        $result = $runner->run();
+        if (!$result['success']) {
+            contai_log('Migration batch failed: ' . $result['message']);
+        }
+        try {
+            contai_register_job_processor_cron();
+        } catch (\Exception $e) {
+            contai_log("Cron registration error: " . $e->getMessage());
+        }
+        try {
+            contai_register_agent_actions_cron();
+        } catch (\Exception $e) {
+            contai_log("Agent cron registration error: " . $e->getMessage());
+        }
+        add_option('contai_disable_feeds', '1');
+        add_option('contai_disable_author_pages', '1');
+        add_option('contai_redirect_404', '1');
+        update_option('contai_plugin_version', CONTAI_VERSION, false);
+    }
+}

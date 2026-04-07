@@ -4,6 +4,18 @@ All notable changes to Content AI are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [2.21.2] - 2026-04-06
+
+### Fixed
+- **Plugin updates not applying until reinstall** (#68): WordPress `register_activation_hook` only fires on first install, not on updates. Added a `plugins_loaded` upgrade routine that detects version changes and runs pending database migrations, re-registers cron events, invalidates OPcache, and flushes stale transients
+- **Stale browser cache after update**: Replaced hardcoded asset version strings with dynamic `CONTAI_VERSION` constant for all enqueued CSS/JS files
+
+### Added
+- **`CONTAI_VERSION` constant**: Single source of truth for the plugin version, used for asset cache busting and upgrade detection
+- **`contai_maybe_upgrade()` routine**: Hooked to `plugins_loaded` at priority 5, compares stored version against current and executes upgrade tasks on mismatch
+- **Uninstall cleanup**: Added `contai_plugin_version`, `contai_db_version`, and `contai_migration_error` to option cleanup list
+- **11 unit tests**: Comprehensive test coverage for the upgrade routine and activation function
+
 ## [2.20.0] - 2026-04-06
 
 ### Added

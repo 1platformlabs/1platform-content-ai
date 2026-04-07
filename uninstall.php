@@ -92,6 +92,10 @@ $content_ai_options = array(
 	// Analytics integration.
 	'1platform_ga4_measurement_id',
 	'1platform_website_id',
+	// Plugin version tracking.
+	'contai_plugin_version',
+	'contai_db_version',
+	'contai_migration_error',
 );
 
 foreach ( $content_ai_options as $content_ai_option ) {
