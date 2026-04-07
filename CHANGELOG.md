@@ -4,6 +4,19 @@ All notable changes to Content AI are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [2.24.0] - 2026-04-07
+
+### Added
+- **Self-service onboarding**: New "Create Your Account" section on the license page — users enter email, select initial balance ($5/$10/$25/custom), and pay via integrated payment. API key is auto-activated after payment confirmation
+- **Payment polling**: JavaScript polls registration status every 5s with 5-minute timeout. Session recovery via WP transient if tab is closed mid-payment
+- **REST endpoints**: `POST /contai/v1/onboarding/register` and `GET /contai/v1/onboarding/status/{session_id}` — both require `manage_options` capability with full input validation (email, amount, currency, UUID session_id)
+- **OnboardingService**: Thin service proxying registration and status calls to the 1Platform API with app-token-only authentication
+- **CreateAccountSection component**: Reusable UI with amount selector buttons, email input, polling spinner, success/error states, and toggle between "Create Account" and "Enter Existing Key"
+- **Onboarding CSS**: Full styling for the create account card, amount buttons, status indicators, and responsive layout
+
+### Changed
+- **License panel**: Replaced `ContaiBetaVipNotice` with `ContaiCreateAccountSection` for unlicensed users, providing a direct onboarding path instead of a passive notice
+
 ## [2.22.0] - 2026-04-07
 
 ### Added

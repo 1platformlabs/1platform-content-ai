@@ -566,3 +566,142 @@
         padding: 6px 12px;
     }
 }
+
+/* ── Create Account (Onboarding) ── */
+
+.contai-create-account {
+    background: var(--contai-bg-card, #fff);
+    border: 1px solid var(--contai-border, #dcdcde);
+    border-radius: var(--contai-radius-lg, 12px);
+    padding: var(--contai-spacing-xl, 24px);
+    margin-bottom: var(--contai-spacing-xl, 24px);
+}
+
+.contai-create-account-header {
+    display: flex;
+    align-items: center;
+    gap: var(--contai-spacing-md, 12px);
+    margin-bottom: var(--contai-spacing-lg, 16px);
+}
+
+.contai-create-account-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--contai-primary, #2271b1);
+    color: #fff;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.contai-create-account-title {
+    margin: 0;
+    font-size: 18px;
+}
+
+.contai-onboarding-field {
+    margin-bottom: var(--contai-spacing-lg, 16px);
+}
+
+.contai-onboarding-field label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+.contai-onboarding-amounts {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.contai-amount-btn {
+    padding: 8px 18px;
+    border: 2px solid var(--contai-border, #dcdcde);
+    border-radius: 8px;
+    background: var(--contai-bg-card, #fff);
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.15s ease;
+}
+
+.contai-amount-btn:hover {
+    border-color: var(--contai-primary, #2271b1);
+}
+
+.contai-amount-btn.active {
+    border-color: var(--contai-primary, #2271b1);
+    background: var(--contai-primary, #2271b1);
+    color: #fff;
+}
+
+.contai-amount-custom {
+    width: 90px;
+    padding: 8px 12px;
+    border: 2px solid var(--contai-border, #dcdcde);
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+#contai-onboarding-submit {
+    margin-top: var(--contai-spacing-md, 12px);
+}
+
+.contai-onboarding-error {
+    margin-top: var(--contai-spacing-md, 12px);
+    padding: 10px 14px;
+    background: #fcf0f0;
+    border-left: 4px solid #d63638;
+    border-radius: 4px;
+    color: #8b1a1a;
+}
+
+.contai-onboarding-status,
+.contai-onboarding-recovery {
+    display: flex;
+    align-items: center;
+    gap: var(--contai-spacing-md, 12px);
+    padding: var(--contai-spacing-lg, 16px);
+    background: #f0f6fc;
+    border-radius: 8px;
+}
+
+.contai-onboarding-success {
+    display: flex;
+    align-items: center;
+    gap: var(--contai-spacing-md, 12px);
+    padding: var(--contai-spacing-lg, 16px);
+    background: #edf7ed;
+    border-radius: 8px;
+    color: #1e4620;
+}
+
+.contai-onboarding-success .dashicons {
+    font-size: 28px;
+    color: #00a32a;
+}
+
+.contai-onboarding-spinner .dashicons,
+.contai-onboarding-recovery .dashicons {
+    animation: contai-spin 1s linear infinite;
+}
+
+@keyframes contai-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.contai-create-account-toggle {
+    text-align: center;
+    margin-bottom: var(--contai-spacing-lg, 16px);
+}
+
+.contai-create-account-toggle a {
+    font-size: 13px;
+    text-decoration: none;
+}

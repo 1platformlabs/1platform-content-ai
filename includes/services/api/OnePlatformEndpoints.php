@@ -75,6 +75,13 @@ class ContaiOnePlatformEndpoints {
     const ANALYTICS_STATUS          = '/analytics/status';
     const ANALYTICS_MP_EVENT        = '/analytics/mp-event';
 
+    // ── Onboarding ─────────────────────────────────────────────
+    const ONBOARDING_REGISTER = '/onboarding/register';
+
+    public static function onboardingStatus(string $session_id): string {
+        return sprintf('/onboarding/status/%s', $session_id);
+    }
+
     // ── Businesses ──────────────────────────────────────────────
     const BUSINESSES = '/businesses';
 
