@@ -38,7 +38,14 @@ class ContaiCookieNoticeHelper {
 
 		$language = get_option( 'contai_site_language', 'spanish' );
 		$text = get_option( 'contai_cookie_notice_text' );
-		$link = $language === 'english' ? '/privacy-policy/' : '/politica-de-privacidad/';
+		$privacy_page = get_posts( array(
+			'post_type'   => 'page',
+			'meta_key'    => '_contai_legal_key',
+			'meta_value'  => 'privacy-policy',
+			'post_status' => 'publish',
+			'numberposts' => 1,
+		) );
+		$link = ! empty( $privacy_page ) ? get_permalink( $privacy_page[0]->ID ) : ( $language === 'english' ? '/privacy-policy/' : '/politica-de-privacidad/' );
 		$accept_label = $language === 'english' ? 'Accept' : 'Estoy de acuerdo';
 		$reject_label = $language === 'english' ? 'Reject' : 'Rechazar';
 		$privacy_label = $language === 'english' ? 'Privacy Policy' : 'Política de privacidad';

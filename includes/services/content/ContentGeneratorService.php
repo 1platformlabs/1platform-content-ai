@@ -135,6 +135,11 @@ class ContaiContentGeneratorService {
             $request_data['categories'] = array_map('sanitize_text_field', $categories);
         }
 
+        $used_urls = $this->getUsedFeaturedImageUrls();
+        if (!empty($used_urls)) {
+            $request_data['exclude_image_urls'] = array_values($used_urls);
+        }
+
         return $request_data;
     }
 
@@ -175,6 +180,17 @@ class ContaiContentGeneratorService {
         return is_array($data)
             && isset($data['title'])
             && isset($data['content']);
+    }
+
+    private function getUsedFeaturedImageUrls(): array {
+        global $wpdb;
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+        $results = $wpdb->get_col(
+            "SELECT DISTINCT meta_value FROM {$wpdb->postmeta} WHERE meta_key = '_contai_featured_image_source' AND meta_value != ''"
+        );
+
+        return is_array($results) ? $results : [];
     }
 }
 

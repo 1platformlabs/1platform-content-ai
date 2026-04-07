@@ -426,15 +426,39 @@ function contai_create_footer_menu_with_legal_pages(): void {
 		return;
 	}
 
-	// Fallback: try runtime-registered footer locations
-	$registered = get_registered_nav_menus();
-	foreach ( $footer_locations as $loc ) {
-		if ( isset( $registered[ $loc ] ) ) {
-			$locations[ $loc ] = $menu_id;
-			set_theme_mod( 'nav_menu_locations', $locations );
-			return;
+	// Fallback: pattern-match footer location from registered nav menus
+	$registered       = get_registered_nav_menus();
+	$footer_patterns  = array( 'footer', 'bottom', 'secondary' );
+	$exclude_patterns = array( 'primary', 'main', 'header', 'top', 'mobile', 'social' );
+
+	foreach ( $registered as $location => $description ) {
+		$loc_lower  = strtolower( $location );
+		$desc_lower = strtolower( $description );
+
+		// Skip primary navigation locations
+		$is_excluded = false;
+		foreach ( $exclude_patterns as $exclude ) {
+			if ( strpos( $loc_lower, $exclude ) !== false || strpos( $desc_lower, $exclude ) !== false ) {
+				$is_excluded = true;
+				break;
+			}
+		}
+		if ( $is_excluded ) {
+			continue;
+		}
+
+		// Match footer patterns
+		foreach ( $footer_patterns as $pattern ) {
+			if ( strpos( $loc_lower, $pattern ) !== false || strpos( $desc_lower, $pattern ) !== false ) {
+				$locations[ $location ] = $menu_id;
+				set_theme_mod( 'nav_menu_locations', $locations );
+				error_log( "[ContAI] Footer menu assigned to '{$location}' via pattern match for theme '{$theme}'" );
+				return;
+			}
 		}
 	}
+
+	error_log( "[ContAI] WARNING: No footer location found for theme '{$theme}'. Registered menus: " . implode( ', ', array_keys( $registered ) ) );
 }
 
 /**

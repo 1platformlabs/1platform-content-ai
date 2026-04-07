@@ -224,6 +224,7 @@ class ContaiPostGenerationOrchestrator {
         }
 
         contai_log('All candidate featured images already used on this site, skipping featured image to avoid duplication');
+        error_log('[ContAI] All candidate featured images already used — post created without featured image');
         return null;
     }
 
