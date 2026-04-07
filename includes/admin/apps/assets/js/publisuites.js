@@ -91,6 +91,40 @@
                 });
             }, 6000);
         }
+
+        // Order tabs
+        (function() {
+            var tabButtons = document.querySelectorAll('.contai-ps-orders__tab');
+            var tabContents = document.querySelectorAll('.contai-ps-orders__tab-content');
+            if (!tabButtons.length) return;
+
+            tabButtons.forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var tabName = this.getAttribute('data-tab');
+                    tabButtons.forEach(function(b) {
+                        b.classList.remove('active');
+                        b.setAttribute('aria-selected', 'false');
+                    });
+                    tabContents.forEach(function(c) { c.classList.remove('active'); });
+                    this.classList.add('active');
+                    this.setAttribute('aria-selected', 'true');
+                    var target = document.getElementById('ps-tab-' + tabName);
+                    if (target) target.classList.add('active');
+                });
+            });
+
+            // Auto-select first tab with orders if action required is empty
+            var alertBadge = document.querySelector('.contai-ps-orders__tab-badge--alert');
+            if (!alertBadge) {
+                for (var i = 0; i < tabButtons.length; i++) {
+                    var badge = tabButtons[i].querySelector('.contai-ps-orders__tab-badge');
+                    if (badge && parseInt(badge.textContent) > 0) {
+                        tabButtons[i].click();
+                        break;
+                    }
+                }
+            }
+        })();
     });
 
 })(jQuery);
