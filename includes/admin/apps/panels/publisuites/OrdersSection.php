@@ -621,22 +621,6 @@ class ContaiPublisuitesOrdersSection
     }
 
     /* ------------------------------------------------------------------
-       Empty state (global — when no orders at all)
-       ------------------------------------------------------------------ */
-
-    private function renderEmptyState(): void
-    {
-        ?>
-        <div class="contai-ps-orders__empty">
-            <span class="dashicons dashicons-format-aside contai-ps-orders__empty-icon" aria-hidden="true"></span>
-            <p class="contai-ps-orders__empty-text">
-                <?php esc_html_e('No sponsored post orders yet. Orders will appear here once they are available in the marketplace.', '1platform-content-ai'); ?>
-            </p>
-        </div>
-        <?php
-    }
-
-    /* ------------------------------------------------------------------
        Helpers
        ------------------------------------------------------------------ */
 
