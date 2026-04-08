@@ -42,7 +42,9 @@ class ContaiOnboardingRestController {
                 ),
                 'amount' => array(
                     'required'          => true,
-                    'sanitize_callback' => 'floatval',
+                    'sanitize_callback' => function( $value ) {
+                        return floatval( $value );
+                    },
                     'validate_callback' => function( $value ) {
                         return is_numeric( $value ) && floatval( $value ) >= 5 && floatval( $value ) <= 10000;
                     },
@@ -110,13 +112,16 @@ class ContaiOnboardingRestController {
             $data = $response->getData();
             $session_id = isset( $data->session_id ) ? $data->session_id : ( isset( $data['session_id'] ) ? $data['session_id'] : '' );
 
-            // Save session_id in transient for recovery after tab close (scoped per user)
+            $payment_url = isset( $data->payment_url ) ? $data->payment_url : ( isset( $data['payment_url'] ) ? $data['payment_url'] : '' );
+
+            // Save session_id + payment_url in transient for recovery (scoped per user)
             if ( $session_id ) {
                 $transient_key = 'contai_onboarding_session_' . get_current_user_id();
-                set_transient( $transient_key, sanitize_text_field( $session_id ), DAY_IN_SECONDS );
+                set_transient( $transient_key, array(
+                    'session_id'  => sanitize_text_field( $session_id ),
+                    'payment_url' => esc_url_raw( $payment_url ),
+                ), DAY_IN_SECONDS );
             }
-
-            $payment_url = isset( $data->payment_url ) ? $data->payment_url : ( isset( $data['payment_url'] ) ? $data['payment_url'] : '' );
 
             return new WP_REST_Response( array(
                 'success' => true,

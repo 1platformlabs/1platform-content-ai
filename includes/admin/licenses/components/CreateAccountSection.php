@@ -15,7 +15,7 @@ class ContaiCreateAccountSection {
      *
      * @param string|null $pending_session_id Session ID from transient (recovery).
      */
-    public static function render( ?string $pending_session_id = null ): void {
+    public static function render( ?string $pending_session_id = null, ?string $pending_payment_url = null ): void {
         ?>
         <div class="contai-create-account" id="contai-create-account">
             <div class="contai-create-account-header">
@@ -30,7 +30,8 @@ class ContaiCreateAccountSection {
 
             <?php if ( $pending_session_id ) : ?>
             <div class="contai-onboarding-recovery" id="contai-onboarding-recovery"
-                 data-session-id="<?php echo esc_attr( $pending_session_id ); ?>">
+                 data-session-id="<?php echo esc_attr( $pending_session_id ); ?>"
+                 <?php if ( $pending_payment_url ) : ?>data-payment-url="<?php echo esc_url( $pending_payment_url ); ?>"<?php endif; ?>>
                 <span class="dashicons dashicons-update spin"></span>
                 <p><?php esc_html_e( 'You have a pending registration. Checking status...', '1platform-content-ai' ); ?></p>
             </div>
@@ -61,14 +62,6 @@ class ContaiCreateAccountSection {
                         <button type="button" class="contai-amount-btn" data-amount="5">$5</button>
                         <button type="button" class="contai-amount-btn active" data-amount="10">$10</button>
                         <button type="button" class="contai-amount-btn" data-amount="25">$25</button>
-                        <input type="number"
-                               id="contai-onboarding-custom-amount"
-                               class="contai-amount-custom"
-                               min="5"
-                               max="10000"
-                               step="0.01"
-                               aria-label="<?php esc_attr_e( 'Custom amount', '1platform-content-ai' ); ?>"
-                               placeholder="<?php esc_attr_e( 'Custom', '1platform-content-ai' ); ?>" />
                     </div>
                 </div>
 
@@ -86,6 +79,9 @@ class ContaiCreateAccountSection {
                 <p id="contai-onboarding-status-text">
                     <?php esc_html_e( 'Processing your payment...', '1platform-content-ai' ); ?>
                 </p>
+                <button type="button" id="contai-onboarding-cancel" class="button button-link" style="margin-top:12px;">
+                    <?php esc_html_e( 'Cancel and start over', '1platform-content-ai' ); ?>
+                </button>
             </div>
 
             <div class="contai-onboarding-success" id="contai-onboarding-success" style="display:none;">

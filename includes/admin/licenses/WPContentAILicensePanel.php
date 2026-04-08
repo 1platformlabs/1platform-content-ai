@@ -88,8 +88,10 @@ class WPContentAILicensePanel
 
         if ($status['status'] === 'no_license') {
             $this->enqueueOnboardingAssets();
-            $pending_session = $this->getValidOnboardingSession();
-            ContaiCreateAccountSection::render($pending_session);
+            $pending = $this->getValidOnboardingSession();
+            $pending_session_id  = $pending ? $pending['session_id']  : null;
+            $pending_payment_url = $pending ? $pending['payment_url'] : null;
+            ContaiCreateAccountSection::render($pending_session_id, $pending_payment_url);
             $section = new ContaiActivateLicenseSection(self::NONCE_ACTION, self::NONCE_FIELD);
             $section->render();
             return;
@@ -407,12 +409,28 @@ class WPContentAILicensePanel
         <?php
     }
 
-    private function getValidOnboardingSession(): ?string
+    private function getValidOnboardingSession(): ?array
     {
         $transient_key = 'contai_onboarding_session_' . get_current_user_id();
         $session = get_transient($transient_key);
 
-        if (!$session || !preg_match('/^[a-f0-9\-]{36}$/', $session)) {
+        if (!$session) {
+            return null;
+        }
+
+        // Support legacy string format (session_id only)
+        if (is_string($session)) {
+            if (!preg_match('/^[a-f0-9\-]{36}$/', $session)) {
+                return null;
+            }
+            return array('session_id' => $session, 'payment_url' => '');
+        }
+
+        if (!is_array($session) || empty($session['session_id'])) {
+            return null;
+        }
+
+        if (!preg_match('/^[a-f0-9\-]{36}$/', $session['session_id'])) {
             return null;
         }
 
@@ -459,6 +477,7 @@ class WPContentAILicensePanel
                 'createNew'     => esc_html__('Create a new account instead', '1platform-content-ai'),
                 'alreadyClaimed' => esc_html__('API key was already retrieved. Please enter it below.', '1platform-content-ai'),
                 'invalidKey'    => esc_html__('Invalid API key received. Please enter it manually.', '1platform-content-ai'),
+                'openPayment'   => esc_html__('Click here to complete payment', '1platform-content-ai'),
             ),
         ));
     }

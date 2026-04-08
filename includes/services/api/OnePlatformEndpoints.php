@@ -76,7 +76,7 @@ class ContaiOnePlatformEndpoints {
     const ANALYTICS_MP_EVENT        = '/analytics/mp-event';
 
     // ── Onboarding ─────────────────────────────────────────────
-    const ONBOARDING_REGISTER = '/onboarding/register';
+    const ONBOARDING_REGISTER = '/onboarding/';
 
     public static function onboardingStatus(string $session_id): string {
         if (!preg_match('/^[a-f0-9\-]{36}$/', $session_id)) {

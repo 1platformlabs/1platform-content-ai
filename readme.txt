@@ -4,7 +4,7 @@ Tags: ai content, seo, content generation, internal links, table of contents
 Requires at least: 5.9
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 2.27.0
+Stable tag: 2.27.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -159,6 +159,15 @@ The plugin sends your site URL, API key, and content generation parameters (keyw
 7. Tools — Google Analytics, Google Search Console, Publisuites, and Ads Manager integrations.
 
 == Changelog ==
+
+= 2.27.1 =
+* Fixed: WP 6.9 sanitize_callback crash on onboarding REST route (floatval argument count)
+* Fixed: Agent sync cron crash when API returns WP_Error
+* Fixed: Onboarding now uses app-only auth (no user token required before account exists)
+* Fixed: Payment link shown as clickable link instead of blocked popup
+* Fixed: Session recovery preserves payment URL across page reloads
+* Changed: Simplified amount selector to preset $5/$10/$25 buttons
+* Changed: Added cancel button to polling state
 
 = 2.21.8 =
 * Fixed: Post Maintenance actions not working — refactored to process form in constructor (#72)
