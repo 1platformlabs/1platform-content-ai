@@ -4,6 +4,20 @@ All notable changes to Content AI are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [2.26.0] - 2026-04-07
+
+### Added
+- **Site generation re-execution**: Detect re-execution via `contai_site_generation_completed` option flag, clean previous AI-generated categories and orphaned batch options before re-extracting keywords
+- **Legal page resilience**: Restore trashed legal pages automatically, ensure all 5 required pages (privacy, cookies, legal, about, contact) exist with fallback content if the API omits them
+- **Menu management**: New `MainMenuManager` service to clean orphaned page and category menu items during re-execution
+- **Image deduplication**: Exclude already-used featured image URLs from content generation requests to avoid repeated images across posts
+- **Site generator form refactor**: Inline notice pattern replaces URL-based error messages, form values preserved on error via transient, explicit action attribute and nonce field
+
+### Changed
+- **QueueManager**: Skip keywords that already have generated posts to avoid duplicates on re-execution, mark them as `done`
+- **Cookie notice**: Resolve privacy policy link dynamically from `_contai_legal_key` meta instead of hardcoded slug
+- **Footer menu assignment**: Pattern-match footer location across themes instead of checking a fixed list of location slugs
+
 ## [2.24.0] - 2026-04-07
 
 ### Added

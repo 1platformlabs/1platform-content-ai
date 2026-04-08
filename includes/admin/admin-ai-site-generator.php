@@ -38,20 +38,17 @@ function contai_handle_ai_site_generator_submission() {
 		return;
 	}
 
-	$redirect_url = admin_url( 'admin.php?page=contai-ai-site-generator' );
-
-	// Verify nonce — redirect with error instead of wp_die() to avoid silent refresh (#54)
+	// Verify nonce — show inline error instead of redirecting to avoid silent refresh (#54)
 	$nonce_value = isset( $_POST['contai_site_generator_nonce'] )
 		? sanitize_key( wp_unslash( $_POST['contai_site_generator_nonce'] ) )
 		: '';
 
 	if ( ! wp_verify_nonce( $nonce_value, 'contai_site_generator_nonce' ) ) {
-		set_transient( 'contai_site_gen_notice', array(
+		$GLOBALS['contai_site_gen_inline_notice'] = array(
 			'type'    => 'error',
 			'message' => __( 'Your session has expired. Please reload the page and try again.', '1platform-content-ai' ),
-		), 30 );
-		wp_safe_redirect( $redirect_url );
-		exit;
+		);
+		return;
 	}
 
 	if ( ! current_user_can( 'manage_options' ) ) {
@@ -59,36 +56,38 @@ function contai_handle_ai_site_generator_submission() {
 	}
 
 	try {
-		contai_process_site_generation_submission( $redirect_url );
+		$error = contai_process_site_generation_submission();
+		if ( $error ) {
+			$GLOBALS['contai_site_gen_inline_notice'] = $error;
+			return;
+		}
 	} catch ( \Throwable $e ) {
 		contai_log( 'Site generation submission failed: ' . $e->getMessage() ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
-		set_transient( 'contai_site_gen_notice', array(
+		$GLOBALS['contai_site_gen_inline_notice'] = array(
 			'type'    => 'error',
 			'message' => __( 'An unexpected error occurred while starting site generation. Please try again.', '1platform-content-ai' ),
-		), 30 );
-		wp_safe_redirect( $redirect_url );
-		exit;
+		);
+		return;
 	}
 }
 
 /**
  * Process the site generation form submission.
  *
- * Extracted from the handler to enable try/catch wrapping.
- * All validation errors redirect with a transient notice (#54).
+ * Returns an error array on validation failure (displayed inline without
+ * redirect so the user keeps their form data). Returns null on success
+ * and redirects to show the progress panel (#54).
  *
- * @param string $redirect_url The URL to redirect to after processing.
+ * @return array|null Error notice array on failure, null on success (redirects).
  */
-function contai_process_site_generation_submission( string $redirect_url ) {
+function contai_process_site_generation_submission() {
 	// Validate that category is configured
 	$site_category = sanitize_text_field( wp_unslash( $_POST['contai_site_category'] ?? '' ) );
 	if ( empty( $site_category ) ) {
-		set_transient( 'contai_site_gen_notice', array(
+		return array(
 			'type'    => 'error',
 			'message' => __( 'Please select a category before starting the site generation process.', '1platform-content-ai' ),
-		), 30 );
-		wp_safe_redirect( $redirect_url );
-		exit;
+		);
 	}
 
 	// Validate credits before starting site generation
@@ -97,24 +96,20 @@ function contai_process_site_generation_submission( string $redirect_url ) {
 	$creditCheck = $creditGuard->validateCredits();
 
 	if ( ! $creditCheck['has_credits'] ) {
-		set_transient( 'contai_site_gen_notice', array(
+		return array(
 			'type'    => 'error',
 			'message' => $creditCheck['message'],
-		), 30 );
-		wp_safe_redirect( $redirect_url );
-		exit;
+		);
 	}
 
 	$jobRepository = new ContaiJobRepository();
 	$activeJob = $jobRepository->findActiveSiteGenerationJob();
 
 	if ( $activeJob ) {
-		set_transient( 'contai_site_gen_notice', array(
+		return array(
 			'type'    => 'error',
 			'message' => __( 'There is already an active site generation process running.', '1platform-content-ai' ),
-		), 30 );
-		wp_safe_redirect( $redirect_url );
-		exit;
+		);
 	}
 
 	$site_language = sanitize_text_field( wp_unslash( $_POST['contai_site_language'] ?? 'english' ) );
@@ -166,12 +161,10 @@ function contai_process_site_generation_submission( string $redirect_url ) {
 	$created = $jobRepository->create( $job );
 
 	if ( ! $created ) {
-		set_transient( 'contai_site_gen_notice', array(
+		return array(
 			'type'    => 'error',
 			'message' => __( 'Failed to start site generation process.', '1platform-content-ai' ),
-		), 30 );
-		wp_safe_redirect( $redirect_url );
-		exit;
+		);
 	}
 
 	// Save site configuration to options for use by other services
@@ -190,6 +183,8 @@ function contai_process_site_generation_submission( string $redirect_url ) {
 		}
 	}
 
+	// Success — redirect to show the progress panel
+	$redirect_url = admin_url( 'admin.php?page=contai-ai-site-generator' );
 	set_transient( 'contai_site_gen_notice', array(
 		'type'    => 'success',
 		'message' => __( 'Site generation process has been started successfully!', '1platform-content-ai' ),
@@ -208,10 +203,20 @@ function contai_ai_site_generator_page() {
 	$activeJob = $jobRepository->findActiveSiteGenerationJob();
 	$hasActiveJob = ! empty( $activeJob );
 
-	// Display transient-based notices (primary — survives redirects reliably)
-	$notice = get_transient( 'contai_site_gen_notice' );
-	if ( ! empty( $notice ) && is_array( $notice ) ) {
-		delete_transient( 'contai_site_gen_notice' );
+	// Display inline notice from current POST (no redirect needed — form data preserved)
+	$notice = $GLOBALS['contai_site_gen_inline_notice'] ?? null;
+
+	// Fallback: check transient (from success redirect)
+	if ( ! $notice ) {
+		$notice = get_transient( 'contai_site_gen_notice' );
+		if ( ! empty( $notice ) && is_array( $notice ) ) {
+			delete_transient( 'contai_site_gen_notice' );
+		} else {
+			$notice = null;
+		}
+	}
+
+	if ( $notice ) {
 		$type = in_array( $notice['type'], array( 'success', 'error', 'warning', 'info' ), true ) ? $notice['type'] : 'info';
 		$msg  = $notice['message'] ?? '';
 		if ( ! empty( $msg ) ) {

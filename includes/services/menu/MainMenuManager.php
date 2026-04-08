@@ -19,6 +19,8 @@ class ContaiMainMenuManager {
         $menu_id = $this->getOrCreateMenu();
         $site_language = get_option('contai_site_language', 'spanish');
 
+        $this->removePageItems($menu_id);
+        $this->removeOrphanedCategoryItems($menu_id);
         $this->ensureHomeMenuItem($menu_id, $site_language);
         $this->addCategoryMenuItems($menu_id, $category_names);
     }
@@ -176,6 +178,35 @@ class ContaiMainMenuManager {
         }
 
         return false;
+    }
+
+    private function removePageItems(int $menu_id): void {
+        $menu_items = wp_get_nav_menu_items($menu_id);
+        if (!$menu_items) {
+            return;
+        }
+
+        foreach ($menu_items as $item) {
+            if ($item->type === 'post_type' && $item->object === 'page') {
+                wp_delete_post($item->ID, true);
+            }
+        }
+    }
+
+    private function removeOrphanedCategoryItems(int $menu_id): void {
+        $menu_items = wp_get_nav_menu_items($menu_id);
+        if (!$menu_items) {
+            return;
+        }
+
+        foreach ($menu_items as $item) {
+            if ($item->type === 'taxonomy' && $item->object === 'category') {
+                $category = get_category($item->object_id);
+                if (!$category || is_wp_error($category)) {
+                    wp_delete_post($item->ID, true);
+                }
+            }
+        }
     }
 
     private function addCategoryMenuItems(int $menu_id, array $category_names): void {

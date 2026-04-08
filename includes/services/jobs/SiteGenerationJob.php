@@ -126,6 +126,7 @@ class ContaiSiteGenerationJob implements ContaiJobInterface
                 break;
 
             case 'extractKeywords':
+                $this->cleanPreviousDataIfReExecution();
                 $this->extractKeywords($config['keyword_extraction']);
                 break;
 
@@ -168,6 +169,7 @@ class ContaiSiteGenerationJob implements ContaiJobInterface
                 } catch (Exception $e) {
                     contai_log("Optional step 'setupNavigation' failed: " . $e->getMessage()); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
                 }
+                update_option('contai_site_generation_completed', true);
                 break;
         }
         return $payload;
@@ -252,6 +254,55 @@ class ContaiSiteGenerationJob implements ContaiJobInterface
             // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
             throw new Exception('Website generation failed: ' . implode(', ', $result['errors']));
         }
+    }
+
+    private function isReExecution(): bool
+    {
+        return (bool) get_option('contai_site_generation_completed', false);
+    }
+
+    private function cleanPreviousDataIfReExecution(): void
+    {
+        if (!$this->isReExecution()) {
+            return;
+        }
+
+        error_log('[ContAI] Re-execution detected — cleaning previous data');
+
+        // Clean categories where ALL posts are wizard-generated
+        $categories = get_categories([
+            'hide_empty' => false,
+            'exclude'    => [get_option('default_category')],
+        ]);
+
+        foreach ($categories as $category) {
+            $total_posts = $category->count;
+            if ($total_posts === 0) {
+                wp_delete_term($category->term_id, 'category');
+                continue;
+            }
+
+            $contai_posts = get_posts([
+                'category'    => $category->term_id,
+                'meta_key'    => '_1platform_ai_generated',
+                'meta_value'  => '1',
+                'numberposts' => -1,
+                'fields'      => 'ids',
+            ]);
+
+            if (count($contai_posts) === $total_posts) {
+                wp_delete_term($category->term_id, 'category');
+            }
+        }
+
+        // Clean orphaned batch options
+        global $wpdb;
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+        $wpdb->query(
+            "DELETE FROM {$wpdb->options} WHERE option_name LIKE 'contai\_batch\_%'"
+        );
+
+        error_log('[ContAI] Re-execution cleanup completed');
     }
 
     private function extractKeywords(array $extractionConfig): void
