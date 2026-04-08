@@ -4,7 +4,6 @@ All notable changes to Content AI are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-<<<<<<< Updated upstream
 ## [2.26.0] - 2026-04-07
 
 ### Added
@@ -311,8 +310,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **`CategoryAPIServiceGetActiveCategoriesTest`**: 9 unit tests for `getActiveCategories()` covering API success, auth failure, cache hit, force refresh, inactive categories, non-array data, reindexing, and no-cache-on-failure
 - **`SiteGeneratorPayloadNoLicenseKeyTest`**: 3 unit tests verifying the job payload contains no sensitive data
 
-=======
->>>>>>> Stashed changes
 ## [2.10.2] - 2026-03-25
 
 ### Fixed
