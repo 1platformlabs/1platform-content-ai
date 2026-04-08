@@ -15,7 +15,7 @@
     var pollStart     = 0;
     var pollSessionId = null;
     var selectedAmount = 10;
-    var API_KEY_PATTERN = /^sk-[a-zA-Z0-9]{20,}$/;
+    var API_KEY_PATTERN = /^[a-f0-9]{64}$/;
 
     // ── DOM refs ──
 
@@ -206,6 +206,13 @@
         var licenseForm = licenseInput ? licenseInput.closest('form') : null;
         if (licenseInput && licenseForm) {
             licenseInput.value = apiKey;
+            if (!licenseForm.querySelector('input[name="contai_activate_license"]')) {
+                var hidden = document.createElement('input');
+                hidden.type = 'hidden';
+                hidden.name = 'contai_activate_license';
+                hidden.value = '1';
+                licenseForm.appendChild(hidden);
+            }
             licenseForm.submit();
         } else {
             window.location.reload();
