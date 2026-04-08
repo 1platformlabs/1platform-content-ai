@@ -179,6 +179,9 @@ class WPContentAILicensePanel
         $authService = ContaiOnePlatformAuthService::create();
         $authService->clearUserToken();
 
+        // Clear onboarding session — activation complete, no more polling needed
+        delete_transient('contai_onboarding_session_' . get_current_user_id());
+
         // Step 2: Authenticate with new API key
         $result = $this->service->refreshUserProfile();
 
@@ -213,6 +216,9 @@ class WPContentAILicensePanel
         // Clear authentication token
         $authService = ContaiOnePlatformAuthService::create();
         $authService->clearToken();
+
+        // Clear onboarding session to prevent re-activation polling loop
+        delete_transient('contai_onboarding_session_' . get_current_user_id());
 
         // Redirect to refresh the page and hide API Keys section
         $redirect_url = admin_url('admin.php?page=contai-licenses');
