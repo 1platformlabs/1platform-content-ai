@@ -16,7 +16,7 @@ class ContaiOnboardingService {
     private ContaiOnePlatformClient $client;
 
     public function __construct( ?ContaiOnePlatformClient $client = null ) {
-        $this->client = $client ?? ContaiOnePlatformClient::create();
+        $this->client = $client ?? ContaiOnePlatformClient::create()->setAppOnlyAuth();
     }
 
     /**

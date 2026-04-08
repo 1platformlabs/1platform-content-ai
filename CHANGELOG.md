@@ -4,6 +4,20 @@ All notable changes to Content AI are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [2.27.1] - 2026-04-08
+
+### Fixed
+- **WP 6.9 sanitize_callback crash**: Wrapped `floatval` in closure for onboarding REST route — WordPress 6.9 passes 3 arguments to `sanitize_callback` but `floatval()` only accepts 1
+- **Agent sync cron crash**: Added `is_wp_error()` guard in `ContaiAgentSyncService::pollAndProcessActions()` before accessing API response as array
+- **App-only auth for onboarding**: Added `getAppOnlyAuthHeaders()` and `setAppOnlyAuth()` to API client so onboarding requests use only the app token (user doesn't exist yet)
+- **Onboarding endpoint path**: Corrected API endpoint from `/onboarding/register` to `/onboarding/` matching the FastAPI route
+- **Payment link display**: Replaced `window.open()` popup (blocked by browsers) with inline clickable payment link
+- **Session recovery with payment URL**: Transient now stores both `session_id` and `payment_url` for recovery after page reload, with backward compatibility for legacy string format
+
+### Changed
+- **Removed custom amount input**: Simplified onboarding to preset $5, $10, $25 buttons only
+- **Cancel polling button**: Added "Cancel and start over" button to polling state for better UX
+
 ## [2.26.0] - 2026-04-07
 
 ### Added

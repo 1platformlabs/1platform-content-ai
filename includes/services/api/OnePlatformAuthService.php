@@ -109,6 +109,26 @@ class ContaiOnePlatformAuthService {
     }
 
     /**
+     * Build auth headers with app token only (no user token).
+     *
+     * Used by flows where the user doesn't exist yet (e.g. onboarding).
+     */
+    public function getAppOnlyAuthHeaders(): ?array {
+        $app_token = $this->getAppToken();
+
+        if ($app_token === null) {
+            $this->storeError(self::OPTION_APP_TOKEN_ERROR, 'Failed to obtain app authentication token');
+            return null;
+        }
+
+        $this->clearError(self::OPTION_APP_TOKEN_ERROR);
+
+        return [
+            'Authorization' => 'Bearer ' . $app_token,
+        ];
+    }
+
+    /**
      * @deprecated Use getAuthHeaders() instead. Returns app token for backward compatibility.
      */
     public function getToken(): ?string {

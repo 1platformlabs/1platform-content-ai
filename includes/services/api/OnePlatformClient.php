@@ -32,6 +32,7 @@ class ContaiOnePlatformClient {
     private ContaiRequestLogger $logger;
     private ContaiConfig $config;
     private array $custom_headers = [];
+    private bool $app_only_auth = false;
 
     public function __construct(
         ContaiOnePlatformAuthService $auth_service,
@@ -153,7 +154,15 @@ class ContaiOnePlatformClient {
     }
 
     private function obtainAuthHeaders(): ?array {
+        if ($this->app_only_auth) {
+            return $this->auth_service->getAppOnlyAuthHeaders();
+        }
         return $this->auth_service->getAuthHeaders();
+    }
+
+    public function setAppOnlyAuth(): self {
+        $this->app_only_auth = true;
+        return $this;
     }
 
     private function createAuthFailedResponse(): ContaiOnePlatformResponse {

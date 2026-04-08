@@ -88,7 +88,7 @@ class ContaiAgentSyncService {
 		try {
 			$result = $this->api_service->listActions( array( 'status' => 'pending' ) );
 
-			if ( empty( $result['actions'] ) || ! is_array( $result['actions'] ) ) {
+			if ( is_wp_error( $result ) || ! is_array( $result ) || empty( $result['actions'] ) || ! is_array( $result['actions'] ) ) {
 				return;
 			}
 

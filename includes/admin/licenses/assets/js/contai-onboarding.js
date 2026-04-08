@@ -29,6 +29,7 @@
     var customAmt  = document.getElementById('contai-onboarding-custom-amount');
     var recovery   = document.getElementById('contai-onboarding-recovery');
     var toggleLink = document.getElementById('contai-toggle-existing-key');
+    var cancelBtn  = document.getElementById('contai-onboarding-cancel');
 
     // ── Amount selector ──
 
@@ -126,13 +127,8 @@
                     var sessionId = data.session_id;
                     var paymentUrl = data.payment_url;
 
-                    // Open payment in new tab (only allow https URLs)
-                    if (paymentUrl && /^https:\/\//.test(paymentUrl)) {
-                        window.open(paymentUrl, '_blank');
-                    }
-
-                    // Switch to polling UI
-                    showPolling();
+                    // Switch to polling UI with payment link
+                    showPolling(paymentUrl);
                     startPolling(sessionId);
                 } else {
                     showError(result.message || contaiOnboarding.i18n.failed);
@@ -218,10 +214,20 @@
 
     // ── UI helpers ──
 
-    function showPolling() {
+    function showPolling(paymentUrl) {
         if (form) form.style.display = 'none';
         if (statusBox) statusBox.style.display = '';
         if (successBox) successBox.style.display = 'none';
+        if (recovery) recovery.style.display = 'none';
+
+        // Show payment link if available
+        if (paymentUrl && /^https?:\/\//.test(paymentUrl) && statusText) {
+            statusText.innerHTML = contaiOnboarding.i18n.processing +
+                ' <a href="' + paymentUrl.replace(/"/g, '&quot;') +
+                '" target="_blank" rel="noopener noreferrer" style="display:inline-block;margin-top:8px;font-weight:600;">' +
+                (contaiOnboarding.i18n.openPayment || 'Click here to complete payment') +
+                ' &#8599;</a>';
+        }
     }
 
     function showSuccess() {
@@ -250,6 +256,19 @@
         }
     }
 
+    // ── Cancel and start over ──
+
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', function () {
+            if (pollTimer) {
+                clearInterval(pollTimer);
+                pollTimer = null;
+            }
+            pollSessionId = null;
+            showForm();
+        });
+    }
+
     // ── Pause/resume polling on tab visibility ──
 
     document.addEventListener('visibilitychange', function () {
@@ -265,9 +284,29 @@
 
     if (recovery) {
         var recoverSessionId = recovery.getAttribute('data-session-id');
+        var recoverPaymentUrl = recovery.getAttribute('data-payment-url') || '';
         if (recoverSessionId) {
-            showPolling();
-            startPolling(recoverSessionId);
+            // Check status first — if still pending, show payment link; if completed, activate
+            apiFetch('status/' + encodeURIComponent(recoverSessionId))
+                .then(function (result) {
+                    if (result.success && result.data) {
+                        if (result.data.status === 'completed' && result.data.api_key) {
+                            showSuccess();
+                            activateKey(result.data.api_key);
+                        } else if (result.data.status === 'failed') {
+                            showForm();
+                            showError(contaiOnboarding.i18n.failed);
+                        } else {
+                            showPolling(recoverPaymentUrl);
+                            startPolling(recoverSessionId);
+                        }
+                    } else {
+                        showForm();
+                    }
+                })
+                .catch(function () {
+                    showForm();
+                });
         }
     }
 })();
