@@ -290,21 +290,28 @@ class ContaiPublisuitesService
         }
 
         $endpoint = ContaiOnePlatformEndpoints::websitePublisuites($websiteId);
-        $response = $this->client->post($endpoint, [
-            'action' => 'delete',
-        ]);
+        $response = $this->client->post($endpoint, ['action' => 'delete']);
 
-        if ($response->isSuccess()) {
-            if (!empty($config['verificationFileName'])) {
-                $filePath = ABSPATH . sanitize_file_name($config['verificationFileName']);
-                if (file_exists($filePath) && !unlink($filePath)) {
-                    error_log('[1Platform] Failed to delete verification file: ' . $filePath);
-                }
-            }
-            $this->deletePublisuitesConfig();
+        if (!$response->isSuccess()) {
+            return $response;
         }
 
+        $this->deleteVerificationFile($config);
+        $this->deletePublisuitesConfig();
+
         return $response;
+    }
+
+    private function deleteVerificationFile(array $config): void
+    {
+        if (empty($config['verificationFileName'])) {
+            return;
+        }
+
+        $filePath = ABSPATH . sanitize_file_name($config['verificationFileName']);
+        if (file_exists($filePath) && !unlink($filePath)) {
+            error_log('[1Platform] Failed to delete verification file: ' . $filePath);
+        }
     }
 
     public function acceptOrder(int $orderId): ContaiOnePlatformResponse
