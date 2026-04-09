@@ -267,10 +267,15 @@ class ContaiPublisuitesService
 
         if ($response->isSuccess()) {
             $data = $response->getData();
-            if (isset($data['marketplace_status'])) {
-                $config['marketplace_status'] = $data['marketplace_status'];
-                $config['marketplace_status_checked_at'] = gmdate('c');
-                $this->savePublisuitesConfig($config);
+            if (isset($data['marketplace_status']) && is_array($data['marketplace_status'])) {
+                $statuses = $data['marketplace_status'];
+                $wsId = $config['websiteId'] ?? null;
+                $status = $wsId && isset($statuses[$wsId]) ? $statuses[$wsId] : reset($statuses);
+                if ($status) {
+                    $config['marketplace_status'] = $status;
+                    $config['marketplace_status_checked_at'] = gmdate('c');
+                    $this->savePublisuitesConfig($config);
+                }
             }
         }
 
