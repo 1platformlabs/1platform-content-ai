@@ -7,6 +7,7 @@ require_once __DIR__ . '/../../../helpers/license-helper.php';
 require_once __DIR__ . '/publisuites/ConnectSection.php';
 require_once __DIR__ . '/publisuites/VerificationSection.php';
 require_once __DIR__ . '/publisuites/ConnectedSection.php';
+require_once __DIR__ . '/publisuites/MarketplacePendingSection.php';
 require_once __DIR__ . '/publisuites/OrdersSection.php';
 
 /**
@@ -100,6 +101,20 @@ class ContaiPublisuitesPanel
 
             case 'configured':
                 if ($this->service->isVerified($config)) {
+                    $marketplaceStatus = $config['marketplace_status'] ?? null;
+
+                    if ($marketplaceStatus !== 'active') {
+                        return array_merge($base, [
+                            'status_key'           => 'marketplace_pending',
+                            'status_label'         => __('Pending Approval', '1platform-content-ai'),
+                            'status_class'         => 'contai-badge--warning',
+                            'primary_cta_label'    => null,
+                            'primary_cta_action'   => null,
+                            'secondary_cta_label'  => __('Remove from Marketplace', '1platform-content-ai'),
+                            'secondary_cta_action' => 'contai_delete_from_marketplace',
+                        ]);
+                    }
+
                     $view_data = array_merge($base, [
                         'status_key'           => 'connected',
                         'status_label'         => __('Connected', '1platform-content-ai'),
@@ -186,6 +201,11 @@ class ContaiPublisuitesPanel
 
             case 'pending_verification':
                 $section = new ContaiPublisuitesVerificationSection($view_data);
+                $section->render();
+                break;
+
+            case 'marketplace_pending':
+                $section = new ContaiPublisuitesMarketplacePendingSection($view_data);
                 $section->render();
                 break;
 

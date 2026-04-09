@@ -49,24 +49,46 @@ class ContaiPublisuitesConnectedSection
                         </div>
                     <?php endif; ?>
                     <div class="contai-ps-info-list__row">
+                        <dt><?php esc_html_e('Marketplace Status', '1platform-content-ai'); ?></dt>
+                        <dd>
+                            <span class="contai-badge contai-badge--success">
+                                &#10003; <?php esc_html_e('Approved', '1platform-content-ai'); ?>
+                            </span>
+                        </dd>
+                    </div>
+                    <div class="contai-ps-info-list__row">
                         <dt><?php esc_html_e('Site URL', '1platform-content-ai'); ?></dt>
                         <dd class="contai-ps-mono"><?php echo esc_html($this->view_data['site_url']); ?></dd>
                     </div>
                 </dl>
-                <?php if (!empty($this->view_data['secondary_cta_action'])) : ?>
-                    <form method="post" class="contai-ps-form" data-confirm="<?php echo esc_attr($confirm_message); ?>">
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    <?php if (!empty($this->view_data['secondary_cta_action'])) : ?>
+                        <form method="post" class="contai-ps-form" data-confirm="<?php echo esc_attr($confirm_message); ?>">
+                            <?php wp_nonce_field($this->view_data['nonce_action'], $this->view_data['nonce_field']); ?>
+                            <button
+                                type="submit"
+                                name="<?php echo esc_attr($this->view_data['secondary_cta_action']); ?>"
+                                class="button button-secondary contai-ps-btn--danger"
+                                aria-label="<?php esc_attr_e('Disconnect from the marketplace', '1platform-content-ai'); ?>"
+                            >
+                                <span class="dashicons dashicons-dismiss" aria-hidden="true"></span>
+                                <?php echo esc_html($this->view_data['secondary_cta_label']); ?>
+                            </button>
+                        </form>
+                    <?php endif; ?>
+                    <form method="post" class="contai-ps-form">
                         <?php wp_nonce_field($this->view_data['nonce_action'], $this->view_data['nonce_field']); ?>
                         <button
                             type="submit"
-                            name="<?php echo esc_attr($this->view_data['secondary_cta_action']); ?>"
+                            name="contai_delete_from_marketplace"
                             class="button button-secondary contai-ps-btn--danger"
-                            aria-label="<?php esc_attr_e('Disconnect from the marketplace', '1platform-content-ai'); ?>"
+                            onclick="return confirm('<?php echo esc_js(__('Are you sure? This will remove the website from the marketplace and delete all synced orders.', '1platform-content-ai')); ?>');"
                         >
-                            <span class="dashicons dashicons-dismiss" aria-hidden="true"></span>
-                            <?php echo esc_html($this->view_data['secondary_cta_label']); ?>
+                            <span class="dashicons dashicons-trash" aria-hidden="true"></span>
+                            <?php esc_html_e('Remove from Marketplace', '1platform-content-ai'); ?>
                         </button>
                     </form>
-                <?php endif; ?>
+                </div>
             </div>
         </details>
         <?php

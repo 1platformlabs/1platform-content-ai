@@ -77,6 +77,11 @@ class ContaiPublisuitesFormHandler
             $this->handleSendUrl();
             return;
         }
+
+        if (isset($_POST['contai_delete_from_marketplace'])) {
+            $this->handleDeleteFromMarketplace();
+            return;
+        }
     }
 
     private function handleSetup(): void
@@ -259,6 +264,18 @@ class ContaiPublisuitesFormHandler
         }
 
         $this->redirectWithMessage('success', __('URL submitted successfully', '1platform-content-ai'));
+    }
+
+    private function handleDeleteFromMarketplace(): void
+    {
+        $response = $this->service->deleteWebsiteFromMarketplace();
+
+        if ($response->isSuccess()) {
+            $this->redirectWithMessage('success', __('Website removed from the marketplace. You can re-add it at any time.', '1platform-content-ai'));
+            return;
+        }
+
+        $this->redirectWithMessage('error', wp_kses_post($response->getMessage()), $response->getTraceId());
     }
 
     private function redirectWithMessage(string $type, string $message, ?string $trace_id = null): void

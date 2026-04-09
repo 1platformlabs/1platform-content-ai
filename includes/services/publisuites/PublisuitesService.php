@@ -254,9 +254,50 @@ class ContaiPublisuitesService
 
         $endpoint = ContaiOnePlatformEndpoints::websitePublisuites($websiteId);
 
-        return $this->client->post($endpoint, [
+        $response = $this->client->post($endpoint, [
             'action' => 'sync',
         ]);
+
+        if ($response->isSuccess()) {
+            $data = $response->getData();
+            if (isset($data['marketplace_status'])) {
+                $config['marketplace_status'] = $data['marketplace_status'];
+                $config['marketplace_status_checked_at'] = gmdate('c');
+                $this->savePublisuitesConfig($config);
+            }
+        }
+
+        return $response;
+    }
+
+    public function deleteWebsiteFromMarketplace(): ContaiOnePlatformResponse
+    {
+        $config = $this->getPublisuitesConfig();
+        if (!$config) {
+            return new ContaiOnePlatformResponse(false, null, 'No marketplace configuration found', 400);
+        }
+
+        $websiteId = $this->websiteProvider->getWebsiteId();
+        if (!$websiteId) {
+            return new ContaiOnePlatformResponse(false, null, 'Website not configured', 400);
+        }
+
+        $endpoint = ContaiOnePlatformEndpoints::websitePublisuites($websiteId);
+        $response = $this->client->post($endpoint, [
+            'action' => 'delete',
+        ]);
+
+        if ($response->isSuccess()) {
+            if (!empty($config['verificationFileName'])) {
+                $filePath = ABSPATH . sanitize_file_name($config['verificationFileName']);
+                if (file_exists($filePath)) {
+                    @unlink($filePath);
+                }
+            }
+            $this->deletePublisuitesConfig();
+        }
+
+        return $response;
     }
 
     public function acceptOrder(int $orderId): ContaiOnePlatformResponse
