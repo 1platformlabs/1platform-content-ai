@@ -19,9 +19,9 @@ class ContaiPublisuitesMarketplacePendingSection
     public function render(): void
     {
         $config = $this->view_data['config'];
-        $publisuites_id = esc_html($config['publisuitesId'] ?? '—');
-        $site_url = esc_html($this->view_data['site_url']);
-        $verified_at = !empty($config['verifiedAt']) ? esc_html($this->formatDate($config['verifiedAt'])) : '—';
+        $publisuites_id = $config['publisuitesId'] ?? '—';
+        $site_url = $this->view_data['site_url'];
+        $verified_at = !empty($config['verifiedAt']) ? $this->formatDate($config['verifiedAt']) : '—';
         $confirm_remove = esc_js(
             __('Are you sure? This will remove the website from the marketplace and delete all synced orders.', '1platform-content-ai')
         );
@@ -48,11 +48,11 @@ class ContaiPublisuitesMarketplacePendingSection
                     <dl class="contai-ps-info-list" style="margin-bottom: 16px;">
                         <div class="contai-ps-info-list__row">
                             <dt><?php esc_html_e('Marketplace ID', '1platform-content-ai'); ?></dt>
-                            <dd class="contai-ps-mono"><?php echo $publisuites_id; ?></dd>
+                            <dd class="contai-ps-mono"><?php echo esc_html($publisuites_id); ?></dd>
                         </div>
                         <div class="contai-ps-info-list__row">
                             <dt><?php esc_html_e('Site URL', '1platform-content-ai'); ?></dt>
-                            <dd class="contai-ps-mono"><?php echo $site_url; ?></dd>
+                            <dd class="contai-ps-mono"><?php echo esc_html($site_url); ?></dd>
                         </div>
                         <div class="contai-ps-info-list__row">
                             <dt><?php esc_html_e('Status', '1platform-content-ai'); ?></dt>
@@ -64,7 +64,7 @@ class ContaiPublisuitesMarketplacePendingSection
                         </div>
                         <div class="contai-ps-info-list__row">
                             <dt><?php esc_html_e('Submitted', '1platform-content-ai'); ?></dt>
-                            <dd><?php echo $verified_at; ?></dd>
+                            <dd><?php echo esc_html($verified_at); ?></dd>
                         </div>
                     </dl>
 
