@@ -4,7 +4,7 @@ Tags: ai content, seo, content generation, internal links, table of contents
 Requires at least: 5.9
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 2.27.3
+Stable tag: 2.28.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
