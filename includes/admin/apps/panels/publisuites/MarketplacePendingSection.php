@@ -80,13 +80,12 @@ class ContaiPublisuitesMarketplacePendingSection
                                 <?php esc_html_e('Sync Now', '1platform-content-ai'); ?>
                             </button>
                         </form>
-                        <form method="post" class="contai-ps-form">
+                        <form method="post" class="contai-ps-form" data-confirm="<?php echo esc_attr($confirm_remove); ?>">
                             <?php wp_nonce_field($this->view_data['nonce_action'], $this->view_data['nonce_field']); ?>
                             <button
                                 type="submit"
                                 name="contai_delete_from_marketplace"
                                 class="button button-secondary contai-ps-btn--danger"
-                                onclick="return confirm('<?php echo $confirm_remove; ?>');"
                             >
                                 <span class="dashicons dashicons-trash" aria-hidden="true" style="margin-top: 3px;"></span>
                                 <?php esc_html_e('Remove from Marketplace', '1platform-content-ai'); ?>

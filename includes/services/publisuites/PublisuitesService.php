@@ -54,10 +54,10 @@ class ContaiPublisuitesService
         ];
 
         if (isset($data['marketplace_status'])) {
-            $config['marketplace_status'] = $data['marketplace_status'];
+            $config['marketplace_status'] = sanitize_text_field($data['marketplace_status']);
         }
         if (isset($data['marketplace_status_checked_at'])) {
-            $config['marketplace_status_checked_at'] = $data['marketplace_status_checked_at'];
+            $config['marketplace_status_checked_at'] = sanitize_text_field($data['marketplace_status_checked_at']);
         }
 
         return update_option(self::OPTION_PUBLISUITES_CONFIG, $config);
@@ -309,8 +309,15 @@ class ContaiPublisuitesService
         }
 
         $filePath = ABSPATH . sanitize_file_name($config['verificationFileName']);
-        if (file_exists($filePath) && !unlink($filePath)) {
-            error_log('[1Platform] Failed to delete verification file: ' . $filePath);
+        $realPath = realpath($filePath);
+
+        if ($realPath === false || strpos($realPath, realpath(ABSPATH)) !== 0) {
+            error_log('[1Platform] Blocked verification file deletion outside ABSPATH');
+            return;
+        }
+
+        if (!unlink($realPath)) {
+            error_log('[1Platform] Failed to delete verification file');
         }
     }
 
