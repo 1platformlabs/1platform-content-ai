@@ -4,6 +4,13 @@ All notable changes to Content AI are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [2.28.2] - 2026-04-08
+
+### Fixed
+- **Marketplace status stuck on Pending**: API returns `marketplace_status` as a dict `{websiteId: status}` but plugin saved it as-is; now correctly extracts the status string for the current website
+- **View on marketplace URL**: Changed from incorrect `/publishers/sells/view/` to `/publishers/websites/view-order/` with `view_order_id` (falls back to `publisuites_order_id` if unavailable)
+- **Type safety**: Added `(string)` cast on `view_order_id` before URL construction for defensive hygiene
+
 ## [2.27.1] - 2026-04-08
 
 ### Fixed

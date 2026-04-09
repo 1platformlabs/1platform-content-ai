@@ -560,7 +560,8 @@ class ContaiPublisuitesOrdersSection
                 <?php endif; ?>
 
                 <div class="contai-ps-orders__detail-footer">
-                    <a href="<?php echo esc_url('https://www.publisuites.com/publishers/sells/view/' . $order_id . '/'); ?>"
+                    <?php $view_id = (string) $this->extractField($order, 'view_order_id', $order_id); ?>
+                    <a href="<?php echo esc_url('https://www.publisuites.com/publishers/websites/view-order/' . $view_id . '/'); ?>"
                        target="_blank"
                        rel="noopener noreferrer"
                        class="button button-secondary">
