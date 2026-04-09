@@ -42,16 +42,23 @@ class ContaiPublisuitesService
     public function savePublisuitesConfig(array $data): bool
     {
         $config = [
-            'userId' => $data['user_id'] ?? $this->userProvider->getUserId() ?? '',
-            'websiteId' => $data['website_id'] ?? $this->websiteProvider->getWebsiteId() ?? '',
-            'publisuitesId' => $data['publisuites_id'] ?? '',
+            'userId' => $data['user_id'] ?? $data['userId'] ?? $this->userProvider->getUserId() ?? '',
+            'websiteId' => $data['website_id'] ?? $data['websiteId'] ?? $this->websiteProvider->getWebsiteId() ?? '',
+            'publisuitesId' => $data['publisuites_id'] ?? $data['publisuitesId'] ?? '',
             'status' => $data['status'] ?? 'pending_verification',
-            'verificationFileName' => $data['verification_file_name'] ?? '',
-            'verificationFileContent' => $data['verification_file_content'] ?? '',
+            'verificationFileName' => $data['verification_file_name'] ?? $data['verificationFileName'] ?? '',
+            'verificationFileContent' => $data['verification_file_content'] ?? $data['verificationFileContent'] ?? '',
             'verified' => $data['verified'] ?? false,
-            'verifiedAt' => $data['verified_at'] ?? null,
+            'verifiedAt' => $data['verified_at'] ?? $data['verifiedAt'] ?? null,
             'message' => $data['message'] ?? '',
         ];
+
+        if (isset($data['marketplace_status'])) {
+            $config['marketplace_status'] = sanitize_text_field($data['marketplace_status']);
+        }
+        if (isset($data['marketplace_status_checked_at'])) {
+            $config['marketplace_status_checked_at'] = sanitize_text_field($data['marketplace_status_checked_at']);
+        }
 
         return update_option(self::OPTION_PUBLISUITES_CONFIG, $config);
     }
@@ -93,7 +100,7 @@ class ContaiPublisuitesService
         }
 
         if (!$config || empty($config['publisuitesId'])) {
-            return new ContaiOnePlatformResponse(false, null, 'Publisuites not connected', 400);
+            return new ContaiOnePlatformResponse(false, null, 'Marketplace not connected', 400);
         }
 
         $endpoint = ContaiOnePlatformEndpoints::websitePublisuites($websiteId);
@@ -108,7 +115,7 @@ class ContaiPublisuitesService
         if (!$config) {
             return [
                 'success' => false,
-                'message' => 'Publisuites configuration not found',
+                'message' => 'Marketplace configuration not found',
             ];
         }
 
@@ -254,9 +261,64 @@ class ContaiPublisuitesService
 
         $endpoint = ContaiOnePlatformEndpoints::websitePublisuites($websiteId);
 
-        return $this->client->post($endpoint, [
+        $response = $this->client->post($endpoint, [
             'action' => 'sync',
         ]);
+
+        if ($response->isSuccess()) {
+            $data = $response->getData();
+            if (isset($data['marketplace_status'])) {
+                $config['marketplace_status'] = $data['marketplace_status'];
+                $config['marketplace_status_checked_at'] = gmdate('c');
+                $this->savePublisuitesConfig($config);
+            }
+        }
+
+        return $response;
+    }
+
+    public function deleteWebsiteFromMarketplace(): ContaiOnePlatformResponse
+    {
+        $config = $this->getPublisuitesConfig();
+        if (!$config) {
+            return new ContaiOnePlatformResponse(false, null, 'No marketplace configuration found', 400);
+        }
+
+        $websiteId = $this->websiteProvider->getWebsiteId();
+        if (!$websiteId) {
+            return new ContaiOnePlatformResponse(false, null, 'Website not configured', 400);
+        }
+
+        $endpoint = ContaiOnePlatformEndpoints::websitePublisuites($websiteId);
+        $response = $this->client->post($endpoint, ['action' => 'delete']);
+
+        if (!$response->isSuccess()) {
+            return $response;
+        }
+
+        $this->deleteVerificationFile($config);
+        $this->deletePublisuitesConfig();
+
+        return $response;
+    }
+
+    private function deleteVerificationFile(array $config): void
+    {
+        if (empty($config['verificationFileName'])) {
+            return;
+        }
+
+        $filePath = ABSPATH . sanitize_file_name($config['verificationFileName']);
+        $realPath = realpath($filePath);
+
+        if ($realPath === false || strpos($realPath, realpath(ABSPATH)) !== 0) {
+            error_log('[1Platform] Blocked verification file deletion outside ABSPATH');
+            return;
+        }
+
+        if (!unlink($realPath)) {
+            error_log('[1Platform] Failed to delete verification file');
+        }
     }
 
     public function acceptOrder(int $orderId): ContaiOnePlatformResponse
