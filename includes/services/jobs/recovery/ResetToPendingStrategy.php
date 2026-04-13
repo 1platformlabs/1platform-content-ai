@@ -21,6 +21,11 @@ class ContaiResetToPendingStrategy implements ContaiJobRecoveryStrategy
             return false;
         }
 
+        // Don't reset if max attempts reached — let MarkAsFailedStrategy handle it
+        if ($job->hasReachedMaxAttempts()) {
+            return false;
+        }
+
         // Never re-queue jobs that failed due to insufficient credits
         $errorMessage = $job->getErrorMessage() ?? '';
         if (ContaiCreditGuard::isInsufficientCreditsError($errorMessage)) {
@@ -49,6 +54,7 @@ class ContaiResetToPendingStrategy implements ContaiJobRecoveryStrategy
 
     public function recover(ContaiJob $job): void
     {
+        $job->incrementAttempts();
         $job->setStatus(ContaiJobStatus::PENDING);
         $job->setProcessedAt(null);
     }
