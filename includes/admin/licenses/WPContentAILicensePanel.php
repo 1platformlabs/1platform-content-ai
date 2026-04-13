@@ -5,6 +5,7 @@ if (!defined('ABSPATH')) exit;
 require_once __DIR__ . '/../../services/user-profile/UserProfileService.php';
 require_once __DIR__ . '/../../services/api/OnePlatformAuthService.php';
 require_once __DIR__ . '/../../providers/WebsiteProvider.php';
+require_once __DIR__ . '/../../services/setup/PublisuitesSetupService.php';
 require_once __DIR__ . '/components/ActivateLicenseSection.php';
 require_once __DIR__ . '/components/UserProfileSection.php';
 require_once __DIR__ . '/components/CreateAccountSection.php';
@@ -52,6 +53,22 @@ class WPContentAILicensePanel
                         break;
                     case 'already_configured':
                         $message .= ' ' . __('Website already configured.', '1platform-content-ai');
+                        break;
+                }
+            }
+
+            if (isset($_GET['publisuites_setup'])) {
+                $publiAction = sanitize_key(wp_unslash($_GET['publisuites_setup']));
+
+                switch ($publiAction) {
+                    case 'restored':
+                        $message .= ' ' . __('Link building connection restored.', '1platform-content-ai');
+                        break;
+                    case 'verified':
+                        $message .= ' ' . __('Link building verified and connected.', '1platform-content-ai');
+                        break;
+                    case 'full_activation':
+                        $message .= ' ' . __('Link building activated.', '1platform-content-ai');
                         break;
                 }
             }
@@ -201,6 +218,18 @@ class WPContentAILicensePanel
 
         if ($websiteResult['success']) {
             $args['website_setup'] = sanitize_key($websiteResult['action']);
+
+            // Step 4: Auto-connect Publisuites (graceful — never blocks activation)
+            $websiteData = $websiteResult['website_data'] ?? [];
+            if (!empty($websiteData)) {
+                try {
+                    $publiSetup = new ContaiPublisuitesSetupService();
+                    $publiResult = $publiSetup->autoConnect($websiteData);
+                    $args['publisuites_setup'] = sanitize_key($publiResult['action'] ?? 'skipped');
+                } catch (\Exception $e) {
+                    $args['publisuites_setup'] = 'error';
+                }
+            }
         } else {
             $args['website_setup_error'] = '1';
         }

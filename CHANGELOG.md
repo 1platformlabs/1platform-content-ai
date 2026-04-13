@@ -4,6 +4,11 @@ All notable changes to Content AI are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [2.29.0] - 2026-04-13
+
+### Added
+- **Auto-connect link building on license activation**: When a user activates a license on a site that already has link building connected in the API, the plugin now automatically detects and restores that connection. Handles three scenarios: already verified (instant restore), registered but unverified (creates verification file and verifies), and not registered (full activation flow). Graceful degradation ensures license activation never fails due to link building issues (#93)
+
 ## [2.28.4] - 2026-04-13
 
 ### Fixed

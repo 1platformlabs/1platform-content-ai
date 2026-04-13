@@ -300,10 +300,14 @@ class ContaiWebsiteProvider
             $this->debugLog('Website already configured locally (ID: ' . $existingConfig['websiteId'] . '), syncing status');
             $this->syncWebsiteStatus();
 
+            $apiResponse = $this->getWebsiteFromApi();
+            $websiteData = ($apiResponse && $apiResponse->isSuccess()) ? $apiResponse->getData() : [];
+
             return [
-                'success' => true,
-                'action'  => 'already_configured',
-                'message' => 'Website already configured',
+                'success'      => true,
+                'action'       => 'already_configured',
+                'message'      => 'Website already configured',
+                'website_data' => $websiteData,
             ];
         }
 
@@ -312,12 +316,14 @@ class ContaiWebsiteProvider
 
         if ($searchResponse->isSuccess()) {
             $this->debugLog('Website found in API, saving config locally');
-            $this->saveWebsiteConfig($searchResponse->getData());
+            $websiteData = $searchResponse->getData();
+            $this->saveWebsiteConfig($websiteData);
 
             return [
-                'success' => true,
-                'action'  => 'linked',
-                'message' => 'Website already exists',
+                'success'      => true,
+                'action'       => 'linked',
+                'message'      => 'Website already exists',
+                'website_data' => $websiteData,
             ];
         }
 
@@ -344,13 +350,15 @@ class ContaiWebsiteProvider
             ];
         }
 
-        $this->saveWebsiteConfig($createResponse->getData());
+        $websiteData = $createResponse->getData();
+        $this->saveWebsiteConfig($websiteData);
         $this->debugLog('Website created and saved successfully');
 
         return [
-            'success' => true,
-            'action'  => 'created',
-            'message' => 'Website added successfully',
+            'success'      => true,
+            'action'       => 'created',
+            'message'      => 'Website added successfully',
+            'website_data' => $websiteData,
         ];
     }
 

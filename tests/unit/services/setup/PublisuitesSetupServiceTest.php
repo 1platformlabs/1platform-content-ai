@@ -259,6 +259,218 @@ class PublisuitesSetupServiceTest extends TestCase
         $this->assertTrue($result['success']);
     }
 
+    // ── autoConnect: already verified ─────────────────────────────
+
+    public function test_autoConnect_restores_verified_publisuites(): void
+    {
+        $websiteData = [
+            'id' => 'ws-100',
+            'actions' => [
+                'publisuites' => [
+                    'verification' => [
+                        'publisuites_id' => 'ps-999',
+                        'file_name' => 'verify-token.html',
+                        'file_content' => '<html>ok</html>',
+                        'verified' => true,
+                        'verified_at' => '2026-04-01T10:00:00Z',
+                        'marketplace_status' => 'active',
+                    ],
+                ],
+            ],
+        ];
+
+        $this->service
+            ->shouldReceive('savePublisuitesConfig')
+            ->once()
+            ->with(Mockery::on(function ($config) {
+                return $config['publisuites_id'] === 'ps-999'
+                    && $config['verified'] === true
+                    && $config['status'] === 'active'
+                    && $config['verified_at'] === '2026-04-01T10:00:00Z'
+                    && $config['marketplace_status'] === 'active';
+            }));
+
+        // Should NOT call any API methods
+        $this->service->shouldNotReceive('connectWebsite');
+        $this->service->shouldNotReceive('verifyWebsite');
+        $this->service->shouldNotReceive('createVerificationFile');
+
+        $result = $this->setupService->autoConnect($websiteData);
+
+        $this->assertTrue($result['success']);
+        $this->assertEquals('restored', $result['action']);
+    }
+
+    // ── autoConnect: registered but not verified ────────────────
+
+    public function test_autoConnect_verifies_unverified_publisuites(): void
+    {
+        $websiteData = [
+            'id' => 'ws-100',
+            'actions' => [
+                'publisuites' => [
+                    'verification' => [
+                        'publisuites_id' => 'ps-888',
+                        'file_name' => 'verify-token.html',
+                        'file_content' => '<html>pending</html>',
+                        'verified' => false,
+                    ],
+                ],
+            ],
+        ];
+
+        // Save initial config
+        $this->service
+            ->shouldReceive('savePublisuitesConfig')
+            ->once()
+            ->with(Mockery::on(function ($config) {
+                return $config['publisuites_id'] === 'ps-888'
+                    && $config['verified'] === false
+                    && $config['status'] === 'pending_verification';
+            }))
+            ->ordered();
+
+        $this->service
+            ->shouldReceive('createVerificationFile')
+            ->once()
+            ->andReturn(['success' => true, 'message' => 'File created']);
+
+        $this->service
+            ->shouldReceive('verifyWebsite')
+            ->once()
+            ->andReturn(new ContaiOnePlatformResponse(true, ['verified' => true, 'verified_at' => '2026-04-01T12:00:00Z'], 'Verified', 200));
+
+        $this->service
+            ->shouldReceive('getPublisuitesConfig')
+            ->once()
+            ->andReturn(['publisuites_id' => 'ps-888', 'status' => 'pending_verification']);
+
+        // Save updated config after verify
+        $this->service
+            ->shouldReceive('savePublisuitesConfig')
+            ->once()
+            ->with(Mockery::on(function ($config) {
+                return $config['verified'] === true && $config['status'] === 'active';
+            }))
+            ->ordered();
+
+        // Should NOT call connectWebsite (already registered)
+        $this->service->shouldNotReceive('connectWebsite');
+
+        $result = $this->setupService->autoConnect($websiteData);
+
+        $this->assertTrue($result['success']);
+        $this->assertEquals('verified', $result['action']);
+    }
+
+    // ── autoConnect: no publisuites → full activation ───────────
+
+    public function test_autoConnect_runs_full_activation_when_no_publisuites(): void
+    {
+        $websiteData = [
+            'id' => 'ws-100',
+            'actions' => [
+                'search_console' => ['verification' => ['verified' => true]],
+            ],
+        ];
+
+        // Full activation flow
+        $connectData = [
+            'publisuites_id' => 'ps-new',
+            'verification_file_name' => 'verify.html',
+            'verification_file_content' => '<html>verify</html>',
+        ];
+
+        $this->service
+            ->shouldReceive('connectWebsite')
+            ->once()
+            ->andReturn(new ContaiOnePlatformResponse(true, $connectData, 'Added', 200));
+
+        $this->service->shouldReceive('savePublisuitesConfig')->twice();
+
+        $this->service
+            ->shouldReceive('createVerificationFile')
+            ->once()
+            ->andReturn(['success' => true, 'message' => 'File created']);
+
+        $this->service
+            ->shouldReceive('verifyWebsite')
+            ->once()
+            ->andReturn(new ContaiOnePlatformResponse(true, ['verified' => true, 'verified_at' => '2026-04-01'], 'Verified', 200));
+
+        $this->service
+            ->shouldReceive('getPublisuitesConfig')
+            ->once()
+            ->andReturn(['publisuites_id' => 'ps-new']);
+
+        $result = $this->setupService->autoConnect($websiteData);
+
+        $this->assertTrue($result['success']);
+        $this->assertEquals('full_activation', $result['action']);
+    }
+
+    // ── autoConnect: verification file creation fails ───────────
+
+    public function test_autoConnect_returns_failure_when_verification_file_fails(): void
+    {
+        $websiteData = [
+            'id' => 'ws-100',
+            'actions' => [
+                'publisuites' => [
+                    'verification' => [
+                        'publisuites_id' => 'ps-777',
+                        'file_name' => 'verify.html',
+                        'file_content' => '<html>v</html>',
+                        'verified' => false,
+                    ],
+                ],
+            ],
+        ];
+
+        $this->service->shouldReceive('savePublisuitesConfig')->once();
+
+        $this->service
+            ->shouldReceive('createVerificationFile')
+            ->once()
+            ->andReturn(['success' => false, 'message' => 'Permission denied']);
+
+        $this->service->shouldNotReceive('verifyWebsite');
+
+        $result = $this->setupService->autoConnect($websiteData);
+
+        $this->assertFalse($result['success']);
+        $this->assertEquals('verification_file_failed', $result['action']);
+    }
+
+    // ── autoConnect: empty actions falls back to full activation ─
+
+    public function test_autoConnect_with_empty_publisuites_id_runs_full_activation(): void
+    {
+        $websiteData = [
+            'id' => 'ws-100',
+            'actions' => [
+                'publisuites' => [
+                    'verification' => [
+                        'publisuites_id' => null,
+                    ],
+                ],
+            ],
+        ];
+
+        // Full activation should be called
+        $this->service
+            ->shouldReceive('connectWebsite')
+            ->once()
+            ->andReturn(new ContaiOnePlatformResponse(false, null, 'API error', 500));
+
+        $this->service->shouldNotReceive('savePublisuitesConfig');
+
+        $result = $this->setupService->autoConnect($websiteData);
+
+        $this->assertFalse($result['success']);
+        $this->assertEquals('full_activation', $result['action']);
+    }
+
     // ── Config updated to active after verify ────────────────────
 
     public function test_activate_updates_config_to_active_after_verify(): void
