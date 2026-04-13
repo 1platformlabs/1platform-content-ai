@@ -7,15 +7,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [2.30.3] - 2026-04-13
 
 ### Fixed
-- **GA4 not tracking visits**: Consent Mode v2 defaulted to `denied` for both `analytics_storage` and `ad_storage`, blocking all pageview tracking even before users interacted with the cookie banner. Changed to opt-out model — consent defaults to `granted` and is revoked only when users explicitly reject cookies
-- **Cookie banner not updating GA4 consent**: Accept/Refuse/Close buttons only set a cookie but never called `gtag('consent', 'update', ...)`, so GA4 consent state was never synchronized with user choice during the session
-- **Consent race condition for returning rejectors**: The deny script ran after `gtag('config')` had already fired a pageview. Moved consent resolution server-side into the initial `gtag('consent', 'default', ...)` block so GA4 loads with the correct state from the start
-- **`ad_storage` never revoked on reject**: Only `analytics_storage` was toggled on refuse/close — `ad_storage` remained `granted`. Both storage types now update together via a shared `updateConsent()` helper
-- **Cookie missing `SameSite` attribute**: Added explicit `SameSite=Lax` to the consent cookie for consistent cross-browser behavior
-- **Close button treated as rejection**: Closing the banner without choosing set the cookie to `false` (reject). Now sets `dismissed` — banner re-appears on next visit so users can make an explicit choice
+- **GA4 not tracking visits**: Consent Mode v2 defaulted both `analytics_storage` and `ad_storage` to `denied`, blocking all tracking. Consent state now resolves server-side before gtag.js loads — defaults to granted (opt-out) and respects user choice via cookie
+- **Cookie banner disconnected from GA4**: Accept/Refuse buttons set a cookie but never called `gtag('consent', 'update')`. Both storage types now sync via `updateConsent()` helper
+- **Close button treated as rejection**: Closing the banner set cookie to `false`. Now sets `dismissed` so the banner re-appears on next visit for an explicit choice
+- **Cookie missing `SameSite` attribute**: Added `SameSite=Lax` for consistent cross-browser behavior
 
 ### Added
-- **Admin-configurable consent mode**: New "Consent Mode" dropdown in Cookie Notice Settings allows admins to choose between Opt-out (default, tracks by default) and Opt-in/GDPR (requires explicit consent before tracking)
+- **Configurable consent mode**: New dropdown in Cookie Notice Settings — Opt-out (default, LATAM) or Opt-in/GDPR (requires explicit accept before tracking)
 
 ## [2.30.1] - 2026-04-13
 
