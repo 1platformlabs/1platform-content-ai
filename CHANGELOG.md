@@ -4,6 +4,15 @@ All notable changes to Content AI are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [2.30.3] - 2026-04-13
+
+### Fixed
+- **GA4 not tracking visits**: Consent Mode v2 defaulted to `denied` for both `analytics_storage` and `ad_storage`, blocking all pageview tracking even before users interacted with the cookie banner. Changed to opt-out model — consent defaults to `granted` and is revoked only when users explicitly reject cookies
+- **Cookie banner not updating GA4 consent**: Accept/Refuse/Close buttons only set a cookie but never called `gtag('consent', 'update', ...)`, so GA4 consent state was never synchronized with user choice during the session
+- **Consent race condition for returning rejectors**: The deny script ran after `gtag('config')` had already fired a pageview. Moved consent resolution server-side into the initial `gtag('consent', 'default', ...)` block so GA4 loads with the correct state from the start
+- **`ad_storage` never revoked on reject**: Only `analytics_storage` was toggled on refuse/close — `ad_storage` remained `granted`. Both storage types now update together via a shared `updateConsent()` helper
+- **Cookie missing `SameSite` attribute**: Added explicit `SameSite=Lax` to the consent cookie for consistent cross-browser behavior
+
 ## [2.30.1] - 2026-04-13
 
 ### Fixed

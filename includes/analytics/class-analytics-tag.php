@@ -27,14 +27,19 @@ class OnePlatform_Analytics_Tag {
         }
 
         $escaped_id = esc_attr($measurement_id);
+
+        // Determine consent state: granted by default, denied if user explicitly rejected
+        $cookie_rejected = isset($_COOKIE['cookie_notice_accepted']) && $_COOKIE['cookie_notice_accepted'] === 'false';
+        $consent_revoked = $cookie_rejected && !apply_filters('1platform_analytics_consent_granted', false);
+        $consent_state   = $consent_revoked ? 'denied' : 'granted';
         ?>
         <!-- Google tag (gtag.js) - Managed by 1Platform -->
         <script>
           window.dataLayer = window.dataLayer || [];
           function gtag(){dataLayer.push(arguments);}
           gtag('consent', 'default', {
-            'analytics_storage': 'denied',
-            'ad_storage': 'denied'
+            'analytics_storage': '<?php echo $consent_state; ?>',
+            'ad_storage': '<?php echo $consent_state; ?>'
           });
         </script>
         <script async src="https://www.googletagmanager.com/gtag/js?id=<?php echo $escaped_id; ?>"></script>
@@ -43,13 +48,6 @@ class OnePlatform_Analytics_Tag {
           gtag('config', '<?php echo $escaped_id; ?>');
         </script>
         <?php
-
-        // Hook for consent plugins (CookieYes, Complianz, etc.)
-        if (apply_filters('1platform_analytics_consent_granted', false)) {
-            ?>
-            <script>gtag('consent', 'update', {'analytics_storage': 'granted'});</script>
-            <?php
-        }
     }
 
     /**

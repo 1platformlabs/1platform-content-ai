@@ -13,7 +13,16 @@ document.addEventListener('DOMContentLoaded', function () {
             date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
             expires = '; expires=' + date.toUTCString();
         }
-        document.cookie = name + '=' + (value || '') + expires + '; path=/';
+        document.cookie = name + '=' + (value || '') + expires + '; path=/; SameSite=Lax';
+    }
+
+    function updateConsent(state) {
+        if (typeof gtag === 'function') {
+            gtag('consent', 'update', {
+                'analytics_storage': state,
+                'ad_storage': state
+            });
+        }
     }
 
     function hideBanner() {
@@ -30,6 +39,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (acceptBtn) {
         acceptBtn.addEventListener('click', function () {
             setCookie('cookie_notice_accepted', 'true', 180);
+            updateConsent('granted');
             hideBanner();
         });
     }
@@ -37,6 +47,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (refuseBtn) {
         refuseBtn.addEventListener('click', function () {
             setCookie('cookie_notice_accepted', 'false', 180);
+            updateConsent('denied');
             hideBanner();
         });
     }
@@ -44,6 +55,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (closeBtn) {
         closeBtn.addEventListener('click', function () {
             setCookie('cookie_notice_accepted', 'false', 180);
+            updateConsent('denied');
             hideBanner();
         });
     }
