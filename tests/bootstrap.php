@@ -112,6 +112,8 @@ require_once __DIR__ . '/../includes/admin/apps/handlers/PublisuitesFormHandler.
 require_once __DIR__ . '/../includes/services/jobs/KeywordExtractionJob.php';
 require_once __DIR__ . '/../includes/admin/content-generator/handlers/KeywordExtractionHandler.php';
 require_once __DIR__ . '/../includes/services/jobs/QueueManager.php';
+require_once __DIR__ . '/../includes/services/jobs/JobInterface.php';
+require_once __DIR__ . '/../includes/services/jobs/SiteGenerationJob.php';
 require_once __DIR__ . '/../includes/admin/content-generator/handlers/PostGenerationQueueHandler.php';
 require_once __DIR__ . '/../includes/admin/content-generator/panels/post-maintenance.php';
 
@@ -127,6 +129,14 @@ require_once __DIR__ . '/../includes/services/post/PostMetadataBuilder.php';
 require_once __DIR__ . '/../includes/services/category/CategoryService.php';
 require_once __DIR__ . '/../includes/services/content/ContentGeneratorService.php';
 require_once __DIR__ . '/../includes/services/post/PostGenerationOrchestrator.php';
+
+// ── Menu ───────────────────────────────────────────────────────
+require_once __DIR__ . '/../includes/services/menu/MainMenuManager.php';
+
+// ── Legal ──────────────────────────────────────────────────────
+require_once __DIR__ . '/../includes/services/setup/LegalInfoService.php';
+require_once __DIR__ . '/../includes/services/legal/LegalPagesAPIClient.php';
+require_once __DIR__ . '/../includes/services/legal/LegalPagesGenerator.php';
 
 // ── SEO ────────────────────────────────────────────────────────
 require_once __DIR__ . '/../includes/services/seo/SeoHeadService.php';
