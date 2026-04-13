@@ -53,6 +53,7 @@ $content_ai_options = array(
 	'contai_custom_head',
 	'contai_cookie_notice_enabled',
 	'contai_cookie_notice_text',
+	'contai_consent_mode',
 	// Auth tokens.
 	'contai_app_access_token',
 	'contai_app_token_expires_at',

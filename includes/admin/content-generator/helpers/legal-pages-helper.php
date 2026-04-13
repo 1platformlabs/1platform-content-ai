@@ -17,6 +17,14 @@ class ContaiLegalPagesHelper {
             'sanitize_callback' => 'wp_kses_post'
         ]);
 
+        register_setting('contai_legal_pages_settings', 'contai_consent_mode', [
+            'type' => 'string',
+            'default' => 'opt_out',
+            'sanitize_callback' => function ($value) {
+                return in_array($value, ['opt_in', 'opt_out'], true) ? $value : 'opt_out';
+            }
+        ]);
+
         register_setting('contai_legal_info_settings', 'contai_legal_owner', [
             'type' => 'string',
             'default' => '',
@@ -75,6 +83,11 @@ class ContaiLegalPagesHelper {
 
         $enabled = isset($post_data['contai_cookie_notice_enabled']) ? '1' : '0';
         update_option('contai_cookie_notice_enabled', $enabled);
+
+        $consent_mode = isset($post_data['contai_consent_mode']) && $post_data['contai_consent_mode'] === 'opt_in'
+            ? 'opt_in'
+            : 'opt_out';
+        update_option('contai_consent_mode', $consent_mode);
     }
 }
 

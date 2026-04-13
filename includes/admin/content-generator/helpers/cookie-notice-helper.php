@@ -32,7 +32,10 @@ class ContaiCookieNoticeHelper {
 
 	public static function render_cookie_notice(): void {
 		$enabled = get_option( 'contai_cookie_notice_enabled', '1' );
-		if ( $enabled !== '1' || isset( $_COOKIE['cookie_notice_accepted'] ) ) {
+		$cookie_value = isset( $_COOKIE['cookie_notice_accepted'] )
+			? sanitize_text_field( wp_unslash( $_COOKIE['cookie_notice_accepted'] ) )
+			: '';
+		if ( $enabled !== '1' || in_array( $cookie_value, array( 'true', 'false' ), true ) ) {
 			return;
 		}
 
@@ -51,6 +54,7 @@ class ContaiCookieNoticeHelper {
 		$accept_label = $language === 'english' ? 'Accept' : 'Estoy de acuerdo';
 		$reject_label = $language === 'english' ? 'Reject' : 'Rechazar';
 		$privacy_label = $language === 'english' ? 'Privacy Policy' : 'Política de privacidad';
+		$close_label   = $language === 'english' ? 'Close' : 'Cerrar';
 		?>
 
 		<div id="cookie-notice" role="dialog" class="cookie-revoke-hidden cn-position-bottom cn-effect-slide cookie-notice-visible cn-animated" aria-label="Cookie Notice" style="background-color: rgba(0,0,0,1);">
@@ -61,7 +65,7 @@ class ContaiCookieNoticeHelper {
 					<button id="cn-refuse-cookie" data-cookie-set="refuse" class="cn-set-cookie cn-button cn-button-custom button" aria-label="<?php echo esc_attr( $reject_label ); ?>"><?php echo esc_html( $reject_label ); ?></button>
 					<button onclick="window.open('<?php echo esc_url( $link ); ?>', '_blank')" class="cn-button cn-button-custom button" aria-label="<?php echo esc_attr( $privacy_label ); ?>"><?php echo esc_html( $privacy_label ); ?></button>
 				</span>
-				<span id="cn-close-notice" data-cookie-set="accept" class="cn-close-icon" title="<?php echo esc_attr( $reject_label ); ?>"></span>
+				<span id="cn-close-notice" data-cookie-set="accept" class="cn-close-icon" title="<?php echo esc_attr( $close_label ); ?>"></span>
 			</div>
 		</div>
 		<?php
