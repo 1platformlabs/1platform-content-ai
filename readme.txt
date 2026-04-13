@@ -4,7 +4,7 @@ Tags: ai content, seo, content generation, internal links, table of contents
 Requires at least: 5.9
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 2.28.3
+Stable tag: 2.28.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -159,6 +159,9 @@ The plugin sends your site URL, API key, and content generation parameters (keyw
 7. Tools — Google Analytics, Google Search Console, Publisuites, and Ads Manager integrations.
 
 == Changelog ==
+
+= 2.28.4 =
+* Fixed: Cookie banner displayed buttons but no informative text when cookie text option was never explicitly saved (#85)
 
 = 2.27.1 =
 * Fixed: WP 6.9 sanitize_callback crash on onboarding REST route (floatval argument count)
