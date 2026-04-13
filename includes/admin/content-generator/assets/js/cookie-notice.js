@@ -54,8 +54,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (closeBtn) {
         closeBtn.addEventListener('click', function () {
-            setCookie('cookie_notice_accepted', 'false', 180);
-            updateConsent('denied');
+            setCookie('cookie_notice_accepted', 'dismissed', 180);
             hideBanner();
         });
     }

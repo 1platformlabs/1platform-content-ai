@@ -28,18 +28,15 @@ class OnePlatform_Analytics_Tag {
 
         $escaped_id = esc_attr($measurement_id);
 
-        // Determine consent state: granted by default, denied if user explicitly rejected
-        $cookie_rejected = isset($_COOKIE['cookie_notice_accepted']) && $_COOKIE['cookie_notice_accepted'] === 'false';
-        $consent_revoked = $cookie_rejected && !apply_filters('1platform_analytics_consent_granted', false);
-        $consent_state   = $consent_revoked ? 'denied' : 'granted';
+        $consent_state = $this->resolve_consent_state();
         ?>
         <!-- Google tag (gtag.js) - Managed by 1Platform -->
         <script>
           window.dataLayer = window.dataLayer || [];
           function gtag(){dataLayer.push(arguments);}
           gtag('consent', 'default', {
-            'analytics_storage': '<?php echo $consent_state; ?>',
-            'ad_storage': '<?php echo $consent_state; ?>'
+            'analytics_storage': '<?php echo esc_js($consent_state); ?>',
+            'ad_storage': '<?php echo esc_js($consent_state); ?>'
           });
         </script>
         <script async src="https://www.googletagmanager.com/gtag/js?id=<?php echo $escaped_id; ?>"></script>
@@ -48,6 +45,41 @@ class OnePlatform_Analytics_Tag {
           gtag('config', '<?php echo $escaped_id; ?>');
         </script>
         <?php
+    }
+
+    /**
+     * Resolve consent state from cookie + admin config + filter.
+     *
+     * Logic:
+     * 1. If the `1platform_analytics_consent_granted` filter returns true,
+     *    external consent plugins (CookieYes, Complianz) override → granted.
+     * 2. Read the cookie_notice_accepted cookie (whitelist-validated).
+     *    - 'true'  → user accepted → granted
+     *    - 'false' → user rejected → denied
+     * 3. If no cookie (first visit), use admin-configured default:
+     *    - 'opt_out' (default) → granted (tracks by default, user can reject)
+     *    - 'opt_in'            → denied  (GDPR-strict, requires explicit accept)
+     *
+     * @return string 'granted' or 'denied'
+     */
+    private function resolve_consent_state(): string {
+        if (apply_filters('1platform_analytics_consent_granted', false)) {
+            return 'granted';
+        }
+
+        $cookie_value = isset($_COOKIE['cookie_notice_accepted'])
+            ? sanitize_text_field(wp_unslash($_COOKIE['cookie_notice_accepted']))
+            : '';
+
+        if ($cookie_value === 'true') {
+            return 'granted';
+        }
+        if ($cookie_value === 'false') {
+            return 'denied';
+        }
+
+        $consent_mode = get_option('contai_consent_mode', 'opt_out');
+        return $consent_mode === 'opt_in' ? 'denied' : 'granted';
     }
 
     /**

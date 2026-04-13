@@ -12,6 +12,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Consent race condition for returning rejectors**: The deny script ran after `gtag('config')` had already fired a pageview. Moved consent resolution server-side into the initial `gtag('consent', 'default', ...)` block so GA4 loads with the correct state from the start
 - **`ad_storage` never revoked on reject**: Only `analytics_storage` was toggled on refuse/close — `ad_storage` remained `granted`. Both storage types now update together via a shared `updateConsent()` helper
 - **Cookie missing `SameSite` attribute**: Added explicit `SameSite=Lax` to the consent cookie for consistent cross-browser behavior
+- **Close button treated as rejection**: Closing the banner without choosing set the cookie to `false` (reject). Now sets `dismissed` — banner re-appears on next visit so users can make an explicit choice
+
+### Added
+- **Admin-configurable consent mode**: New "Consent Mode" dropdown in Cookie Notice Settings allows admins to choose between Opt-out (default, tracks by default) and Opt-in/GDPR (requires explicit consent before tracking)
 
 ## [2.30.1] - 2026-04-13
 

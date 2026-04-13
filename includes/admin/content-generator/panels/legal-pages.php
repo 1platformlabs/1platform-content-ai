@@ -378,6 +378,7 @@ class ContaiLegalPagesPanel {
             $enabled = '1';
         }
         $current_text = get_option('contai_cookie_notice_text', ContaiLegalPagesHelper::get_cookie_text());
+        $consent_mode = get_option('contai_consent_mode', 'opt_out');
         ?>
         <div class="contai-settings-panel contai-panel-cookie-notice">
             <div class="contai-panel-header">
@@ -404,6 +405,21 @@ class ContaiLegalPagesPanel {
                         <p class="contai-help-text">
                             <span class="dashicons dashicons-info"></span>
                             <?php esc_html_e('Display cookie consent notice to your visitors', '1platform-content-ai'); ?>
+                        </p>
+                    </div>
+
+                    <div class="contai-form-group">
+                        <label for="contai_consent_mode" class="contai-label">
+                            <span class="dashicons dashicons-shield"></span>
+                            <?php esc_html_e('Consent Mode', '1platform-content-ai'); ?>
+                        </label>
+                        <select id="contai_consent_mode" name="contai_consent_mode" class="contai-select">
+                            <option value="opt_out" <?php selected($consent_mode, 'opt_out'); ?>><?php esc_html_e('Opt-out (track by default, user can reject)', '1platform-content-ai'); ?></option>
+                            <option value="opt_in" <?php selected($consent_mode, 'opt_in'); ?>><?php esc_html_e('Opt-in / GDPR (require explicit consent before tracking)', '1platform-content-ai'); ?></option>
+                        </select>
+                        <p class="contai-help-text">
+                            <span class="dashicons dashicons-info"></span>
+                            <?php esc_html_e('Opt-in is required for GDPR (EU). Opt-out is suitable for LATAM and non-EU regions.', '1platform-content-ai'); ?>
                         </p>
                     </div>
 
