@@ -4,6 +4,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+require_once __DIR__ . '/legal-pages-helper.php';
+
 class ContaiCookieNoticeHelper {
 
 	public static function enqueue_assets(): void {
@@ -37,7 +39,7 @@ class ContaiCookieNoticeHelper {
 		self::enqueue_assets();
 
 		$language = get_option( 'contai_site_language', 'spanish' );
-		$text = get_option( 'contai_cookie_notice_text' );
+		$text = get_option( 'contai_cookie_notice_text', ContaiLegalPagesHelper::get_cookie_text() );
 		$privacy_page = get_posts( array(
 			'post_type'   => 'page',
 			'meta_key'    => '_contai_legal_key',
