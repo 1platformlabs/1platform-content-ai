@@ -20,6 +20,11 @@ class ContaiMarkAsFailedStrategy implements ContaiJobRecoveryStrategy
             return false;
         }
 
+        // Always fail jobs that have exhausted all retry attempts
+        if ($job->hasReachedMaxAttempts()) {
+            return true;
+        }
+
         $processedAt = $job->getProcessedAt();
 
         if (empty($processedAt)) {

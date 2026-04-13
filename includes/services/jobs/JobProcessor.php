@@ -30,8 +30,8 @@ class ContaiJobProcessor
 
     public function processQueue()
     {
-        //set_time_limit(300);
-        //ini_set('max_execution_time', '300');
+        set_time_limit(300);
+        ini_set('max_execution_time', '300');
 
         if (!$this->acquireLock()) {
             return 0;
@@ -100,7 +100,7 @@ class ContaiJobProcessor
 
             $job->markAsCompleted();
             $this->jobRepository->update($job);
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             $errorMessage = $e->getMessage(); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
 
             // Tag 402 errors so recovery strategies can skip them
@@ -141,7 +141,7 @@ class ContaiJobProcessor
         return $this->jobHandlers[$jobType] ?? null;
     }
 
-    private function isInsufficientCreditsException(Exception $e): bool {
+    private function isInsufficientCreditsException(\Throwable $e): bool {
         $message = strtolower($e->getMessage());
 
         if (strpos($message, 'insufficient balance') !== false

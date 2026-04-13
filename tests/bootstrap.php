@@ -114,6 +114,11 @@ require_once __DIR__ . '/../includes/admin/content-generator/handlers/KeywordExt
 require_once __DIR__ . '/../includes/services/jobs/QueueManager.php';
 require_once __DIR__ . '/../includes/services/jobs/JobInterface.php';
 require_once __DIR__ . '/../includes/services/jobs/SiteGenerationJob.php';
+require_once __DIR__ . '/../includes/services/jobs/recovery/JobRecoveryStrategy.php';
+require_once __DIR__ . '/../includes/services/jobs/recovery/ResetToPendingStrategy.php';
+require_once __DIR__ . '/../includes/services/jobs/recovery/MarkAsFailedStrategy.php';
+require_once __DIR__ . '/../includes/services/jobs/recovery/JobRecoveryService.php';
+require_once __DIR__ . '/../includes/services/jobs/JobProcessor.php';
 require_once __DIR__ . '/../includes/admin/content-generator/handlers/PostGenerationQueueHandler.php';
 require_once __DIR__ . '/../includes/admin/content-generator/panels/post-maintenance.php';
 

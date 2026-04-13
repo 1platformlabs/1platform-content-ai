@@ -4,6 +4,14 @@ All notable changes to Content AI are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [2.30.1] - 2026-04-13
+
+### Fixed
+- **Post Generation jobs stuck in Processing forever**: Jobs that threw PHP `Error` types (TypeError, ValueError) escaped the `catch (Exception)` block, leaving them permanently stuck in PROCESSING status. Changed to `catch (\Throwable)` to handle all error types. Additionally, the recovery system created an infinite retry loop — `ResetToPendingStrategy` always fired before `MarkAsFailedStrategy` without tracking attempts. Recovery now increments attempts and respects `max_attempts`, allowing jobs to properly escalate to FAILED after 3 retries. Enabled `set_time_limit(300)` to prevent PHP from hanging indefinitely during job execution (#86)
+
+### Added
+- **Job processor and recovery strategy tests**: 16 new regression tests covering Throwable catch behavior, recovery attempt tracking, and the full escalation chain from reset-to-pending through mark-as-failed
+
 ## [2.29.0] - 2026-04-13
 
 ### Added
