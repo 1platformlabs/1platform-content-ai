@@ -4,6 +4,11 @@ All notable changes to Content AI are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [2.28.4] - 2026-04-13
+
+### Fixed
+- **Cookie banner missing text**: Frontend `render_cookie_notice()` called `get_option('contai_cookie_notice_text')` without a default fallback, so the banner showed buttons but no text when the option was never explicitly saved. Added `ContaiLegalPagesHelper::get_cookie_text()` as default, matching the admin panel behavior (#85)
+
 ## [2.28.2] - 2026-04-08
 
 ### Fixed
