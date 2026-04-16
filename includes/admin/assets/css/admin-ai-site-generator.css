@@ -252,6 +252,15 @@
     font-size: 13px;
 }
 
+.contai-optional {
+    color: var(--contai-text-muted, #6b7280);
+    font-weight: 400;
+    font-size: 12px;
+    text-transform: none;
+    letter-spacing: 0;
+    margin-left: 4px;
+}
+
 /* -- Input Wrapper with Icon -- */
 .contai-input-wrap {
     position: relative;

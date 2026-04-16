@@ -166,13 +166,13 @@ function contai_render_full_site_generator_form() {
 					<div class="contai-form-group">
 						<label for="contai_adsense_publisher" class="contai-label">
 							<?php esc_html_e( 'AdSense Publisher ID', '1platform-content-ai' ); ?>
-							<span class="contai-required">*</span>
+							<span class="contai-optional">(<?php esc_html_e( 'optional', '1platform-content-ai' ); ?>)</span>
 						</label>
 						<div class="contai-input-wrap contai-input-icon">
 							<span class="dashicons dashicons-money-alt"></span>
-							<input type="text" id="contai_adsense_publisher" name="contai_adsense_publisher" class="contai-input" value="<?php echo esc_attr( $post( 'contai_adsense_publisher' ) ); ?>" placeholder="pub-1234567890123456" autocomplete="off" spellcheck="false" required>
+							<input type="text" id="contai_adsense_publisher" name="contai_adsense_publisher" class="contai-input" value="<?php echo esc_attr( $post( 'contai_adsense_publisher' ) ); ?>" placeholder="pub-1234567890123456" autocomplete="off" spellcheck="false" pattern="pub-\d{10,20}">
 						</div>
-						<span class="contai-help-text"><?php esc_html_e( 'Account > Account information in AdSense', '1platform-content-ai' ); ?></span>
+						<span class="contai-help-text"><?php esc_html_e( 'Account > Account information in AdSense. Leave empty if you do not have an AdSense account yet.', '1platform-content-ai' ); ?></span>
 					</div>
 				</div>
 			</div>
