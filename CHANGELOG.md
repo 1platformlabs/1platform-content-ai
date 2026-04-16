@@ -4,6 +4,11 @@ All notable changes to Content AI are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [2.31.1] - 2026-04-16
+
+### Fixed
+- **Site Wizard AdSense Publisher ID validation blocks save**: The `ADSENSE PUBLISHER ID` field on the AI Site Generator form was marked `required` in HTML, so browsers showed "Completa este campo" / "Please fill out this field" and blocked submit even for users without an AdSense account. The backend already treated the value as optional (empty values are ignored via `! empty()` + `^pub-\d+$` regex), so the HTML `required` constraint was inconsistent. Removed `required`, replaced the red asterisk with an "(optional)" hint, added a `pattern="pub-\d{10,20}"` attribute so format is still enforced *when provided*, and clarified the help text to say users can leave the field empty if they do not have an AdSense account yet (#101)
+
 ## [2.30.3] - 2026-04-13
 
 ### Fixed

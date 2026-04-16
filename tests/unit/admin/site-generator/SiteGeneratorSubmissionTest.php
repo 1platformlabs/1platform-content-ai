@@ -472,6 +472,68 @@ class SiteGeneratorSubmissionTest extends TestCase
         );
     }
 
+    // ── Form: AdSense Publisher ID Optional (#101) ─────────────────
+
+    public function test_adsense_publisher_input_is_not_required(): void
+    {
+        $line = $this->findLineContaining($this->formContent, 'id="contai_adsense_publisher"');
+
+        $this->assertNotNull($line, 'AdSense publisher input line must exist');
+        $this->assertStringNotContainsString(
+            ' required',
+            $line,
+            'AdSense Publisher ID input must NOT be required — users without AdSense must be able to submit (#101)'
+        );
+    }
+
+    public function test_adsense_publisher_label_marks_field_as_optional(): void
+    {
+        $labelBlock = $this->extractBlock(
+            $this->formContent,
+            'for="contai_adsense_publisher"',
+            '</label>'
+        );
+
+        $this->assertNotNull($labelBlock, 'AdSense publisher label block must exist');
+        $this->assertStringNotContainsString(
+            'contai-required',
+            $labelBlock,
+            'AdSense Publisher ID label must NOT show required asterisk (#101)'
+        );
+        $this->assertStringContainsString(
+            'contai-optional',
+            $labelBlock,
+            'AdSense Publisher ID label must indicate the field is optional (#101)'
+        );
+    }
+
+    public function test_adsense_publisher_keeps_format_pattern_when_provided(): void
+    {
+        $line = $this->findLineContaining($this->formContent, 'id="contai_adsense_publisher"');
+
+        $this->assertNotNull($line, 'AdSense publisher input line must exist');
+        $this->assertMatchesRegularExpression(
+            '/pattern="pub-\\\\d\{[^}]+\}"/',
+            $line,
+            'AdSense Publisher ID must enforce "pub-<digits>" format when provided, even though empty is allowed (#101)'
+        );
+    }
+
+    public function test_adsense_publisher_backend_still_validates_when_non_empty(): void
+    {
+        $processingFunc = $this->extractFunction($this->handlerContent, 'contai_process_site_generation_submission');
+        $this->assertStringContainsString(
+            '! empty( $adsense_publisher )',
+            $processingFunc,
+            'Backend must guard save with ! empty() so the field being optional does not blank saved values (#101)'
+        );
+        $this->assertStringContainsString(
+            '/^pub-\\d+$/',
+            $processingFunc,
+            'Backend must still validate format with regex when a value is provided (#101)'
+        );
+    }
+
     // ── Form: Security ─────────────────────────────────────────────
 
     public function test_form_has_nonce_field(): void
@@ -522,6 +584,19 @@ class SiteGeneratorSubmissionTest extends TestCase
     }
 
     // ── Helper Methods ─────────────────────────────────────────────
+
+    /**
+     * Find the first line containing a substring.
+     */
+    private function findLineContaining(string $content, string $needle): ?string
+    {
+        foreach (preg_split('/\R/', $content) as $line) {
+            if (strpos($line, $needle) !== false) {
+                return $line;
+            }
+        }
+        return null;
+    }
 
     /**
      * Extract a code block between two markers.
