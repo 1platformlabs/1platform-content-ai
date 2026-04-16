@@ -4,6 +4,16 @@ All notable changes to Content AI are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [2.31.3] - 2026-04-16
+
+### Fixed
+- **Content generation rejected with 422 Unprocessable Content**: The plugin sent `image_provider: "pixabay"` or `"pexels"` on every `POST /posts/content/`, but the API schema now only accepts the client-facing aliases `"default"` and `"alternative"` (changed on the API side on 2026-03-28). Every content generation request was failing at Pydantic validation before reaching the endpoint. `ContentGeneratorService::buildRequestData()` now maps internal identifiers to the API aliases (`pixabay → default`, `pexels → alternative`) at the boundary, leaving the plugin's internal vocabulary (settings option, `_image_provider` post meta, job payloads) unchanged.
+- **Site Wizard showed the bare string "Request failed" on upstream errors**: When the API responded with a non-2xx status but the body was not JSON (e.g., an HTML 502/504 page from an upstream gateway), `OnePlatformClient::createErrorResponse()` fell through every diagnostic field and returned the literal `"Request failed"` — hiding the HTTP status from users and logs. The fallback now includes the status code (`"Request failed (HTTP 502)"`), so timeouts, gateway errors, and provider outages are distinguishable without code changes (#100)
+
+### Added
+- **OnePlatformClient error fallback tests**: 4 regression tests pinning the createErrorResponse fallback chain — status-aware fallback, zero-status edge case, API `msg` precedence, wp_error precedence
+- **ContentGeneratorService image_provider mapping tests**: 4 regression tests covering `pixabay → default`, `pexels → alternative`, already-aliased passthrough, and unknown-value passthrough
+
 ## [2.31.1] - 2026-04-16
 
 ### Fixed

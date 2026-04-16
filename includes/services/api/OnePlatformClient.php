@@ -270,13 +270,23 @@ class ContaiOnePlatformClient {
     }
 
     private function createErrorResponse(?array $json, ContaiHTTPResponse $http_response, ?string $trace_id = null): ContaiOnePlatformResponse {
-        $error_message = $json['msg'] ?? $json['detail'] ?? $http_response->getError() ?? self::ERROR_REQUEST_FAILED;
+        $status_code = $http_response->getStatusCode();
+
+        // When neither the API nor wp_remote_request provide a diagnostic message
+        // (e.g. upstream gateway returns a non-JSON body like an HTML 502 page),
+        // include the HTTP status in the fallback so users can distinguish a
+        // timeout from a provider outage instead of seeing only "Request failed".
+        $fallback_message = $status_code > 0
+            ? sprintf('%s (HTTP %d)', self::ERROR_REQUEST_FAILED, $status_code)
+            : self::ERROR_REQUEST_FAILED;
+
+        $error_message = $json['msg'] ?? $json['detail'] ?? $http_response->getError() ?? $fallback_message;
 
         return new ContaiOnePlatformResponse(
             false,
             null,
             $error_message,
-            $http_response->getStatusCode(),
+            $status_code,
             $trace_id
         );
     }
