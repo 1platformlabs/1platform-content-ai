@@ -10,6 +10,14 @@ class ContaiContentGeneratorService {
     private const ERROR_API_REQUEST_FAILED = 'Failed to generate content from API';
     private const ERROR_INVALID_RESPONSE = 'Invalid response from API';
 
+    // Translate internal provider identifiers to the client-facing aliases the API accepts
+    // (Literal["default","alternative"]). Keeps the plugin free of external provider names
+    // on the wire while preserving the existing internal vocabulary (options, post meta).
+    private const IMAGE_PROVIDER_MAP = [
+        'pixabay' => 'default',
+        'pexels'  => 'alternative',
+    ];
+
     private ContaiOnePlatformClient $client;
 
     public function __construct(ContaiOnePlatformClient $client) {
@@ -128,7 +136,7 @@ class ContaiContentGeneratorService {
             'keyword' => sanitize_text_field($keyword),
             'lang' => sanitize_text_field($lang),
             'country' => sanitize_text_field($country),
-            'image_provider' => sanitize_text_field($image_provider),
+            'image_provider' => $this->resolveApiImageProvider($image_provider),
         ];
 
         if (!empty($categories)) {
@@ -141,6 +149,11 @@ class ContaiContentGeneratorService {
         }
 
         return $request_data;
+    }
+
+    private function resolveApiImageProvider(string $image_provider): string {
+        $sanitized = sanitize_text_field($image_provider);
+        return self::IMAGE_PROVIDER_MAP[$sanitized] ?? $sanitized;
     }
 
     private function requestContentGeneration(
