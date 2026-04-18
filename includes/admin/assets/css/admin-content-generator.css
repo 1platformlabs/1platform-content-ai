@@ -31,6 +31,7 @@
 
 .contai-content-generator h1 {
     margin: 0 0 var(--contai-spacing-xs) 0;
+    font-family: var(--contai-font-heading);
     font-size: 26px;
     font-weight: 700;
     color: var(--contai-neutral-700);
@@ -94,6 +95,7 @@
 
 .contai-panel-title {
     margin: 0 0 6px 0;
+    font-family: var(--contai-font-heading);
     font-size: 16px;
     font-weight: 600;
     color: var(--contai-neutral-700);
@@ -522,7 +524,7 @@ button.button-primary:active,
     font-family: var(--contai-font-mono);
     font-size: 12.5px;
     line-height: 1.6;
-    color: #e2e8f0;
+    color: #dcdcde;
     white-space: pre;
 }
 

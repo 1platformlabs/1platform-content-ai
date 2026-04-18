@@ -30,7 +30,7 @@ class ContaiTocSettingsPanel {
                 <?php $this->renderAdvancedSettings($current); ?>
 
                 <div class="contai-form-actions">
-                    <button type="submit" class="button button-primary button-large">
+                    <button type="submit" class="button button-primary">
                         <?php esc_html_e('Save Settings', '1platform-content-ai'); ?>
                     </button>
                     <button type="submit" name="reset_settings" value="1" class="button button-secondary"

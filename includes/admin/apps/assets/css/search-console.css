@@ -1,10 +1,13 @@
 /* Search Console Panel Styles */
 
 .contai-panel-search-console {
-  border-left: 4px solid var(--contai-primary);
+  border: 1px solid var(--contai-neutral-200);
+  border-radius: var(--contai-radius-md);
+  overflow: hidden;
 }
-.contai-settings-section{
-    padding: 10px;
+
+.contai-settings-section {
+  padding: var(--contai-spacing-lg);
 }
 
 .contai-search-console-add .contai-settings-section,
@@ -25,6 +28,7 @@
 
 .contai-section-title {
   margin: 0 0 var(--contai-spacing-lg) 0;
+  font-family: var(--contai-font-heading);
   font-size: 20px;
   font-weight: 700;
   color: var(--contai-neutral-700);
@@ -42,6 +46,7 @@
 
 .contai-section-subtitle {
   margin: 0 0 var(--contai-spacing-md) 0;
+  font-family: var(--contai-font-heading);
   font-size: 16px;
   font-weight: 600;
   color: var(--contai-neutral-700);
@@ -191,18 +196,17 @@
 }
 
 .contai-step-number {
-  width: 40px;
-  height: 40px;
-  background: linear-gradient(135deg, var(--contai-primary) 0%, var(--contai-primary-dark) 100%);
+  width: 32px;
+  height: 32px;
+  background: var(--contai-primary);
   color: #fff;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 700;
-  font-size: 18px;
+  font-weight: 600;
+  font-size: 14px;
   flex-shrink: 0;
-  box-shadow: var(--contai-shadow-md);
 }
 
 .contai-step-content {
@@ -210,6 +214,7 @@
 }
 
 .contai-step-title {
+  font-family: var(--contai-font-heading);
   font-weight: 700;
   font-size: 15px;
   color: var(--contai-neutral-700);
@@ -235,16 +240,16 @@
 /* Code Block */
 
 .contai-code-block {
-  background: #1e293b;
+  background: var(--contai-neutral-700);
   border-radius: var(--contai-radius-md);
   padding: var(--contai-spacing-md);
   margin-bottom: var(--contai-spacing-md);
   position: relative;
-  border: 1px solid #334155;
+  border: 1px solid #50575e;
 }
 
 .contai-code-block code {
-  color: #10b981;
+  color: var(--contai-success);
   font-size: 13px;
   font-family: var(--contai-font-mono);
   word-break: break-all;
@@ -288,9 +293,9 @@
 }
 
 .contai-copy-btn.copied {
-  background: rgba(16, 185, 129, 0.2);
-  border-color: rgba(16, 185, 129, 0.4);
-  color: #10b981;
+  background: var(--contai-success-bg);
+  border-color: var(--contai-success-border);
+  color: var(--contai-success);
 }
 
 .contai-copy-btn.copied::before {
@@ -298,7 +303,7 @@
 }
 
 .contai-copy-btn.copied .dashicons {
-  color: #10b981;
+  color: var(--contai-success);
 }
 
 /* File Status */
@@ -308,7 +313,7 @@
   align-items: center;
   gap: 6px;
   padding: 6px 12px;
-  border-radius: 20px;
+  border-radius: var(--contai-radius-pill);
   font-size: 12px;
   font-weight: 600;
   margin-bottom: var(--contai-spacing-md);
@@ -351,9 +356,9 @@
   padding: 24px;
   border-radius: var(--contai-radius-lg);
   margin-bottom: var(--contai-spacing-xl);
-  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
-  border: 2px solid #34d399;
-  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.15);
+  background: linear-gradient(135deg, var(--contai-success-bg) 0%, var(--contai-success-border) 100%);
+  border: 2px solid var(--contai-success-border);
+  box-shadow: var(--contai-shadow-sm);
 }
 
 .contai-verification-badge .dashicons {
@@ -368,16 +373,17 @@
 }
 
 .contai-badge-title {
+  font-family: var(--contai-font-heading);
   font-size: 18px;
   font-weight: 700;
-  color: #065f46;
+  color: var(--contai-success-text);
   display: block;
   margin-bottom: 4px;
 }
 
 .contai-badge-description {
   font-size: 14px;
-  color: #047857;
+  color: var(--contai-success-text);
 }
 
 /* Website Info */
@@ -421,7 +427,7 @@
   align-items: center;
   gap: 6px;
   padding: 6px 14px;
-  border-radius: 20px;
+  border-radius: var(--contai-radius-pill);
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
@@ -437,7 +443,7 @@
 }
 
 .contai-status-badge.contai-status-active {
-  background: linear-gradient(135deg, #10b981 0%, var(--contai-success) 100%);
+  background: linear-gradient(135deg, var(--contai-success) 0%, var(--contai-success) 100%);
   color: #ffffff;
   border: 1px solid var(--contai-success);
 }
@@ -448,9 +454,9 @@
 }
 
 .contai-status-badge.contai-status-inactive {
-  background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+  background: linear-gradient(135deg, #646970 0%, #50575e 100%);
   color: #ffffff;
-  border: 1px solid #4b5563;
+  border: 1px solid #50575e;
 }
 
 .contai-text-mono {
@@ -545,6 +551,7 @@
 }
 
 .contai-danger-title {
+  font-family: var(--contai-font-heading);
   color: var(--contai-error);
   margin-bottom: var(--contai-spacing-md) !important;
   font-size: 16px;
@@ -569,22 +576,23 @@
 }
 
 .button-danger {
-  background: linear-gradient(135deg, #ef4444 0%, var(--contai-error) 100%) !important;
+  background: var(--contai-error) !important;
   border-color: var(--contai-error) !important;
   color: #fff !important;
   font-weight: 600;
+  font-size: 13.5px;
+  padding: 10px 20px;
 }
 
 .button-danger:hover {
-  background: linear-gradient(135deg, var(--contai-error) 0%, #b91c1c 100%) !important;
-  border-color: #b91c1c !important;
+  background: var(--contai-error-text) !important;
+  border-color: var(--contai-error-text) !important;
   color: #fff !important;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+  transform: translateY(-1px);
 }
 
 .button-danger:focus {
-  outline: 3px solid rgba(220, 38, 38, 0.3);
+  outline: 3px solid rgba(214, 54, 56, 0.3);
   outline-offset: 2px;
 }
 
@@ -648,43 +656,38 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-size: 15px;
-  font-weight: 700;
-  border-radius: var(--contai-radius-lg);
-  box-shadow: var(--contai-shadow-md);
+  font-size: 13.5px;
+  font-weight: 600;
+  border-radius: var(--contai-radius-md);
+  padding: 10px 20px;
 }
 
 .contai-search-console-add .button-primary:hover,
 .contai-search-console-verification .button-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--contai-shadow-lg);
+  transform: translateY(-1px);
+  box-shadow: var(--contai-shadow-sm);
 }
 
 .contai-search-console-add .button-primary .dashicons,
 .contai-search-console-verification .button-primary .dashicons {
-  font-size: 18px;
-  width: 18px;
-  height: 18px;
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
 }
 
 .contai-search-console-verification .button-secondary {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-size: 14px;
-  border-radius: var(--contai-radius-lg);
+  font-size: 13.5px;
+  border-radius: var(--contai-radius-md);
+  padding: 10px 20px;
 }
 
 .contai-search-console-verification .button-secondary .dashicons {
-  font-size: 18px;
-  width: 18px;
-  height: 18px;
-}
-
-.button-large {
-  font-size: 15px !important;
-  padding: 12px 24px !important;
-  height: auto !important;
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
 }
 
 /* Loading State */
@@ -748,31 +751,6 @@
   .contai-step-number {
     align-self: flex-start;
   }
-
-.contai-form-actions {
-  display: flex;
-  gap: var(--contai-spacing-md);
-  padding-top: var(--contai-spacing-xl);
-  border-top: 2px solid var(--contai-neutral-200);
-  margin: var(--contai-spacing-md);
-}
-
-.contai-form-actions .button-primary {
-  font-size: 15px;
-  font-weight: 700;
-  border-radius: var(--contai-radius-lg);
-  box-shadow: var(--contai-shadow-md);
-}
-
-.contai-form-actions .button-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--contai-shadow-lg);
-}
-
-.contai-form-actions .button-secondary {
-  font-size: 14px;
-  border-radius: var(--contai-radius-lg);
-}
 
   .contai-sitemaps-table,
   .contai-table {

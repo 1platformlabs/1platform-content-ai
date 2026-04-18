@@ -162,7 +162,7 @@ class ContaiPublisuitesVerificationSection
             <button
                 type="submit"
                 name="<?php echo esc_attr($this->view_data['primary_cta_action']); ?>"
-                class="button button-primary button-hero contai-ps-cta"
+                class="button button-primary contai-ps-cta"
                 aria-label="<?php esc_attr_e('Verify your website ownership', '1platform-content-ai'); ?>"
             >
                 <span class="dashicons dashicons-yes-alt" aria-hidden="true"></span>

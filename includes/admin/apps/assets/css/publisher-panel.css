@@ -125,12 +125,12 @@
 
 .contai-ads-manager .contai-ads-status-active {
     background: var(--contai-success);
-    box-shadow: 0 0 0 2px rgba(5, 150, 105, 0.15);
+    box-shadow: 0 0 0 2px var(--contai-success-bg);
 }
 
 .contai-ads-manager .contai-ads-status-inactive {
     background: var(--contai-neutral-400);
-    box-shadow: 0 0 0 2px rgba(148, 163, 184, 0.15);
+    box-shadow: 0 0 0 2px var(--contai-neutral-100);
 }
 
 /* --- Form Body --- */
@@ -319,6 +319,7 @@
 
 .contai-ads-manager .contai-ads-action-body h3 {
     margin: 0 0 6px;
+    font-family: var(--contai-font-heading);
     font-size: 14px;
     font-weight: 600;
     color: var(--contai-neutral-700);
@@ -340,7 +341,7 @@
     color: var(--contai-neutral-500);
     padding: 4px 10px;
     background: var(--contai-neutral-50);
-    border-radius: 20px;
+    border-radius: var(--contai-radius-pill);
     border: 1px solid var(--contai-neutral-200);
 }
 
@@ -360,7 +361,7 @@
 }
 
 .contai-ads-manager .contai-ads-action-card-danger:hover {
-    box-shadow: 0 2px 8px rgba(220, 38, 38, 0.08);
+    box-shadow: var(--contai-shadow-sm);
 }
 
 .contai-ads-manager .contai-ads-action-card-danger .contai-ads-action-footer {
@@ -371,7 +372,7 @@
 /* --- Danger Button --- */
 .contai-ads-manager .button-danger,
 .contai-ads-manager button.button-danger {
-    background: linear-gradient(135deg, var(--contai-error) 0%, #c02225 100%);
+    background: linear-gradient(135deg, var(--contai-error) 0%, #8a2424 100%);
     border: 1px solid var(--contai-error);
     color: #fff;
     box-shadow: var(--contai-shadow-sm);
@@ -379,8 +380,8 @@
 
 .contai-ads-manager .button-danger:hover,
 .contai-ads-manager button.button-danger:hover {
-    background: linear-gradient(135deg, #c02225 0%, #a71d27 100%);
-    border-color: #a71d27;
+    background: linear-gradient(135deg, #8a2424 0%, #8a2424 100%);
+    border-color: #8a2424;
     color: #fff;
     box-shadow: var(--contai-shadow-md);
     transform: translateY(-1px);
@@ -388,8 +389,8 @@
 
 .contai-ads-manager .button-danger:active,
 .contai-ads-manager button.button-danger:active {
-    background: #a71d27;
-    border-color: #a71d27;
+    background: #8a2424;
+    border-color: #8a2424;
     color: #fff;
     transform: translateY(0);
 }
@@ -426,6 +427,7 @@
 }
 
 .contai-ads-manager .contai-adsense-empty h3 {
+    font-family: var(--contai-font-heading);
     font-size: 20px;
     font-weight: 600;
     color: var(--contai-neutral-700);
@@ -457,7 +459,7 @@
     border-radius: var(--contai-radius-md);
     background: var(--contai-neutral-50);
     border: 1px solid var(--contai-neutral-200);
-    transition: border-color 0.2s, background 0.2s;
+    transition: border-color var(--contai-duration-fast) ease, background var(--contai-duration-fast) ease;
 }
 
 .contai-ads-manager .contai-adsense-step.active {
@@ -495,6 +497,7 @@
 }
 
 .contai-ads-manager .contai-adsense-step h4 {
+    font-family: var(--contai-font-heading);
     font-size: 14px;
     font-weight: 600;
     color: var(--contai-neutral-700);
@@ -513,15 +516,15 @@
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    padding: 12px 24px;
+    padding: 10px 20px;
     background: var(--contai-primary);
     color: #fff;
     border: none;
     border-radius: var(--contai-radius-md);
-    font-size: 14px;
+    font-size: 13.5px;
     font-weight: 600;
     cursor: pointer;
-    transition: background 0.2s, box-shadow 0.2s;
+    transition: background var(--contai-duration-fast) ease, box-shadow var(--contai-duration-fast) ease;
 }
 
 .contai-ads-manager .contai-btn-oauth:hover {
@@ -584,7 +587,7 @@
 }
 
 .contai-ads-manager .contai-adsense-mid {
-    font-family: monospace;
+    font-family: var(--contai-font-mono);
     font-size: 14px;
     color: var(--contai-neutral-600);
     background: var(--contai-neutral-100);
@@ -648,7 +651,7 @@
 }
 
 .contai-ads-manager .contai-adsense-feature__icon--purple {
-    background: #f3e8ff;
+    background: rgba(124, 58, 237, 0.08);
     color: #7c3aed;
 }
 
@@ -659,6 +662,7 @@
 }
 
 .contai-ads-manager .contai-adsense-feature h4 {
+    font-family: var(--contai-font-heading);
     font-size: 13px;
     font-weight: 600;
     color: var(--contai-neutral-700);
@@ -679,6 +683,7 @@
 }
 
 .contai-ads-manager .contai-adsense-earnings-summary h4 {
+    font-family: var(--contai-font-heading);
     font-size: 14px;
     font-weight: 600;
     color: var(--contai-neutral-700);

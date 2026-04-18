@@ -1,47 +1,47 @@
 /* ============================================================
-   1Platform Content AI — Design System Tokens (Light Mode)
-   Maps --contai-* variables to 1Platform Design System values.
+   1Platform Content AI — Design System Tokens
+   WordPress-native palette aligned with WP Admin colors.
    ============================================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Funnel+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
 
 :root {
-    /* ── Accent ── */
-    --contai-primary: #2563eb;
-    --contai-primary-dark: #1d4ed8;
-    --contai-primary-darker: #1e40af;
-    --contai-primary-light: #3b82f6;
-    --contai-primary-lighter: #60a5fa;
-    --contai-primary-glow: rgba(37, 99, 235, 0.08);
-    --contai-primary-border: #bfdbfe;
+    /* ── Accent (WordPress Admin Blue) ── */
+    --contai-primary: #2271b1;
+    --contai-primary-dark: #135e96;
+    --contai-primary-darker: #0a4b78;
+    --contai-primary-light: #72aee6;
+    --contai-primary-lighter: #a7d5f2;
+    --contai-primary-glow: rgba(34, 113, 177, 0.08);
+    --contai-primary-border: #72aee6;
 
-    /* ── Semantic ── */
-    --contai-success: #059669;
-    --contai-success-bg: #f0fdf4;
-    --contai-success-border: #bbf7d0;
-    --contai-success-text: #166534;
-    --contai-error: #dc2626;
-    --contai-error-bg: #fef2f2;
-    --contai-error-border: #fecaca;
-    --contai-error-text: #991b1b;
-    --contai-warning: #d97706;
-    --contai-warning-bg: #fffbeb;
-    --contai-warning-border: #fde68a;
-    --contai-warning-text: #92400e;
-    --contai-info: #2563eb;
-    --contai-info-bg: #eff6ff;
-    --contai-info-border: #bfdbfe;
-    --contai-info-text: #1e40af;
+    /* ── Semantic (WordPress Admin Colors) ── */
+    --contai-success: #00a32a;
+    --contai-success-bg: #edfaef;
+    --contai-success-border: #68de7c;
+    --contai-success-text: #00450c;
+    --contai-error: #d63638;
+    --contai-error-bg: #fcf0f1;
+    --contai-error-border: #f0b8b8;
+    --contai-error-text: #8a2424;
+    --contai-warning: #dba617;
+    --contai-warning-bg: #fcf9e8;
+    --contai-warning-border: #f0d33d;
+    --contai-warning-text: #6e520d;
+    --contai-info: #72aee6;
+    --contai-info-bg: #f0f6fc;
+    --contai-info-border: #72aee6;
+    --contai-info-text: #135e96;
 
-    /* ── Neutrals ── */
-    --contai-neutral-50: #f8fafc;
-    --contai-neutral-100: #f1f5f9;
-    --contai-neutral-200: #e2e8f0;
-    --contai-neutral-300: #cbd5e1;
-    --contai-neutral-400: #94a3b8;
-    --contai-neutral-500: #64748b;
-    --contai-neutral-600: #475569;
-    --contai-neutral-700: #0f172a;
+    /* ── Neutrals (WordPress Admin Grays) ── */
+    --contai-neutral-50: #f6f7f7;
+    --contai-neutral-100: #f0f0f1;
+    --contai-neutral-200: #dcdcde;
+    --contai-neutral-300: #c3c4c7;
+    --contai-neutral-400: #a7aaad;
+    --contai-neutral-500: #646970;
+    --contai-neutral-600: #50575e;
+    --contai-neutral-700: #1e1e1e;
 
     /* ── Spacing ── */
     --contai-spacing-xs: 8px;
@@ -51,19 +51,20 @@
     --contai-spacing-xl: 32px;
 
     /* ── Border Radius ── */
-    --contai-radius-sm: 6px;
+    --contai-radius-sm: 4px;
     --contai-radius-md: 8px;
-    --contai-radius-lg: 12px;
+    --contai-radius-lg: 8px;
     --contai-radius-pill: 9999px;
 
-    /* ── Shadows ── */
-    --contai-shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
-    --contai-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
-    --contai-shadow-md: 0 4px 16px rgba(37, 99, 235, 0.06);
-    --contai-shadow-lg: 0 8px 24px rgba(37, 99, 235, 0.06);
-    --contai-shadow-glow: 0 0 20px rgba(37, 99, 235, 0.1);
+    /* ── Shadows (Gentle Lift) ── */
+    --contai-shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
+    --contai-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.07);
+    --contai-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06);
+    --contai-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.08);
+    --contai-shadow-glow: 0 0 0 3px rgba(34, 113, 177, 0.12);
 
     /* ── Typography ── */
+    --contai-font-heading: 'Funnel Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     --contai-font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     --contai-font-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', Consolas, monospace;
 
@@ -236,6 +237,7 @@
 
 .contai-page-header h1 {
     margin: 0 0 var(--contai-spacing-xs) 0;
+    font-family: var(--contai-font-heading);
     font-size: 26px;
     font-weight: 700;
     color: var(--contai-neutral-700);
@@ -299,6 +301,7 @@
 
 .contai-panel-title {
     margin: 0 0 6px 0;
+    font-family: var(--contai-font-heading);
     font-size: 16px;
     font-weight: 600;
     color: var(--contai-neutral-700);
@@ -691,6 +694,68 @@
 }
 
 /* ============================================================
+   CONNECTION GATE
+   Used on every SaaS-dependent page when the API key is missing.
+   Matches Pencil frame "Connection Gate Template" (a0ASD).
+   ============================================================ */
+
+.contai-connection-gate {
+    background: #fff;
+    border: 1px solid var(--contai-neutral-200);
+    border-radius: var(--contai-radius-md);
+    box-shadow: var(--contai-shadow-xs);
+    padding: var(--contai-spacing-xl);
+    max-width: 820px;
+    margin: var(--contai-spacing-lg) 0;
+}
+
+.contai-connection-gate-title {
+    display: flex;
+    align-items: center;
+    gap: var(--contai-spacing-sm);
+    margin: 0 0 var(--contai-spacing-md) 0;
+    font-family: var(--contai-font-heading);
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--contai-neutral-700);
+    letter-spacing: -0.01em;
+}
+
+.contai-connection-gate-title .dashicons {
+    color: var(--contai-primary);
+    font-size: 22px;
+    width: 22px;
+    height: 22px;
+}
+
+.contai-connection-gate-body {
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--contai-neutral-600);
+    margin: 0 0 var(--contai-spacing-sm) 0;
+    max-width: 640px;
+}
+
+.contai-connection-gate-hint {
+    font-size: 12.5px;
+    color: var(--contai-neutral-500);
+    margin: 0 0 var(--contai-spacing-lg) 0;
+    max-width: 640px;
+}
+
+.contai-connection-gate-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--contai-spacing-sm);
+    margin: 0;
+}
+
+.contai-connection-gate-actions .button .dashicons {
+    margin-right: 6px;
+    vertical-align: middle;
+}
+
+/* ============================================================
    RESPONSIVE
    ============================================================ */
 
@@ -722,5 +787,19 @@
 
     .contai-page-header h1 {
         font-size: 22px;
+    }
+
+    .contai-connection-gate {
+        padding: var(--contai-spacing-lg);
+    }
+
+    .contai-connection-gate-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .contai-connection-gate-actions .button {
+        width: 100%;
+        justify-content: center;
     }
 }

@@ -21,6 +21,7 @@
 
 .contai-settings-wrap h1 {
     margin-bottom: 24px;
+    font-family: var(--contai-font-heading);
     font-size: 28px;
     font-weight: 600;
     color: var(--contai-neutral-700);

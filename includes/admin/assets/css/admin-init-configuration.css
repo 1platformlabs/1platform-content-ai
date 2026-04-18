@@ -29,6 +29,7 @@
 
 .contai-settings-wrap h1 {
     margin-bottom: 24px;
+    font-family: var(--contai-font-heading);
     font-size: 28px;
     font-weight: 600;
     color: var(--contai-neutral-700);
@@ -179,15 +180,9 @@ button.button-secondary:hover {
 .button-secondary:active,
 input[type="submit"].button-secondary:active,
 button.button-secondary:active {
-    background: #e3f0fc;
+    background: #f0f6fc;
     border-color: var(--contai-primary-darker);
     color: var(--contai-primary-darker);
-}
-
-.button-large {
-    padding: 16px 32px;
-    font-size: 15px;
-    font-weight: 600;
 }
 
 /* ============================================================================

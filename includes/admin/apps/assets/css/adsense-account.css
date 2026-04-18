@@ -32,6 +32,7 @@
 
 .contai-ads-manager .contai-adsense-empty h3 {
     margin: 0 0 8px;
+    font-family: var(--contai-font-heading);
     font-size: 18px;
     font-weight: 700;
     color: var(--contai-neutral-700);
@@ -93,11 +94,12 @@
 .contai-ads-manager .contai-adsense-step.active .contai-adsense-step__num {
     background: linear-gradient(135deg, var(--contai-primary) 0%, var(--contai-primary-dark) 100%);
     color: #fff;
-    box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
+    box-shadow: var(--contai-shadow-sm);
 }
 
 .contai-ads-manager .contai-adsense-step h4 {
     margin: 0 0 2px;
+    font-family: var(--contai-font-heading);
     font-size: 13.5px;
     font-weight: 600;
     color: var(--contai-neutral-600);
@@ -119,8 +121,8 @@
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    padding: 12px 28px;
-    font-size: 14px;
+    padding: 10px 20px;
+    font-size: 13.5px;
     font-weight: 600;
     color: #fff;
     background: linear-gradient(135deg, var(--contai-primary) 0%, var(--contai-primary-dark) 100%);
@@ -128,7 +130,7 @@
     border-radius: var(--contai-radius-md);
     cursor: pointer;
     box-shadow: var(--contai-shadow-sm);
-    transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+    transition: background var(--contai-duration-fast) ease, box-shadow var(--contai-duration-fast) ease, transform var(--contai-duration-fast) ease;
     line-height: 1.4;
 }
 
@@ -189,9 +191,9 @@
     font-size: 12px;
     font-weight: 600;
     color: var(--contai-success);
-    background: rgba(5, 150, 105, 0.08);
-    border: 1px solid rgba(5, 150, 105, 0.2);
-    border-radius: 20px;
+    background: var(--contai-success-bg);
+    border: 1px solid var(--contai-success-border);
+    border-radius: var(--contai-radius-pill);
 }
 
 .contai-ads-manager .contai-adsense-badge .dashicons {
@@ -251,7 +253,7 @@
 }
 
 .contai-ads-manager .contai-adsense-feature__icon--blue {
-    background: rgba(37, 99, 235, 0.08);
+    background: var(--contai-info-bg);
     color: var(--contai-primary);
 }
 
@@ -260,7 +262,7 @@
 }
 
 .contai-ads-manager .contai-adsense-feature__icon--green {
-    background: rgba(5, 150, 105, 0.08);
+    background: var(--contai-success-bg);
     color: var(--contai-success);
 }
 
@@ -269,7 +271,7 @@
 }
 
 .contai-ads-manager .contai-adsense-feature__icon--amber {
-    background: rgba(217, 119, 6, 0.08);
+    background: var(--contai-warning-bg);
     color: var(--contai-warning);
 }
 
@@ -288,6 +290,7 @@
 
 .contai-ads-manager .contai-adsense-feature h4 {
     margin: 0 0 2px;
+    font-family: var(--contai-font-heading);
     font-size: 11.5px;
     font-weight: 600;
     color: var(--contai-neutral-500);
@@ -311,6 +314,7 @@
 
 .contai-ads-manager .contai-adsense-earnings-summary > h4 {
     margin: 0 0 var(--contai-spacing-sm);
+    font-family: var(--contai-font-heading);
     font-size: 14px;
     font-weight: 600;
     color: var(--contai-neutral-700);
@@ -354,12 +358,12 @@
     border: 1px solid var(--contai-error-border);
     border-radius: var(--contai-radius-md);
     cursor: pointer;
-    transition: background 0.15s ease, color 0.15s ease;
+    transition: background var(--contai-duration-fast) ease, color var(--contai-duration-fast) ease;
 }
 
 .contai-ads-manager .contai-btn-disconnect:hover {
     background: var(--contai-error-bg);
-    color: #991b1b;
+    color: #8a2424;
 }
 
 /* --- Responsive --- */

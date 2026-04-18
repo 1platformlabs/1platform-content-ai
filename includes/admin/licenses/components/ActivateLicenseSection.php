@@ -58,7 +58,7 @@ class ContaiActivateLicenseSection
                     </div>
 
                     <div class="contai-form-actions">
-                        <button type="submit" name="contai_activate_license" class="button button-primary button-large">
+                        <button type="submit" name="contai_activate_license" class="button button-primary">
                             <span class="dashicons dashicons-yes-alt"></span>
                             <?php esc_html_e('Activate License', '1platform-content-ai'); ?>
                         </button>

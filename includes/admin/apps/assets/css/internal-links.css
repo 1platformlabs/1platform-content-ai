@@ -22,6 +22,7 @@
 
 .contai-section-title {
   margin: 0 0 var(--contai-spacing-lg) 0;
+  font-family: var(--contai-font-heading);
   font-size: 20px;
   font-weight: 700;
   color: var(--contai-neutral-700);
@@ -39,6 +40,7 @@
 
 .contai-section-subtitle {
   margin: 0 0 var(--contai-spacing-md) 0;
+  font-family: var(--contai-font-heading);
   font-size: 16px;
   font-weight: 600;
   color: var(--contai-neutral-700);
@@ -102,8 +104,7 @@
 .contai-input-number:focus {
   outline: none;
   border-color: var(--contai-primary);
-  box-shadow: 0 0 0 4px var(--contai-primary-glow);
-  transform: translateY(-1px);
+  box-shadow: var(--contai-shadow-glow);
 }
 
 .contai-input-number:hover {
@@ -119,20 +120,22 @@
 }
 
 .contai-form-actions .button-primary {
-  font-size: 15px;
-  font-weight: 700;
-  border-radius: var(--contai-radius-lg);
-  box-shadow: var(--contai-shadow-md);
+  padding: 10px 20px;
+  font-size: 13.5px;
+  font-weight: 600;
+  border-radius: var(--contai-radius-md);
+  box-shadow: var(--contai-shadow-xs);
 }
 
 .contai-form-actions .button-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--contai-shadow-lg);
+  transform: translateY(-1px);
+  box-shadow: var(--contai-shadow-md);
 }
 
 .contai-form-actions .button-secondary {
-  font-size: 14px;
-  border-radius: var(--contai-radius-lg);
+  padding: 10px 20px;
+  font-size: 13.5px;
+  border-radius: var(--contai-radius-md);
 }
 
 /* Queue Section Styles */
@@ -158,20 +161,22 @@
 }
 
 .contai-queue-form .button-primary {
-  font-size: 15px;
-  font-weight: 700;
-  border-radius: var(--contai-radius-lg);
-  box-shadow: var(--contai-shadow-md);
+  padding: 10px 20px;
+  font-size: 13.5px;
+  font-weight: 600;
+  border-radius: var(--contai-radius-md);
+  box-shadow: var(--contai-shadow-xs);
 }
 
 .contai-queue-form .button-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--contai-shadow-lg);
+  transform: translateY(-1px);
+  box-shadow: var(--contai-shadow-md);
 }
 
 .contai-queue-form .button-secondary {
-  font-size: 14px;
-  border-radius: var(--contai-radius-lg);
+  padding: 10px 20px;
+  font-size: 13.5px;
+  border-radius: var(--contai-radius-md);
 }
 
 .contai-queue-status-panel {
@@ -197,7 +202,7 @@
   background: #fff;
   border-radius: var(--contai-radius-lg);
   border: 2px solid var(--contai-neutral-200);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all var(--contai-duration-fast) ease;
   position: relative;
   overflow: hidden;
 }
@@ -215,7 +220,7 @@
     var(--contai-primary-dark)
   );
   opacity: 0;
-  transition: opacity 0.3s ease;
+  transition: opacity var(--contai-duration-fast) ease;
 }
 
 .contai-stat-card:hover {
@@ -234,11 +239,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 16px;
+  border-radius: var(--contai-radius-md);
   font-size: 28px;
   flex-shrink: 0;
   box-shadow: var(--contai-shadow-sm);
-  transition: transform 0.3s ease;
+  transition: transform var(--contai-duration-fast) ease;
 }
 
 .contai-stat-card:hover .contai-stat-icon {
@@ -246,8 +251,8 @@
 }
 
 .contai-stat-icon.contai-stat-pending {
-  background: linear-gradient(135deg, #ffd93d 0%, #ffb800 100%);
-  color: #6b4f00;
+  background: linear-gradient(135deg, #f0d33d 0%, #dba617 100%);
+  color: #6e520d;
 }
 
 .contai-stat-icon.contai-stat-processing {
@@ -499,7 +504,7 @@
 }
 
 .contai-status-badge.contai-status-active {
-  background: linear-gradient(135deg, #10b981 0%, var(--contai-success) 100%);
+  background: linear-gradient(135deg, var(--contai-success) 0%, var(--contai-success) 100%);
   color: #ffffff;
   border: 1px solid var(--contai-success);
 }
@@ -510,7 +515,7 @@
 }
 
 .contai-status-badge.contai-status-inactive {
-  background: linear-gradient(135deg, #ef4444 0%, var(--contai-error) 100%);
+  background: linear-gradient(135deg, var(--contai-error) 0%, var(--contai-error) 100%);
   color: #ffffff;
   border: 1px solid var(--contai-error);
 }
@@ -563,6 +568,7 @@
 
 .contai-empty-state-title {
   margin: 0 0 12px 0;
+  font-family: var(--contai-font-heading);
   font-size: 20px;
   font-weight: 700;
   color: var(--contai-neutral-700);

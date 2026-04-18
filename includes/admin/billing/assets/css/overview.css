@@ -31,7 +31,7 @@
     justify-content: center;
     width: 56px;
     height: 56px;
-    border-radius: 14px;
+    border-radius: var(--contai-radius-md);
     background: linear-gradient(135deg, var(--contai-primary-light), var(--contai-info-bg));
     flex-shrink: 0;
 }
@@ -44,6 +44,7 @@
 }
 
 .contai-billing-hero-label {
+    font-family: var(--contai-font-heading);
     margin: 0 0 4px 0;
     font-size: 13px;
     font-weight: 500;
@@ -180,7 +181,7 @@ code.contai-billing-detail-value {
 .contai-billing-modal {
     background: #fff;
     border-radius: var(--contai-radius-lg);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+    box-shadow: var(--contai-shadow-lg);
     width: 100%;
     max-width: 480px;
     margin: var(--contai-spacing-lg);
@@ -193,6 +194,7 @@ code.contai-billing-detail-value {
 
 .contai-billing-modal-header h3 {
     margin: 0;
+    font-family: var(--contai-font-heading);
     font-size: 16px;
     font-weight: 600;
     color: var(--contai-neutral-700);

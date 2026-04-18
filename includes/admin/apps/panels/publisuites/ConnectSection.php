@@ -124,7 +124,7 @@ class ContaiPublisuitesConnectSection
             <button
                 type="submit"
                 name="<?php echo esc_attr($this->view_data['primary_cta_action']); ?>"
-                class="button button-primary button-hero contai-ps-cta"
+                class="button button-primary contai-ps-cta"
                 aria-label="<?php esc_attr_e('Connect your website to the marketplace', '1platform-content-ai'); ?>"
             >
                 <span class="dashicons dashicons-plus-alt2" aria-hidden="true"></span>

@@ -215,7 +215,7 @@ class ContaiLogsPanel {
         echo '<div class="contai-logs-stat-card">';
         echo '<div class="contai-logs-stat-icon contai-logs-stat-icon--page"><span class="dashicons dashicons-admin-page"></span></div>';
         echo '<div class="contai-logs-stat-info">';
-        echo '<div class="contai-logs-stat-value">' . esc_html($page) . ' <span style="font-size:13px;font-weight:400;color:var(--contai-neutral-400);">/ ' . esc_html($totalPages ?: 1) . '</span></div>';
+        echo '<div class="contai-logs-stat-value">' . esc_html($page) . ' <span class="contai-logs-stat-value-total">/ ' . esc_html($totalPages ?: 1) . '</span></div>';
         echo '<div class="contai-logs-stat-label">' . esc_html__('Current Page', '1platform-content-ai') . '</div>';
         echo '</div></div>';
 
@@ -338,12 +338,12 @@ class ContaiLogsPanel {
         // Actions row
         echo '<div class="contai-logs-filters-actions">';
         echo '<div class="contai-logs-filters-actions-left">';
-        echo '<button type="submit" class="button button-primary"><span class="dashicons dashicons-search" style="font-size:16px;width:16px;height:16px;"></span> ' . esc_html__('Apply Filters', '1platform-content-ai') . '</button>';
+        echo '<button type="submit" class="button button-primary contai-logs-filters-apply"><span class="dashicons dashicons-search"></span> ' . esc_html__('Apply Filters', '1platform-content-ai') . '</button>';
         echo '<a href="' . esc_url($baseUrl) . '" class="button button-secondary">' . esc_html__('Reset', '1platform-content-ai') . '</a>';
         echo '</div>';
 
         // Clear Logs (right-aligned, subtle)
-        echo '<form method="post" style="margin:0;" onsubmit="return confirm(\'' . esc_js(__('Are you sure you want to clear all logs? This action cannot be undone.', '1platform-content-ai')) . '\');">';
+        echo '<form method="post" class="contai-logs-clear-form" onsubmit="return confirm(\'' . esc_js(__('Are you sure you want to clear all logs? This action cannot be undone.', '1platform-content-ai')) . '\');">';
         wp_nonce_field('contai_clear_logs', 'contai_clear_logs_nonce');
         echo '<input type="hidden" name="contai_clear_logs_action" value="1" />';
         if (!empty($this->filters['provider'])) {
@@ -442,7 +442,7 @@ class ContaiLogsPanel {
         if (!$item['success']) {
             $errorLabel = ContaiLogsAdapter::getErrorTypeLabel($item['error_type']);
             if (!empty($errorLabel)) {
-                echo '<span class="contai-badge contai-badge-danger" style="margin-bottom:4px;">' . esc_html($errorLabel) . '</span><br>';
+                echo '<span class="contai-badge contai-badge-danger contai-logs-message-badge">' . esc_html($errorLabel) . '</span><br>';
             }
         }
         echo '<span class="contai-logs-cell-sub" title="' . esc_attr($msg) . '">' . esc_html($msgDisplay) . '</span>';
@@ -453,7 +453,7 @@ class ContaiLogsPanel {
         echo '<td><span class="contai-badge ' . esc_attr($sourceClass) . '">' . esc_html(ucfirst($item['source_type'])) . '</span></td>';
 
         // Time — relative-style display
-        echo '<td><span class="contai-logs-cell-sub" style="white-space:nowrap;">' . esc_html($item['timestamp']) . '</span></td>';
+        echo '<td><span class="contai-logs-cell-sub contai-logs-cell-time">' . esc_html($item['timestamp']) . '</span></td>';
 
         // Actions
         $detailUrl = admin_url('admin.php?page=contai-logs&log_id=' . urlencode($item['id']));
@@ -494,7 +494,7 @@ class ContaiLogsPanel {
         echo $successBadge;
         echo '<span class="contai-badge ' . esc_attr($badgeClass) . '">' . esc_html($statusDisplay) . '</span>';
         if (!empty($detail['trace_id'])) {
-            echo '<code style="font-size:11px;color:var(--contai-neutral-400);font-family:var(--contai-font-mono);">' . esc_html($detail['trace_id']) . '</code>';
+            echo '<code class="contai-logs-detail-trace">' . esc_html($detail['trace_id']) . '</code>';
         }
         echo '</div></div></div>';
 
@@ -625,7 +625,7 @@ class ContaiLogsPanel {
     }
 
     private function renderErrorState(): void {
-        echo '<div class="contai-logs-table-card" style="padding:var(--contai-spacing-lg, 24px);">';
+        echo '<div class="contai-logs-table-card contai-logs-error-wrap">';
         echo '<div class="contai-notice contai-notice-error"><span class="dashicons dashicons-warning"></span><p>' . esc_html($this->errorMessage) . '</p></div>';
         echo '</div>';
     }

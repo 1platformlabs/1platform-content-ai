@@ -63,7 +63,7 @@ class ContaiSearchConsoleAddWebsiteSection
             <form method="post" class="contai-search-console-form">
                 <?php wp_nonce_field(self::NONCE_ACTION, self::NONCE_FIELD); ?>
                 <div class="contai-form-actions">
-                    <button type="submit" name="contai_setup_search_console" class="button button-primary button-large">
+                    <button type="submit" name="contai_setup_search_console" class="button button-primary">
                         <span class="dashicons dashicons-cloud-saved"></span>
                         <?php esc_html_e('Connect to Search Console', '1platform-content-ai'); ?>
                     </button>

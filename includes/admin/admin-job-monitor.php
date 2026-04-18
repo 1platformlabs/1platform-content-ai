@@ -91,10 +91,12 @@ class ContaiAdminJobMonitor {
 				<h1><?php esc_html_e( 'Jobs', '1platform-content-ai' ); ?></h1>
 				<div class="contai-refresh-controls">
 					<span class="contai-last-updated">
-						Last updated: <strong><?php echo esc_html( gmdate( 'H:i:s' ) ); ?></strong>
+						<?php esc_html_e( 'Last updated:', '1platform-content-ai' ); ?>
+						<strong><?php echo esc_html( gmdate( 'H:i:s' ) ); ?></strong>
 					</span>
 					<button type="button" class="button" onclick="location.reload()">
-						🔄 Refresh
+						<span class="dashicons dashicons-update" aria-hidden="true"></span>
+						<?php esc_html_e( 'Refresh', '1platform-content-ai' ); ?>
 					</button>
 				</div>
 			</div>
@@ -103,30 +105,32 @@ class ContaiAdminJobMonitor {
 
 			<?php if ( ! empty( $processingJobs ) && $this->hasStuckJobs( $processingJobs ) ) : ?>
 				<div class="contai-alert contai-alert-warning">
-					<span>⚠️</span>
+					<span class="dashicons dashicons-warning" aria-hidden="true"></span>
 					<div>
-						<strong>Warning:</strong> Some jobs appear to be stuck (running for more than 30 minutes).
-						Consider recovering them.
+						<strong><?php esc_html_e( 'Warning:', '1platform-content-ai' ); ?></strong>
+						<?php esc_html_e( 'Some jobs appear to be stuck (running for more than 30 minutes). Consider recovering them.', '1platform-content-ai' ); ?>
 					</div>
 				</div>
 			<?php endif; ?>
 
 			<div class="contai-section">
 				<div class="contai-section-header">
-					<h2 class="contai-section-title">ContaiJob Queue Details</h2>
+					<h2 class="contai-section-title"><?php esc_html_e( 'ContaiJob Queue Details', '1platform-content-ai' ); ?></h2>
 					<div class="contai-section-actions">
-						<form method="post" style="display: inline-block; margin: 0;">
+						<form method="post" class="contai-inline-form">
 							<?php wp_nonce_field( 'contai_delete_jobs' ); ?>
 							<button type="submit" name="delete_completed_jobs" class="button"
-									onclick="return confirm('Are you sure you want to delete all completed jobs?')">
-								🗑️ Clear Completed
+									onclick="return confirm('<?php echo esc_js( __( 'Are you sure you want to delete all completed jobs?', '1platform-content-ai' ) ); ?>')">
+								<span class="dashicons dashicons-trash" aria-hidden="true"></span>
+								<?php esc_html_e( 'Clear Completed', '1platform-content-ai' ); ?>
 							</button>
 						</form>
 						<?php if ( ! empty( $processingJobs ) ) : ?>
-							<form method="post" style="display: inline-block; margin: 0;">
+							<form method="post" class="contai-inline-form">
 								<?php wp_nonce_field( 'contai_recover_jobs' ); ?>
 								<button type="submit" name="recover_stuck_jobs" class="button button-primary">
-									🔧 Recover Stuck
+									<span class="dashicons dashicons-admin-tools" aria-hidden="true"></span>
+									<?php esc_html_e( 'Recover Stuck', '1platform-content-ai' ); ?>
 								</button>
 							</form>
 						<?php endif; ?>
@@ -147,32 +151,36 @@ class ContaiAdminJobMonitor {
 	private function renderStatsGrid( array $metrics ): void {
 		$stats = array(
 			array(
-				'label' => 'Pending',
+				'label' => __( 'Pending', '1platform-content-ai' ),
 				'value' => $metrics['total_pending'],
-				'sublabel' => 'Waiting in queue',
+				'sublabel' => __( 'Waiting in queue', '1platform-content-ai' ),
 				'class' => 'stat-pending',
-				'icon' => '⏳',
+				'icon' => 'dashicons-clock',
 			),
 			array(
-				'label' => 'Processing',
+				'label' => __( 'Processing', '1platform-content-ai' ),
 				'value' => $metrics['total_processing'],
-				'sublabel' => sprintf( '%d / 5 slots used', $metrics['processing_slots_used'] ),
+				'sublabel' => sprintf(
+					/* translators: %d: number of processing slots in use */
+					__( '%d / 5 slots used', '1platform-content-ai' ),
+					$metrics['processing_slots_used']
+				),
 				'class' => 'stat-processing',
-				'icon' => '⚙️',
+				'icon' => 'dashicons-admin-generic',
 			),
 			array(
-				'label' => 'Completed',
+				'label' => __( 'Completed', '1platform-content-ai' ),
 				'value' => $metrics['total_done'],
-				'sublabel' => 'Successfully finished',
+				'sublabel' => __( 'Successfully finished', '1platform-content-ai' ),
 				'class' => 'stat-done',
-				'icon' => '✓',
+				'icon' => 'dashicons-yes-alt',
 			),
 			array(
-				'label' => 'Failed',
+				'label' => __( 'Failed', '1platform-content-ai' ),
 				'value' => $metrics['total_failed'],
-				'sublabel' => 'Errors occurred',
+				'sublabel' => __( 'Errors occurred', '1platform-content-ai' ),
 				'class' => 'stat-failed',
-				'icon' => '✗',
+				'icon' => 'dashicons-dismiss',
 			),
 		);
 
@@ -181,7 +189,8 @@ class ContaiAdminJobMonitor {
 			?>
 			<div class="contai-stat-card <?php echo esc_attr( $stat['class'] ); ?>">
 				<div class="contai-stat-value">
-					<?php echo esc_html( $stat['icon'] . ' ' . $stat['value'] ); ?>
+					<span class="dashicons <?php echo esc_attr( $stat['icon'] ); ?>" aria-hidden="true"></span>
+					<span><?php echo esc_html( $stat['value'] ); ?></span>
 				</div>
 				<div class="contai-stat-label"><?php echo esc_html( $stat['label'] ); ?></div>
 				<?php if ( ! empty( $stat['sublabel'] ) ) : ?>
@@ -189,7 +198,14 @@ class ContaiAdminJobMonitor {
 				<?php endif; ?>
 				<?php if ( $stat['class'] === 'stat-processing' ) : ?>
 					<div class="contai-progress-bar">
-						<div class="contai-progress-fill" style="width: <?php echo esc_attr( $metrics['processing_slots_used'] / 5 * 100 ); ?>%"></div>
+						<div
+							class="contai-progress-fill"
+							role="progressbar"
+							aria-valuenow="<?php echo esc_attr( (string) $metrics['processing_slots_used'] ); ?>"
+							aria-valuemin="0"
+							aria-valuemax="5"
+							style="width: <?php echo esc_attr( (string) ( $metrics['processing_slots_used'] / 5 * 100 ) ); ?>%"
+						></div>
 					</div>
 				<?php endif; ?>
 			</div>
@@ -268,7 +284,7 @@ class ContaiAdminJobMonitor {
 			return;
 		}
 
-		echo '<h3 style="margin-top: 0;">Recent Activity</h3>';
+		echo '<h3 class="contai-overview-heading">' . esc_html__( 'Recent Activity', '1platform-content-ai' ) . '</h3>';
 		$this->renderJobsTableHtml( $recentJobs );
 	}
 
@@ -317,7 +333,7 @@ class ContaiAdminJobMonitor {
 						<td>
 							<?php echo wp_kses_post( ContaiJobDetailsFormatter::formatStatus( $job['status'] ) ); ?>
 							<?php if ( $isStuck ) : ?>
-								<span class="contai-badge contai-badge-warning" style="margin-left: 8px;">STUCK</span>
+								<span class="contai-badge contai-badge-warning contai-jobs-stuck-badge"><?php esc_html_e( 'STUCK', '1platform-content-ai' ); ?></span>
 							<?php endif; ?>
 						</td>
 						<td>
@@ -369,7 +385,7 @@ class ContaiAdminJobMonitor {
 		?>
 		<div class="contai-section">
 			<div class="contai-section-header">
-				<h2 class="contai-section-title">ContaiJob Type Breakdown</h2>
+				<h2 class="contai-section-title"><?php esc_html_e( 'ContaiJob Type Breakdown', '1platform-content-ai' ); ?></h2>
 			</div>
 			<div class="contai-metrics-grid">
 				<?php foreach ( $breakdown as $jobType => $stats ) : ?>
@@ -379,14 +395,14 @@ class ContaiAdminJobMonitor {
 						</div>
 						<div class="contai-metric-value">
 							<?php echo esc_html( $stats['total'] ); ?>
-							<span class="contai-metric-unit">total</span>
+							<span class="contai-metric-unit"><?php esc_html_e( 'total', '1platform-content-ai' ); ?></span>
 						</div>
-						<div style="margin-top: 12px; font-size: 12px; color: var(--color-gray-600);">
-							<div>⏳ Pending: <?php echo esc_html( $stats['pending'] ); ?></div>
-							<div>⚙️ Processing: <?php echo esc_html( $stats['processing'] ); ?></div>
-							<div>✓ Done: <?php echo esc_html( $stats['done'] ); ?></div>
-							<div>✗ Failed: <?php echo esc_html( $stats['failed'] ); ?></div>
-						</div>
+						<ul class="contai-metric-breakdown">
+							<li><span class="dashicons dashicons-clock" aria-hidden="true"></span> <?php esc_html_e( 'Pending:', '1platform-content-ai' ); ?> <?php echo esc_html( $stats['pending'] ); ?></li>
+							<li><span class="dashicons dashicons-admin-generic" aria-hidden="true"></span> <?php esc_html_e( 'Processing:', '1platform-content-ai' ); ?> <?php echo esc_html( $stats['processing'] ); ?></li>
+							<li><span class="dashicons dashicons-yes-alt" aria-hidden="true"></span> <?php esc_html_e( 'Done:', '1platform-content-ai' ); ?> <?php echo esc_html( $stats['done'] ); ?></li>
+							<li><span class="dashicons dashicons-dismiss" aria-hidden="true"></span> <?php esc_html_e( 'Failed:', '1platform-content-ai' ); ?> <?php echo esc_html( $stats['failed'] ); ?></li>
+						</ul>
 					</div>
 				<?php endforeach; ?>
 			</div>
@@ -398,7 +414,7 @@ class ContaiAdminJobMonitor {
 		?>
 		<div class="contai-section">
 			<div class="contai-section-header">
-				<h2 class="contai-section-title">Cron Status</h2>
+				<h2 class="contai-section-title"><?php esc_html_e( 'Cron Status', '1platform-content-ai' ); ?></h2>
 			</div>
 			<?php $this->renderCronStatus(); ?>
 		</div>
@@ -408,9 +424,11 @@ class ContaiAdminJobMonitor {
 	private function renderEmptyState( string $title, string $message ): void {
 		?>
 		<div class="contai-empty-state">
-			<div class="contai-empty-state-icon">📭</div>
+			<div class="contai-empty-state-icon">
+				<span class="dashicons dashicons-inbox" aria-hidden="true"></span>
+			</div>
 			<div class="contai-empty-state-text"><?php echo esc_html( $title ); ?></div>
-			<p style="color: var(--color-gray-600); margin-top: 8px;">
+			<p class="contai-empty-state-message">
 				<?php echo esc_html( $message ); ?>
 			</p>
 		</div>
@@ -451,11 +469,11 @@ class ContaiAdminJobMonitor {
 					?>
 					<div class="contai-metrics-grid">
 						<div class="contai-metric-card">
-							<div class="contai-metric-label">Next Run</div>
-							<div class="contai-metric-value" style="font-size: 16px;">
+							<div class="contai-metric-label"><?php esc_html_e( 'Next Run', '1platform-content-ai' ); ?></div>
+							<div class="contai-metric-value contai-metric-value--sm">
 								<?php echo esc_html( $nextRun ); ?>
 							</div>
-							<div style="margin-top: 4px; font-size: 13px; color: var(--color-gray-600);">
+							<div class="contai-metric-subtext">
 								<?php echo esc_html( $timeUntilFormatted ); ?>
 							</div>
 						</div>
@@ -463,24 +481,25 @@ class ContaiAdminJobMonitor {
 						<?php foreach ( $details as $data ) : ?>
 							<?php if ( isset( $data['schedule'] ) ) : ?>
 								<div class="contai-metric-card">
-									<div class="contai-metric-label">Schedule</div>
-									<div class="contai-metric-value" style="font-size: 16px;">
+									<div class="contai-metric-label"><?php esc_html_e( 'Schedule', '1platform-content-ai' ); ?></div>
+									<div class="contai-metric-value contai-metric-value--sm">
 										<?php echo esc_html( $data['schedule'] ); ?>
 									</div>
-									<div style="margin-top: 4px; font-size: 13px; color: var(--color-gray-600);">
-										Every 60 seconds
+									<div class="contai-metric-subtext">
+										<?php esc_html_e( 'Every 60 seconds', '1platform-content-ai' ); ?>
 									</div>
 								</div>
 							<?php endif; ?>
 						<?php endforeach; ?>
 
 						<div class="contai-metric-card">
-							<div class="contai-metric-label">Status</div>
-							<div class="contai-metric-value" style="font-size: 16px; color: var(--color-success);">
-								✓ Active
+							<div class="contai-metric-label"><?php esc_html_e( 'Status', '1platform-content-ai' ); ?></div>
+							<div class="contai-metric-value contai-metric-value--sm contai-metric-value--active">
+								<span class="dashicons dashicons-yes-alt" aria-hidden="true"></span>
+								<?php esc_html_e( 'Active', '1platform-content-ai' ); ?>
 							</div>
-							<div style="margin-top: 4px; font-size: 13px; color: var(--color-gray-600);">
-								Cron is running
+							<div class="contai-metric-subtext">
+								<?php esc_html_e( 'Cron is running', '1platform-content-ai' ); ?>
 							</div>
 						</div>
 					</div>
@@ -492,10 +511,10 @@ class ContaiAdminJobMonitor {
 		if ( ! $found ) {
 			?>
 			<div class="contai-alert contai-alert-danger">
-				<span>⚠️</span>
+				<span class="dashicons dashicons-warning" aria-hidden="true"></span>
 				<div>
-					<strong>Cron Not Registered!</strong>
-					Jobs will not process automatically. Please reactivate the plugin.
+					<strong><?php esc_html_e( 'Cron Not Registered!', '1platform-content-ai' ); ?></strong>
+					<?php esc_html_e( 'Jobs will not process automatically. Please reactivate the plugin.', '1platform-content-ai' ); ?>
 				</div>
 			</div>
 			<?php

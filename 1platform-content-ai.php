@@ -261,11 +261,34 @@ function contai_agents_page() {
     ContaiAgentsAdminPage::render();
 }
 
+/**
+ * Enqueue the shared design system stylesheet on every plugin admin screen.
+ *
+ * Registers and enqueues the base CSS (tokens, primitives, Connection Gate)
+ * so any plugin screen — including those that do not declare it as a
+ * dependency — renders with the redesigned visual language.
+ */
+function contai_enqueue_design_system() {
+    $screen = get_current_screen();
+
+    if ( ! $screen || strpos( $screen->id, 'contai' ) === false ) {
+        return;
+    }
+
+    wp_enqueue_style(
+        'contai-content-generator-base',
+        plugin_dir_url( __FILE__ ) . 'includes/admin/content-generator/assets/css/base.css',
+        array(),
+        CONTAI_VERSION
+    );
+}
+add_action( 'admin_enqueue_scripts', 'contai_enqueue_design_system', 5 );
+
 add_action( 'admin_enqueue_scripts', function( $hook ) {
     if ( strpos( $hook, 'contai-agents' ) === false ) {
         return;
     }
-    wp_enqueue_style( 'contai-agents-admin', plugin_dir_url( __FILE__ ) . 'includes/admin/agents/contai-agents-admin.css', array(), CONTAI_VERSION );
+    wp_enqueue_style( 'contai-agents-admin', plugin_dir_url( __FILE__ ) . 'includes/admin/agents/contai-agents-admin.css', array( 'contai-content-generator-base' ), CONTAI_VERSION );
     wp_enqueue_script( 'contai-agents-admin', plugin_dir_url( __FILE__ ) . 'includes/admin/agents/contai-agents-admin.js', array(), CONTAI_VERSION, true );
     wp_localize_script( 'contai-agents-admin', 'contaiAgents', array(
         'restUrl'  => rest_url( 'contai/v1/' ),
@@ -292,27 +315,27 @@ function contai_render_connection_required_notice() {
     $license_url = admin_url( 'admin.php?page=contai-licenses' );
     ?>
     <div class="wrap">
-        <div class="contai-connection-notice" style="padding: 20px; background: #fff; border: 1px solid #ccd0d4; border-left: 4px solid #ffb900; box-shadow: 0 1px 1px rgba(0,0,0,.04);">
-            <h2 style="margin-top: 0;">
-                <span class="dashicons dashicons-admin-network" style="font-size: 24px; margin-right: 8px;"></span>
+        <section class="contai-connection-gate" aria-labelledby="contai-connection-gate-title">
+            <h2 id="contai-connection-gate-title" class="contai-connection-gate-title">
+                <span class="dashicons dashicons-admin-network" aria-hidden="true"></span>
                 <?php esc_html_e( 'Connect to 1Platform Content AI', '1platform-content-ai' ); ?>
             </h2>
-            <p style="font-size: 14px; max-width: 600px;">
+            <p class="contai-connection-gate-body">
                 <?php esc_html_e( 'This feature requires an active connection to the 1Platform Content AI service. Enter your API key to enable AI-powered content generation, keyword extraction, and other cloud features.', '1platform-content-ai' ); ?>
             </p>
-            <p style="font-size: 13px; color: #666; max-width: 600px;">
+            <p class="contai-connection-gate-hint">
                 <?php esc_html_e( 'Local tools like Table of Contents and Internal Links work without an API key.', '1platform-content-ai' ); ?>
             </p>
-            <p>
-                <a href="<?php echo esc_url( $license_url ); ?>" class="button button-primary button-hero">
-                    <span class="dashicons dashicons-admin-network" style="margin-top: 5px;"></span>
+            <p class="contai-connection-gate-actions">
+                <a href="<?php echo esc_url( $license_url ); ?>" class="button button-primary">
+                    <span class="dashicons dashicons-admin-network" aria-hidden="true"></span>
                     <?php esc_html_e( 'Enter API Key', '1platform-content-ai' ); ?>
                 </a>
-                <a href="https://1platform.pro" target="_blank" rel="noopener noreferrer" class="button button-secondary button-hero" style="margin-left: 10px;">
+                <a href="https://1platform.pro" target="_blank" rel="noopener noreferrer" class="button button-secondary">
                     <?php esc_html_e( 'Get an API Key', '1platform-content-ai' ); ?>
                 </a>
             </p>
-        </div>
+        </section>
     </div>
     <?php
     return true;

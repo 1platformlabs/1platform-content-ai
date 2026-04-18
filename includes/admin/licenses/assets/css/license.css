@@ -2,11 +2,9 @@
 
 .contai-license-panel {
     margin-bottom: var(--contai-spacing-xl);
-    border-left: 4px solid var(--contai-primary);
-}
-
-.contai-license-panel.contai-license-active {
-    border-left-color: var(--contai-success);
+    border: 1px solid var(--contai-neutral-200);
+    border-radius: var(--contai-radius-md);
+    overflow: hidden;
 }
 
 /* License Status Card */
@@ -31,8 +29,8 @@
 }
 
 .contai-license-status-card .contai-status-icon {
-    width: 60px;
-    height: 60px;
+    width: 44px;
+    height: 44px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -42,18 +40,16 @@
 
 .contai-license-status-card.contai-status-active .contai-status-icon {
     background: var(--contai-success);
-    box-shadow: var(--contai-shadow-md);
 }
 
 .contai-license-status-card.contai-status-inactive .contai-status-icon {
     background: var(--contai-warning);
-    box-shadow: var(--contai-shadow-md);
 }
 
 .contai-license-status-card .contai-status-icon .dashicons {
-    font-size: 28px;
-    width: 28px;
-    height: 28px;
+    font-size: 22px;
+    width: 22px;
+    height: 22px;
     color: #fff;
 }
 
@@ -187,7 +183,7 @@
     align-items: center;
     gap: 6px;
     padding: 4px 12px;
-    border-radius: 20px;
+    border-radius: var(--contai-radius-pill);
     font-size: 12px;
     font-weight: 600;
     text-transform: uppercase;
@@ -379,24 +375,6 @@
     color: var(--contai-error-text);
 }
 
-/* Button Enhancements */
-
-.button-large {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--contai-spacing-xs);
-    padding: 10px 20px !important;
-    font-size: 15px !important;
-    font-weight: 600;
-    height: auto !important;
-}
-
-.button-large .dashicons {
-    font-size: 18px;
-    width: 18px;
-    height: 18px;
-}
-
 /* Responsive */
 
 @media (max-width: 768px) {
@@ -426,28 +404,28 @@
 /* ── Create Account (Onboarding) ── */
 
 .contai-create-account {
-    background: var(--contai-bg-card, #fff);
-    border: 1px solid var(--contai-border, #dcdcde);
-    border-radius: var(--contai-radius-lg, 12px);
-    padding: var(--contai-spacing-xl, 24px);
-    margin-bottom: var(--contai-spacing-xl, 24px);
+    background: #fff;
+    border: 1px solid var(--contai-neutral-200);
+    border-radius: var(--contai-radius-md);
+    padding: var(--contai-spacing-xl);
+    margin-bottom: var(--contai-spacing-xl);
 }
 
 .contai-create-account-header {
     display: flex;
     align-items: center;
-    gap: var(--contai-spacing-md, 12px);
-    margin-bottom: var(--contai-spacing-lg, 16px);
+    gap: var(--contai-spacing-md);
+    margin-bottom: var(--contai-spacing-lg);
 }
 
 .contai-create-account-badge {
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    background: var(--contai-primary, #2271b1);
+    background: var(--contai-primary);
     color: #fff;
     padding: 4px 10px;
-    border-radius: 20px;
+    border-radius: var(--contai-radius-pill);
     font-size: 11px;
     font-weight: 600;
     text-transform: uppercase;
@@ -455,17 +433,21 @@
 
 .contai-create-account-title {
     margin: 0;
+    font-family: var(--contai-font-heading);
     font-size: 18px;
+    font-weight: 600;
 }
 
 .contai-onboarding-field {
-    margin-bottom: var(--contai-spacing-lg, 16px);
+    margin-bottom: var(--contai-spacing-lg);
 }
 
 .contai-onboarding-field label {
     display: block;
     font-weight: 600;
+    font-size: 13.5px;
     margin-bottom: 6px;
+    color: var(--contai-neutral-700);
 }
 
 .contai-onboarding-amounts {
@@ -477,69 +459,71 @@
 
 .contai-amount-btn {
     padding: 8px 18px;
-    border: 2px solid var(--contai-border, #dcdcde);
-    border-radius: 8px;
-    background: var(--contai-bg-card, #fff);
+    border: 2px solid var(--contai-neutral-200);
+    border-radius: var(--contai-radius-md);
+    background: #fff;
     cursor: pointer;
     font-size: 14px;
     font-weight: 600;
-    transition: all 0.15s ease;
+    transition: all var(--contai-duration-fast) ease;
 }
 
 .contai-amount-btn:hover {
-    border-color: var(--contai-primary, #2271b1);
+    border-color: var(--contai-primary);
 }
 
 .contai-amount-btn.active {
-    border-color: var(--contai-primary, #2271b1);
-    background: var(--contai-primary, #2271b1);
+    border-color: var(--contai-primary);
+    background: var(--contai-primary);
     color: #fff;
 }
 
 .contai-amount-custom {
     width: 90px;
     padding: 8px 12px;
-    border: 2px solid var(--contai-border, #dcdcde);
-    border-radius: 8px;
+    border: 2px solid var(--contai-neutral-200);
+    border-radius: var(--contai-radius-md);
     font-size: 14px;
 }
 
 #contai-onboarding-submit {
-    margin-top: var(--contai-spacing-md, 12px);
+    margin-top: var(--contai-spacing-md);
 }
 
 .contai-onboarding-error {
-    margin-top: var(--contai-spacing-md, 12px);
+    margin-top: var(--contai-spacing-md);
     padding: 10px 14px;
-    background: #fcf0f0;
-    border-left: 4px solid #d63638;
-    border-radius: 4px;
-    color: #8b1a1a;
+    background: var(--contai-error-bg);
+    border-left: 4px solid var(--contai-error);
+    border-radius: var(--contai-radius-sm);
+    color: var(--contai-error-text);
 }
 
 .contai-onboarding-status,
 .contai-onboarding-recovery {
     display: flex;
     align-items: center;
-    gap: var(--contai-spacing-md, 12px);
-    padding: var(--contai-spacing-lg, 16px);
-    background: #f0f6fc;
-    border-radius: 8px;
+    gap: var(--contai-spacing-md);
+    padding: var(--contai-spacing-lg);
+    background: var(--contai-info-bg);
+    border-radius: var(--contai-radius-md);
 }
 
 .contai-onboarding-success {
     display: flex;
     align-items: center;
-    gap: var(--contai-spacing-md, 12px);
-    padding: var(--contai-spacing-lg, 16px);
-    background: #edf7ed;
-    border-radius: 8px;
-    color: #1e4620;
+    gap: var(--contai-spacing-md);
+    padding: var(--contai-spacing-lg);
+    background: var(--contai-success-bg);
+    border-radius: var(--contai-radius-md);
+    color: var(--contai-success-text);
 }
 
 .contai-onboarding-success .dashicons {
-    font-size: 28px;
-    color: #00a32a;
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+    color: var(--contai-success);
 }
 
 .contai-onboarding-spinner .dashicons,
@@ -554,10 +538,14 @@
 
 .contai-create-account-toggle {
     text-align: center;
-    margin-bottom: var(--contai-spacing-lg, 16px);
+    margin-bottom: var(--contai-spacing-lg);
 }
 
 .contai-create-account-toggle a {
     font-size: 13px;
     text-decoration: none;
+}
+
+.contai-onboarding-cancel {
+    margin-top: 12px;
 }

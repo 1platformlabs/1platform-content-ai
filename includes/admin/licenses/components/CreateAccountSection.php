@@ -65,7 +65,7 @@ class ContaiCreateAccountSection {
                     </div>
                 </div>
 
-                <button type="button" id="contai-onboarding-submit" class="button button-primary button-hero">
+                <button type="button" id="contai-onboarding-submit" class="button button-primary">
                     <?php esc_html_e( 'Create Account & Pay', '1platform-content-ai' ); ?>
                 </button>
 
@@ -79,7 +79,7 @@ class ContaiCreateAccountSection {
                 <p id="contai-onboarding-status-text">
                     <?php esc_html_e( 'Processing your payment...', '1platform-content-ai' ); ?>
                 </p>
-                <button type="button" id="contai-onboarding-cancel" class="button button-link" style="margin-top:12px;">
+                <button type="button" id="contai-onboarding-cancel" class="button button-link contai-onboarding-cancel">
                     <?php esc_html_e( 'Cancel and start over', '1platform-content-ai' ); ?>
                 </button>
             </div>

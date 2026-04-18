@@ -16,7 +16,7 @@
 
 /* -- Hero Header -- */
 .contai-wizard-header {
-    background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 40%, var(--contai-primary) 100%);
+    background: linear-gradient(135deg, #1e1e1e 0%, #1e3a5f 40%, var(--contai-primary) 100%);
     border-radius: var(--contai-radius-lg) var(--contai-radius-lg) 0 0;
     padding: 36px 40px;
     margin-bottom: 0;
@@ -29,8 +29,8 @@
     position: absolute;
     inset: 0;
     background:
-        radial-gradient(ellipse 600px 400px at 80% 20%, rgba(59, 130, 246, 0.2) 0%, transparent 70%),
-        radial-gradient(ellipse 300px 300px at 20% 80%, rgba(37, 99, 235, 0.1) 0%, transparent 70%);
+        radial-gradient(ellipse 600px 400px at 80% 20%, rgba(255, 255, 255, 0.08) 0%, transparent 70%),
+        radial-gradient(ellipse 300px 300px at 20% 80%, rgba(255, 255, 255, 0.04) 0%, transparent 70%);
     pointer-events: none;
 }
 
@@ -72,6 +72,7 @@
 
 .contai-wizard-header-text h1 {
     margin: 0 0 4px 0;
+    font-family: var(--contai-font-heading);
     font-size: 22px;
     font-weight: 700;
     color: #fff;
@@ -175,6 +176,7 @@
 
 .contai-section-title {
     margin: 0 0 2px 0;
+    font-family: var(--contai-font-heading);
     font-size: 15px;
     font-weight: 650;
     color: var(--contai-neutral-700);
@@ -253,7 +255,7 @@
 }
 
 .contai-optional {
-    color: var(--contai-text-muted, #6b7280);
+    color: var(--contai-neutral-500);
     font-weight: 400;
     font-size: 12px;
     text-transform: none;
@@ -350,7 +352,7 @@
 /* -- Input Error State -- */
 .contai-input-error {
     border-color: var(--contai-error) !important;
-    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.08) !important;
+    box-shadow: 0 0 0 3px rgba(214, 54, 56, 0.08) !important;
 }
 
 .contai-field-error {
@@ -410,7 +412,7 @@
     position: absolute;
     inset: 0;
     background:
-        radial-gradient(ellipse 300px 200px at 90% 50%, rgba(37, 99, 235, 0.15) 0%, transparent 70%);
+        radial-gradient(ellipse 300px 200px at 90% 50%, rgba(255, 255, 255, 0.06) 0%, transparent 70%);
     pointer-events: none;
 }
 
@@ -475,8 +477,8 @@
     align-items: center;
     justify-content: center;
     gap: 8px;
-    padding: 10px 24px;
-    font-size: 13px;
+    padding: 10px 20px;
+    font-size: 13.5px;
     font-weight: 600;
     font-family: inherit;
     border: none;
@@ -513,8 +515,9 @@
 }
 
 .contai-btn-lg {
-    padding: 12px 28px;
+    padding: 10px 20px;
     font-size: 13.5px;
+    font-weight: 600;
     border-radius: var(--contai-radius-md);
 }
 
@@ -590,6 +593,7 @@
 
 .contai-panel-title {
     margin: 0 0 8px 0;
+    font-family: var(--contai-font-heading);
     font-size: 17px;
     font-weight: 600;
     color: var(--contai-neutral-700);
@@ -683,6 +687,7 @@
 
 .contai-completed-steps h3 {
     margin: 0 0 12px;
+    font-family: var(--contai-font-heading);
     font-size: 13px;
     font-weight: 600;
     color: var(--contai-neutral-700);

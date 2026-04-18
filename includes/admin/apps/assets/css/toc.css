@@ -21,20 +21,20 @@
 
 .contai-app-card {
     background: #fff;
-    border: 1px solid var(--contai-neutral-400);
-    border-radius: var(--contai-radius-lg);
+    border: 1px solid var(--contai-neutral-200);
+    border-radius: var(--contai-radius-md);
     padding: var(--contai-spacing-lg);
     display: flex;
     flex-direction: column;
     gap: var(--contai-spacing-md);
-    transition: all 0.2s ease;
-    box-shadow: var(--contai-shadow-sm);
+    transition: all var(--contai-duration-fast) ease;
+    box-shadow: var(--contai-shadow-xs);
 }
 
 .contai-app-card:hover {
-    box-shadow: var(--contai-shadow-lg);
-    transform: translateY(-2px);
-    border-color: var(--contai-primary);
+    box-shadow: var(--contai-shadow-md);
+    transform: translateY(-1px);
+    border-color: var(--contai-primary-light);
 }
 
 .contai-app-card.inactive {
@@ -51,22 +51,21 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 56px;
-    height: 56px;
-    background: linear-gradient(135deg, var(--contai-primary) 0%, var(--contai-primary-dark) 100%);
+    width: 48px;
+    height: 48px;
+    background: var(--contai-info-bg);
     border-radius: var(--contai-radius-md);
-    box-shadow: var(--contai-shadow-md);
 }
 
 .contai-app-card.inactive .contai-app-card-icon {
-    background: var(--contai-neutral-300);
+    background: var(--contai-neutral-100);
 }
 
 .contai-app-card-icon .dashicons {
-    color: #fff;
-    font-size: 32px;
-    width: 32px;
-    height: 32px;
+    color: var(--contai-primary);
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
 }
 
 .contai-app-card-content {
@@ -75,8 +74,9 @@
 
 .contai-app-card-title {
     margin: 0 0 var(--contai-spacing-xs) 0;
-    font-size: 18px;
-    font-weight: 700;
+    font-family: var(--contai-font-heading);
+    font-size: 16px;
+    font-weight: 600;
     color: var(--contai-neutral-700);
 }
 
@@ -129,6 +129,7 @@
     align-items: center;
     gap: var(--contai-spacing-sm);
     margin: 0 0 var(--contai-spacing-lg) 0;
+    font-family: var(--contai-font-heading);
     font-size: 18px;
     font-weight: 700;
     color: var(--contai-neutral-700);
@@ -189,7 +190,7 @@
     border: 1px solid var(--contai-neutral-400);
     border-radius: var(--contai-radius-md);
     font-size: 14px;
-    transition: border-color 0.2s;
+    transition: border-color var(--contai-duration-fast) ease;
 }
 
 .contai-input-text:focus,
@@ -228,7 +229,7 @@
     padding: var(--contai-spacing-sm);
     border-radius: var(--contai-radius-md);
     cursor: pointer;
-    transition: background-color 0.2s;
+    transition: background-color var(--contai-duration-fast) ease;
 }
 
 .contai-checkbox-item:hover {
@@ -262,7 +263,7 @@
     text-align: center;
     font-weight: 600;
     font-size: 13px;
-    transition: all 0.2s;
+    transition: all var(--contai-duration-fast) ease;
 }
 
 .contai-theme-option:hover .contai-theme-preview {
@@ -272,7 +273,7 @@
 .contai-theme-option input[type="radio"]:checked + .contai-theme-preview {
     border-color: var(--contai-primary);
     background-color: var(--contai-primary-light);
-    box-shadow: 0 0 0 1px var(--contai-primary);
+    box-shadow: var(--contai-shadow-glow);
 }
 
 .contai-theme-grey {
@@ -311,7 +312,10 @@
 }
 
 .contai-form-actions .button-primary {
-    padding: 10px 24px;
+    padding: 10px 20px;
+    font-size: 13.5px;
+    font-weight: 600;
+    border-radius: var(--contai-radius-md);
 }
 
 @media (max-width: 768px) {
