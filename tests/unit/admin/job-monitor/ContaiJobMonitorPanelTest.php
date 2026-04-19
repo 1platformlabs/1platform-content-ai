@@ -49,16 +49,25 @@ class ContaiJobMonitorPanelTest extends TestCase
     }
 
     /**
-     * Install (once) a stub for contai_ui_v3_enabled() that reads a process-global
-     * value. The function is created the first time a test runs; subsequent tests
-     * just flip the flag.
+     * Configure WP_Mock so the real contai_ui_v3_enabled() from
+     * includes/helpers/ui-flag.php resolves to the desired boolean by
+     * stubbing the WP functions it reads (user meta + site option).
      */
     private function stubFlag(bool $enabled): void
     {
-        $GLOBALS['__contai_ui_v3_stub'] = $enabled;
-
-        if (!function_exists('contai_ui_v3_enabled')) {
-            eval('function contai_ui_v3_enabled(): bool { return !empty($GLOBALS["__contai_ui_v3_stub"]); }');
-        }
+        WP_Mock::userFunction('get_current_user_id', [
+            'return' => 1,
+        ]);
+        WP_Mock::userFunction('get_user_meta', [
+            'args'   => [1, 'contai_ui_v3', true],
+            'return' => $enabled ? 'on' : 'off',
+        ]);
+        // Fallback if the user-meta branch is not taken (defensive — the "on"/"off"
+        // values short-circuit before the option lookup, but any other meta value
+        // would fall through and read the site-wide option).
+        WP_Mock::userFunction('get_option', [
+            'args'   => ['contai_ui_v3', false],
+            'return' => $enabled,
+        ]);
     }
 }

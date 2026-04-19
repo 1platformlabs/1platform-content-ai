@@ -489,12 +489,15 @@ if ( ! class_exists( 'ContaiAdminJobMonitorV3' ) ) {
 		private function renderPriorityBadge( int $priority ): void {
 			if ( $priority >= 10 ) {
 				$tone  = 'danger';
+				/* translators: %d: numeric priority value */
 				$label = sprintf( __( 'High (%d)', '1platform-content-ai' ), $priority );
 			} elseif ( $priority >= 5 ) {
 				$tone  = 'warning';
+				/* translators: %d: numeric priority value */
 				$label = sprintf( __( 'Medium (%d)', '1platform-content-ai' ), $priority );
 			} else {
 				$tone  = 'neutral';
+				/* translators: %d: numeric priority value */
 				$label = sprintf( __( 'Normal (%d)', '1platform-content-ai' ), $priority );
 			}
 			?>
@@ -572,7 +575,11 @@ if ( ! class_exists( 'ContaiAdminJobMonitorV3' ) ) {
 						$details['registered'] = true;
 						$details['next_run']   = gmdate( 'Y-m-d H:i:s', $timestamp );
 						$timeUntil             = human_time_diff( time(), $timestamp );
-						$details['time_until'] = $timestamp > time() ? "in {$timeUntil}" : "{$timeUntil} ago";
+						$details['time_until'] = $timestamp > time()
+							/* translators: %s: human-readable duration, e.g. "2 mins" */
+							? sprintf( __( 'in %s', '1platform-content-ai' ), $timeUntil )
+							/* translators: %s: human-readable duration, e.g. "2 mins" */
+							: sprintf( __( '%s ago', '1platform-content-ai' ), $timeUntil );
 
 						foreach ( $hookDetails as $data ) {
 							if ( isset( $data['schedule'] ) ) {
@@ -659,5 +666,3 @@ if ( ! class_exists( 'ContaiAdminJobMonitorV3' ) ) {
 		}
 	}
 }
-
-( new ContaiAdminJobMonitorV3() )->render();

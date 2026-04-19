@@ -22,6 +22,9 @@ require_once __DIR__ . '/job-monitor/panels/ContaiJobMonitorPanel.php';
  * off-path keeps the current visuals byte-identical.
  */
 function contai_enqueue_job_monitor_v3_assets() {
+	if ( ! current_user_can( 'manage_options' ) ) {
+		return;
+	}
 	$screen = get_current_screen();
 	if ( ! $screen || strpos( (string) $screen->id, 'contai-job-monitor' ) === false ) {
 		return;

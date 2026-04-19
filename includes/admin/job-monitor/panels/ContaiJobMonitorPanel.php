@@ -18,14 +18,20 @@ if ( ! class_exists( 'ContaiJobMonitorPanel' ) ) {
 
 		/**
 		 * Render the correct variant for the current user/site preference.
+		 *
+		 * Panel files only define renderer classes (no side-effect execution
+		 * on include), so this method is responsible for instantiating and
+		 * invoking them. Includes are idempotent.
 		 */
 		public static function render(): void {
 			if ( function_exists( 'contai_ui_v3_enabled' ) && contai_ui_v3_enabled() ) {
-				require __DIR__ . '/ContaiJobMonitorPanel.v3.php';
+				require_once __DIR__ . '/ContaiJobMonitorPanel.v3.php';
+				( new ContaiAdminJobMonitorV3() )->render();
 				return;
 			}
 
-			require __DIR__ . '/ContaiJobMonitorPanel.legacy.php';
+			require_once __DIR__ . '/ContaiJobMonitorPanel.legacy.php';
+			( new ContaiAdminJobMonitor() )->render();
 		}
 
 		/**

@@ -48,7 +48,9 @@ if ( ! class_exists( 'ContaiAdminJobMonitor' ) ) {
 		}
 
 		private function enqueueAssets(): void {
-			$adminBase = plugin_dir_url( dirname( __DIR__, 2 ) . '/admin.php' );
+			// Reference a known-existing file in includes/admin/ so plugin_dir_url()
+			// resolves the admin base deterministically regardless of CWD.
+			$adminBase = plugin_dir_url( dirname( __DIR__, 2 ) . '/admin-job-monitor.php' );
 
 			contai_enqueue_style_with_version(
 				'contai-content-generator-base',
@@ -438,13 +440,16 @@ if ( ! class_exists( 'ContaiAdminJobMonitor' ) ) {
 		}
 
 		private function renderAutoRefreshScript(): void {
-			$adminBase    = plugin_dir_url( dirname( __DIR__, 2 ) . '/admin.php' );
+			$adminBase    = plugin_dir_url( dirname( __DIR__, 2 ) . '/admin-job-monitor.php' );
 			$adminDirPath = trailingslashit( dirname( __DIR__, 2 ) );
+			$scriptPath   = $adminDirPath . 'assets/js/tai-job-monitor-refresh.js';
+			$version      = file_exists( $scriptPath ) ? (string) filemtime( $scriptPath ) : CONTAI_VERSION;
+
 			wp_enqueue_script(
 				'tai-job-monitor-refresh',
 				$adminBase . 'assets/js/tai-job-monitor-refresh.js',
 				array(),
-				filemtime( $adminDirPath . 'assets/js/tai-job-monitor-refresh.js' ),
+				$version,
 				true
 			);
 		}
@@ -516,5 +521,3 @@ if ( ! class_exists( 'ContaiAdminJobMonitor' ) ) {
 		}
 	}
 }
-
-( new ContaiAdminJobMonitor() )->render();
