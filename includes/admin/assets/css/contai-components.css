@@ -1,0 +1,1519 @@
+/* ============================================================
+   1Platform Content AI — Component CSS (UI v3)
+   Scoped under .contai-app to avoid wp-admin global conflicts.
+   All selectors use :where() to keep specificity at 0,0,0 so
+   wp-admin doesn't need !important to override when needed.
+
+   Ported from design_handoff_ui_v3/preview/*.html.
+   Depends on tokens defined in contai-tokens.css.
+   ============================================================ */
+
+
+/* ─── Shell ────────────────────────────────────────────────── */
+.contai-app {
+    font-family: var(--contai-font-sans);
+    color: var(--fg-1);
+    font-size: 14px;
+    line-height: 1.6;
+}
+.contai-app :where(.contai-page) {
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+.contai-app :where(.contai-caption) {
+    font-family: var(--contai-font-mono);
+    font-size: 10px;
+    color: var(--fg-3);
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    margin: 0 0 6px;
+}
+.contai-app :where(.contai-sr-only) {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+}
+
+
+/* ─── Page header ──────────────────────────────────────────── */
+.contai-app :where(.contai-page-header) {
+    padding-bottom: 4px;
+}
+.contai-app :where(.contai-page-header-row) {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+}
+.contai-app :where(.contai-crumbs) {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--fg-3);
+    font-size: 12px;
+    margin-bottom: 10px;
+}
+.contai-app :where(.contai-crumbs a) { color: var(--fg-3); text-decoration: none; }
+.contai-app :where(.contai-crumbs a:hover) { color: var(--contai-primary); }
+.contai-app :where(.contai-crumbs .contai-crumbs-sep) { color: var(--contai-neutral-300); }
+.contai-app :where(.contai-crumbs .contai-crumbs-current) { color: var(--fg-1); font-weight: 600; }
+.contai-app :where(.contai-page-title) {
+    margin: 0;
+    font-family: var(--contai-font-heading);
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1.2;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.contai-app :where(.contai-page-title .contai-tile) {
+    width: 40px; height: 40px;
+    background: var(--contai-primary-glow);
+    color: var(--contai-primary);
+    border-radius: var(--contai-radius-md);
+    display: flex; align-items: center; justify-content: center;
+    flex: none;
+}
+.contai-app :where(.contai-page-title .contai-tile .dashicons) {
+    font-size: 20px; width: 20px; height: 20px;
+}
+.contai-app :where(.contai-page-subtitle) {
+    margin: 10px 0 0 52px;
+    color: var(--fg-3);
+    font-size: 14px;
+    line-height: 1.6;
+    max-width: 640px;
+}
+.contai-app :where(.contai-page-actions) {
+    display: flex; gap: 8px; align-items: center; padding-top: 4px;
+}
+
+
+/* ─── Panel ────────────────────────────────────────────────── */
+.contai-app :where(.contai-panel) {
+    background: #fff;
+    border: 1px solid var(--border-1);
+    border-radius: var(--contai-radius-md);
+    box-shadow: var(--contai-shadow-xs);
+    overflow: hidden;
+}
+.contai-app :where(.contai-panel-head) {
+    background: var(--bg-2);
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-1);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+.contai-app :where(.contai-panel-head-main) {
+    display: flex; align-items: flex-start; gap: 12px;
+}
+.contai-app :where(.contai-panel-head .contai-tile) {
+    width: 36px; height: 36px;
+    border-radius: var(--contai-radius-md);
+    background: var(--contai-primary-glow);
+    color: var(--contai-primary);
+    display: flex; align-items: center; justify-content: center;
+    flex: none;
+}
+.contai-app :where(.contai-panel-head .contai-tile .dashicons) {
+    font-size: 18px; width: 18px; height: 18px;
+}
+.contai-app :where(.contai-panel-title) {
+    margin: 0;
+    font-family: var(--contai-font-heading);
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--fg-1);
+}
+.contai-app :where(.contai-panel-desc) {
+    margin: 3px 0 0;
+    color: var(--fg-3);
+    font-size: 12.5px;
+    line-height: 1.5;
+}
+.contai-app :where(.contai-panel-body) { padding: 18px 20px; }
+.contai-app :where(.contai-panel-foot) {
+    border-top: 1px solid var(--border-1);
+    background: var(--bg-2);
+    padding: 12px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+}
+.contai-app :where(.contai-panel-foot-meta) { font-size: 12px; color: var(--fg-3); }
+.contai-app :where(.contai-panel-foot-actions) { display: flex; gap: 8px; }
+
+
+/* ─── Buttons ──────────────────────────────────────────────── */
+.contai-app :where(.contai-btn) {
+    height: 36px;
+    padding: 0 14px;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: var(--contai-radius-md);
+    border: 1px solid;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    font-family: inherit;
+    line-height: 1;
+    box-sizing: border-box;
+    white-space: nowrap;
+    text-decoration: none;
+    transition: background var(--contai-duration-fast) var(--contai-ease),
+                border-color var(--contai-duration-fast) var(--contai-ease),
+                box-shadow var(--contai-duration-fast) var(--contai-ease),
+                transform var(--contai-duration-fast) var(--contai-ease);
+}
+.contai-app :where(.contai-btn .dashicons) {
+    font-size: 14px; width: 14px; height: 14px;
+}
+.contai-app :where(.contai-btn-primary) {
+    background: var(--contai-primary);
+    border-color: var(--contai-primary);
+    color: #fff;
+    box-shadow: var(--contai-shadow-xs);
+}
+.contai-app :where(.contai-btn-primary:hover) {
+    background: var(--contai-primary-dark);
+    border-color: var(--contai-primary-dark);
+    box-shadow: var(--contai-shadow-md);
+}
+.contai-app :where(.contai-btn-primary:active) {
+    background: var(--contai-primary-darker);
+    transform: scale(.98);
+    box-shadow: var(--contai-shadow-xs);
+}
+.contai-app :where(.contai-btn-primary:focus-visible) {
+    outline: none;
+    box-shadow: var(--contai-shadow-glow);
+}
+.contai-app :where(.contai-btn-secondary) {
+    background: #fff;
+    border-color: var(--border-2);
+    color: var(--fg-2);
+}
+.contai-app :where(.contai-btn-secondary:hover) {
+    background: var(--bg-2);
+    border-color: var(--contai-neutral-400);
+    color: var(--fg-1);
+}
+.contai-app :where(.contai-btn-secondary:active) {
+    background: var(--contai-neutral-100);
+    transform: scale(.98);
+}
+.contai-app :where(.contai-btn-secondary:focus-visible) {
+    outline: none;
+    border-color: var(--contai-primary);
+    box-shadow: var(--contai-shadow-glow);
+}
+.contai-app :where(.contai-btn-danger) {
+    background: var(--contai-error);
+    border-color: var(--contai-error);
+    color: #fff;
+}
+.contai-app :where(.contai-btn-danger:hover) {
+    background: var(--contai-error-text);
+    border-color: var(--contai-error-text);
+    box-shadow: var(--contai-shadow-md);
+}
+.contai-app :where(.contai-btn-ghost) {
+    background: transparent;
+    border-color: transparent;
+    color: var(--contai-primary);
+    box-shadow: none;
+}
+.contai-app :where(.contai-btn-ghost:hover) {
+    background: var(--contai-primary-glow);
+}
+.contai-app :where(.contai-btn[disabled]),
+.contai-app :where(.contai-btn.is-disabled) {
+    opacity: .5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+.contai-app :where(.contai-btn-sm) {
+    height: 28px;
+    padding: 0 12px;
+    font-size: 12px;
+}
+.contai-app :where(.contai-btn-sm .dashicons) {
+    font-size: 13px; width: 13px; height: 13px;
+}
+.contai-app :where(.contai-btn-lg) {
+    height: 44px;
+    padding: 0 22px;
+    font-size: 14.5px;
+}
+
+
+/* ─── Form fields ──────────────────────────────────────────── */
+.contai-app :where(.contai-field) {
+    display: flex;
+    flex-direction: column;
+}
+.contai-app :where(.contai-field-head) {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+.contai-app :where(.contai-label) {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    font-size: 13.5px;
+    color: var(--fg-1);
+    margin: 0;
+}
+.contai-app :where(.contai-label .dashicons) {
+    color: var(--contai-primary);
+    font-size: 16px; width: 16px; height: 16px;
+}
+.contai-app :where(.contai-field-state) {
+    font-family: var(--contai-font-mono);
+    font-size: 9.5px;
+    color: var(--fg-3);
+    text-transform: uppercase;
+    letter-spacing: .06em;
+}
+.contai-app :where(.contai-input),
+.contai-app :where(.contai-select),
+.contai-app :where(.contai-textarea) {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1px solid var(--border-2);
+    border-radius: var(--contai-radius-md);
+    font-family: inherit;
+    font-size: 13.5px;
+    line-height: 1.5;
+    color: var(--fg-1);
+    background: #fff;
+    box-sizing: border-box;
+    transition: border-color var(--contai-duration-fast) var(--contai-ease),
+                box-shadow var(--contai-duration-fast) var(--contai-ease);
+}
+.contai-app :where(.contai-input:focus),
+.contai-app :where(.contai-select:focus),
+.contai-app :where(.contai-textarea:focus) {
+    outline: none;
+    border-color: var(--contai-primary);
+    box-shadow: 0 0 0 3px var(--contai-primary-glow);
+}
+.contai-app :where(.contai-input.is-error),
+.contai-app :where(.contai-select.is-error),
+.contai-app :where(.contai-textarea.is-error) {
+    border-color: var(--contai-error);
+    box-shadow: 0 0 0 3px rgba(214, 54, 56, .15);
+}
+.contai-app :where(.contai-input[disabled]),
+.contai-app :where(.contai-select[disabled]),
+.contai-app :where(.contai-textarea[disabled]),
+.contai-app :where(.contai-input[readonly].is-disabled) {
+    background: var(--bg-2);
+    color: var(--fg-3);
+    cursor: not-allowed;
+}
+.contai-app :where(.contai-field-help) {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    margin: 6px 0 0;
+    color: var(--fg-3);
+    font-size: 12px;
+    line-height: 1.5;
+}
+.contai-app :where(.contai-field-help .dashicons) {
+    color: var(--contai-primary-lighter);
+    font-size: 14px; width: 14px; height: 14px;
+    margin-top: 1px;
+}
+.contai-app :where(.contai-field-error) {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    margin: 6px 0 0;
+    color: var(--contai-error-text);
+    font-size: 12px;
+    line-height: 1.5;
+}
+.contai-app :where(.contai-field-error .dashicons) {
+    color: var(--contai-error);
+    font-size: 14px; width: 14px; height: 14px;
+    margin-top: 1px;
+}
+
+/* Toggle switch */
+.contai-app :where(.contai-toggle) {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    font-size: 13.5px;
+    color: var(--fg-1);
+    user-select: none;
+}
+.contai-app :where(.contai-toggle input) {
+    position: absolute;
+    width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0,0,0,0); border: 0;
+}
+.contai-app :where(.contai-switch) {
+    width: 36px;
+    height: 20px;
+    border-radius: var(--contai-radius-pill);
+    background: var(--contai-neutral-300);
+    position: relative;
+    transition: background .15s;
+    flex: none;
+}
+.contai-app :where(.contai-switch::after) {
+    content: "";
+    position: absolute;
+    top: 2px; left: 2px;
+    width: 16px; height: 16px;
+    background: #fff;
+    border-radius: 50%;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, .2);
+    transition: left .15s;
+}
+.contai-app :where(.contai-toggle.is-on .contai-switch),
+.contai-app :where(.contai-toggle input:checked ~ .contai-switch) {
+    background: var(--contai-primary);
+}
+.contai-app :where(.contai-toggle.is-on .contai-switch::after),
+.contai-app :where(.contai-toggle input:checked ~ .contai-switch::after) {
+    left: 18px;
+}
+.contai-app :where(.contai-toggle input:focus-visible ~ .contai-switch) {
+    box-shadow: var(--contai-shadow-glow);
+}
+
+/* Checkbox / radio */
+.contai-app :where(.contai-check) {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13.5px;
+    cursor: pointer;
+}
+.contai-app :where(.contai-check input) {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    accent-color: var(--contai-primary);
+}
+
+
+/* ─── Notices ──────────────────────────────────────────────── */
+.contai-app :where(.contai-notice) {
+    display: grid;
+    grid-template-columns: 22px 1fr auto;
+    gap: 12px;
+    align-items: start;
+    padding: 12px 14px 12px 16px;
+    border: 1px solid;
+    border-left-width: 3px;
+    border-radius: 0 var(--contai-radius-md) var(--contai-radius-md) 0;
+    font-size: 13px;
+    line-height: 1.5;
+}
+.contai-app :where(.contai-notice .dashicons) {
+    font-size: 18px; width: 18px; height: 18px; margin-top: 1px;
+}
+.contai-app :where(.contai-notice p) { margin: 0; }
+.contai-app :where(.contai-notice-actions) {
+    display: flex; gap: 6px; align-items: center; margin-left: 8px;
+}
+.contai-app :where(.contai-notice-actions button) {
+    background: transparent;
+    border: none;
+    color: inherit;
+    font-family: inherit;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: var(--contai-radius-sm);
+}
+.contai-app :where(.contai-notice-actions button:hover) {
+    background: rgba(0, 0, 0, .06);
+}
+.contai-app :where(.contai-notice-close) {
+    opacity: .5;
+    font-size: 14px;
+    padding: 2px 6px;
+}
+.contai-app :where(.contai-notice-tag) {
+    font-family: var(--contai-font-mono);
+    font-size: 9.5px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 3px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    background: rgba(0, 0, 0, .07);
+    margin-right: 6px;
+}
+.contai-app :where(.contai-notice-info) {
+    background: var(--contai-info-bg);
+    border-color: var(--contai-info-border);
+    border-left-color: var(--contai-info);
+    color: var(--contai-info-text);
+}
+.contai-app :where(.contai-notice-info .dashicons) { color: var(--contai-info); }
+.contai-app :where(.contai-notice-success) {
+    background: var(--contai-success-bg);
+    border-color: var(--contai-success-border);
+    border-left-color: var(--contai-success);
+    color: var(--contai-success-text);
+}
+.contai-app :where(.contai-notice-success .dashicons) { color: var(--contai-success); }
+.contai-app :where(.contai-notice-warning) {
+    background: var(--contai-warning-bg);
+    border-color: var(--contai-warning-border);
+    border-left-color: var(--contai-warning);
+    color: var(--contai-warning-text);
+}
+.contai-app :where(.contai-notice-warning .dashicons) { color: var(--contai-warning); }
+.contai-app :where(.contai-notice-error) {
+    background: var(--contai-error-bg);
+    border-color: var(--contai-error-border);
+    border-left-color: var(--contai-error);
+    color: var(--contai-error-text);
+}
+.contai-app :where(.contai-notice-error .dashicons) { color: var(--contai-error); }
+
+
+/* ─── Badges ───────────────────────────────────────────────── */
+.contai-app :where(.contai-badge) {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: var(--contai-radius-pill);
+    border: 1px solid;
+    line-height: 1.4;
+    white-space: nowrap;
+}
+.contai-app :where(.contai-badge .dashicons) {
+    font-size: 11px; width: 11px; height: 11px;
+}
+.contai-app :where(.contai-badge .contai-badge-dot) {
+    width: 6px; height: 6px; border-radius: 50%;
+}
+.contai-app :where(.contai-badge-info) {
+    background: var(--contai-info-bg);
+    color: var(--contai-info-text);
+    border-color: var(--contai-info-border);
+}
+.contai-app :where(.contai-badge-success) {
+    background: var(--contai-success-bg);
+    color: var(--contai-success-text);
+    border-color: var(--contai-success-border);
+}
+.contai-app :where(.contai-badge-warning) {
+    background: var(--contai-warning-bg);
+    color: var(--contai-warning-text);
+    border-color: var(--contai-warning-border);
+}
+.contai-app :where(.contai-badge-danger) {
+    background: var(--contai-error-bg);
+    color: var(--contai-error-text);
+    border-color: var(--contai-error-border);
+}
+.contai-app :where(.contai-badge-neutral) {
+    background: var(--bg-3);
+    color: var(--fg-3);
+    border-color: var(--border-1);
+}
+.contai-app :where(.contai-badge-filled-success) {
+    background: var(--contai-success);
+    color: #fff;
+    border-color: var(--contai-success);
+}
+.contai-app :where(.contai-badge-filled-danger) {
+    background: var(--contai-error);
+    color: #fff;
+    border-color: var(--contai-error);
+}
+
+
+/* ─── Tabs ─────────────────────────────────────────────────── */
+.contai-app :where(.contai-tabs-underline) {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--border-2);
+    align-items: flex-end;
+}
+.contai-app :where(.contai-tabs-underline .contai-tab) {
+    padding: 10px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--fg-3);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: transparent;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    text-decoration: none;
+}
+.contai-app :where(.contai-tabs-underline .contai-tab .dashicons) {
+    font-size: 15px; width: 15px; height: 15px;
+}
+.contai-app :where(.contai-tabs-underline .contai-tab:hover) { color: var(--fg-1); }
+.contai-app :where(.contai-tabs-underline .contai-tab.is-active) {
+    color: var(--contai-primary);
+    border-bottom-color: var(--contai-primary);
+    font-weight: 600;
+}
+.contai-app :where(.contai-tab-count) {
+    background: var(--bg-3);
+    color: var(--fg-2);
+    padding: 1px 7px;
+    border-radius: var(--contai-radius-pill);
+    font-size: 10.5px;
+    font-family: var(--contai-font-mono);
+    font-weight: 600;
+}
+.contai-app :where(.contai-tab.is-active .contai-tab-count) {
+    background: var(--contai-primary-glow);
+    color: var(--contai-primary);
+}
+
+.contai-app :where(.contai-tabs-pill) {
+    display: inline-flex;
+    background: var(--bg-3);
+    border-radius: var(--contai-radius-pill);
+    padding: 3px;
+    gap: 2px;
+}
+.contai-app :where(.contai-tabs-pill .contai-tab) {
+    padding: 6px 14px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--fg-3);
+    cursor: pointer;
+    border-radius: var(--contai-radius-pill);
+    background: transparent;
+    border: none;
+}
+.contai-app :where(.contai-tabs-pill .contai-tab.is-active) {
+    background: #fff;
+    color: var(--fg-1);
+    box-shadow: var(--contai-shadow-xs);
+}
+
+.contai-app :where(.contai-tabs-segmented) {
+    display: inline-flex;
+    border: 1px solid var(--border-2);
+    border-radius: var(--contai-radius-md);
+    overflow: hidden;
+}
+.contai-app :where(.contai-tabs-segmented .contai-tab) {
+    padding: 6px 14px;
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--fg-2);
+    cursor: pointer;
+    border: 0;
+    border-right: 1px solid var(--border-2);
+    background: #fff;
+}
+.contai-app :where(.contai-tabs-segmented .contai-tab:last-child) { border-right: 0; }
+.contai-app :where(.contai-tabs-segmented .contai-tab.is-active) {
+    background: var(--contai-primary);
+    color: #fff;
+    border-right-color: var(--contai-primary);
+}
+
+.contai-app :where(.contai-tabs-vertical) {
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    gap: 16px;
+    border: 1px solid var(--border-1);
+    border-radius: var(--contai-radius-md);
+    padding: 14px;
+}
+.contai-app :where(.contai-tabs-vertical .contai-rail) {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    border-right: 1px solid var(--border-1);
+    padding-right: 12px;
+}
+.contai-app :where(.contai-tabs-vertical .contai-tab) {
+    padding: 7px 10px;
+    font-size: 12.5px;
+    color: var(--fg-2);
+    cursor: pointer;
+    border-radius: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: transparent;
+    border: 0;
+    text-align: left;
+}
+.contai-app :where(.contai-tabs-vertical .contai-tab:hover) { background: var(--bg-2); }
+.contai-app :where(.contai-tabs-vertical .contai-tab.is-active) {
+    background: var(--contai-primary-glow);
+    color: var(--contai-primary);
+    font-weight: 600;
+}
+
+
+/* ─── Table ────────────────────────────────────────────────── */
+.contai-app :where(.contai-table-wrap) {
+    border: 1px solid var(--border-1);
+    border-radius: var(--contai-radius-md);
+    background: #fff;
+    overflow: hidden;
+}
+.contai-app :where(.contai-table-toolbar) {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border-1);
+    background: var(--bg-2);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    font-size: 12.5px;
+}
+.contai-app :where(.contai-table-toolbar.is-bulk) {
+    background: var(--contai-info-bg);
+}
+.contai-app :where(.contai-table-toolbar-left) {
+    display: flex; gap: 8px; align-items: center;
+}
+.contai-app :where(.contai-table-search) {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #fff;
+    border: 1px solid var(--border-2);
+    border-radius: var(--contai-radius-md);
+    padding: 4px 10px;
+    font-size: 12px;
+    color: var(--fg-3);
+}
+.contai-app :where(.contai-table-search .dashicons) {
+    font-size: 14px; width: 14px; height: 14px;
+}
+.contai-app :where(.contai-chip) {
+    background: var(--contai-primary-glow);
+    color: var(--contai-primary);
+    padding: 2px 8px;
+    border-radius: var(--contai-radius-pill);
+    font-size: 11px;
+    font-weight: 600;
+    display: inline-flex;
+    gap: 4px;
+    align-items: center;
+}
+.contai-app :where(.contai-chip-x) { cursor: pointer; }
+.contai-app :where(.contai-bulk-count) {
+    background: var(--contai-info-bg);
+    color: var(--contai-info-text);
+    padding: 2px 8px;
+    border-radius: var(--contai-radius-pill);
+    font-size: 11.5px;
+    font-weight: 600;
+}
+
+.contai-app :where(.contai-table) {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+.contai-app :where(.contai-table thead th) {
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--fg-3);
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    padding: 10px 12px;
+    background: var(--bg-2);
+    border-bottom: 1px solid var(--border-1);
+    user-select: none;
+}
+.contai-app :where(.contai-table thead th.sort) {
+    cursor: pointer;
+    color: var(--fg-2);
+}
+.contai-app :where(.contai-table thead th.sort .dashicons) {
+    font-size: 12px; width: 12px; height: 12px; vertical-align: -1px;
+}
+.contai-app :where(.contai-table thead th.sorted) {
+    color: var(--contai-primary);
+}
+.contai-app :where(.contai-table tbody td) {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border-1);
+    color: var(--fg-2);
+}
+.contai-app :where(.contai-table tbody tr:last-child td) { border-bottom: 0; }
+.contai-app :where(.contai-table tbody tr:hover) { background: var(--bg-2); }
+.contai-app :where(.contai-table tbody tr.is-selected) { background: var(--contai-primary-glow); }
+.contai-app :where(.contai-table .contai-mono) {
+    font-family: var(--contai-font-mono);
+    font-size: 11.5px;
+    color: var(--fg-3);
+}
+
+.contai-app :where(.contai-pager) {
+    padding: 10px 12px;
+    background: var(--bg-2);
+    border-top: 1px solid var(--border-1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    color: var(--fg-3);
+}
+.contai-app :where(.contai-pager-btns) {
+    display: flex; gap: 4px;
+}
+.contai-app :where(.contai-pager-btns button) {
+    background: #fff;
+    border: 1px solid var(--border-2);
+    padding: 4px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 12px;
+    color: var(--fg-2);
+    min-width: 28px;
+}
+.contai-app :where(.contai-pager-btns button.is-active) {
+    background: var(--contai-primary);
+    color: #fff;
+    border-color: var(--contai-primary);
+}
+.contai-app :where(.contai-pager-btns button[disabled]) {
+    opacity: .4; cursor: not-allowed;
+}
+
+/* Table empty state (preserves chrome) */
+.contai-app :where(.contai-table-empty) {
+    padding: 40px 20px;
+    text-align: center;
+    color: var(--fg-3);
+}
+.contai-app :where(.contai-table-empty .dashicons) {
+    font-size: 28px; width: 28px; height: 28px;
+    color: var(--fg-4);
+    margin-bottom: 6px;
+}
+.contai-app :where(.contai-table-empty h4) {
+    margin: 4px 0;
+    font-family: var(--contai-font-heading);
+    font-size: 14px;
+    color: var(--fg-1);
+    font-weight: 700;
+}
+.contai-app :where(.contai-table-empty p) {
+    margin: 0; font-size: 12.5px;
+}
+
+
+/* ─── Stat cards ───────────────────────────────────────────── */
+.contai-app :where(.contai-stat-grid) {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+}
+.contai-app :where(.contai-stat) {
+    background: #fff;
+    border: 1px solid var(--border-1);
+    border-radius: var(--contai-radius-md);
+    padding: 16px;
+    transition: border-color .15s, box-shadow .15s;
+    position: relative;
+}
+.contai-app :where(.contai-stat:hover) {
+    border-color: var(--contai-primary-border);
+    box-shadow: var(--contai-shadow-md);
+}
+.contai-app :where(.contai-stat-head) {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+.contai-app :where(.contai-stat-label) {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--fg-3);
+    text-transform: uppercase;
+    letter-spacing: .06em;
+}
+.contai-app :where(.contai-stat-icon) {
+    width: 26px; height: 26px;
+    border-radius: 6px;
+    background: var(--contai-primary-glow);
+    color: var(--contai-primary);
+    display: flex; align-items: center; justify-content: center;
+}
+.contai-app :where(.contai-stat-icon .dashicons) {
+    font-size: 14px; width: 14px; height: 14px;
+}
+.contai-app :where(.contai-stat-value) {
+    font-family: var(--contai-font-heading);
+    font-size: 30px;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+}
+.contai-app :where(.contai-stat-value .contai-stat-unit) {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--fg-3);
+    margin-left: 4px;
+    letter-spacing: 0;
+}
+.contai-app :where(.contai-stat-foot) {
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.contai-app :where(.contai-stat-delta) {
+    font-size: 11px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 2px 8px;
+    border-radius: var(--contai-radius-pill);
+    border: 1px solid var(--contai-success-border);
+    background: var(--contai-success-bg);
+    color: var(--contai-success-text);
+}
+.contai-app :where(.contai-stat-delta.is-down) {
+    background: var(--contai-error-bg);
+    color: var(--contai-error-text);
+    border-color: var(--contai-error-border);
+}
+.contai-app :where(.contai-stat-hint) {
+    font-size: 11px; color: var(--fg-3);
+}
+.contai-app :where(.contai-progress) {
+    height: 4px;
+    background: var(--bg-3);
+    border-radius: var(--contai-radius-pill);
+    overflow: hidden;
+    margin-top: 8px;
+}
+.contai-app :where(.contai-progress-fill) {
+    height: 100%;
+    background: var(--contai-primary);
+}
+
+
+/* ─── Sidebar ──────────────────────────────────────────────── */
+.contai-app :where(.contai-sidebar) {
+    width: 280px;
+    background: #fff;
+    border: 1px solid var(--border-1);
+    border-radius: var(--contai-radius-md);
+    overflow: hidden;
+    box-shadow: var(--contai-shadow-xs);
+}
+.contai-app :where(.contai-sidebar-head) {
+    padding: 16px 18px;
+    border-bottom: 1px solid var(--border-1);
+}
+.contai-app :where(.contai-sidebar-logo) {
+    display: flex; align-items: center; gap: 10px;
+}
+.contai-app :where(.contai-sidebar-logo-tile) {
+    width: 32px; height: 32px;
+    border-radius: var(--contai-radius-md);
+    overflow: hidden;
+    background: #0a0a0f;
+    display: flex; align-items: center; justify-content: center;
+    flex: none;
+}
+.contai-app :where(.contai-sidebar-logo h2) {
+    margin: 0;
+    font-family: var(--contai-font-heading);
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+.contai-app :where(.contai-sidebar-version) {
+    font-family: var(--contai-font-mono);
+    font-size: 10.5px;
+    color: var(--fg-3);
+    margin-top: 2px;
+}
+.contai-app :where(.contai-sidebar-section) {
+    padding: 10px 0 4px;
+}
+.contai-app :where(.contai-sidebar-section-label) {
+    padding: 0 18px 4px;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--fg-3);
+    text-transform: uppercase;
+    letter-spacing: .08em;
+}
+.contai-app :where(.contai-sidebar-menu) {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+.contai-app :where(.contai-sidebar-menu li) {
+    margin: 2px 10px;
+}
+.contai-app :where(.contai-sidebar-menu a) {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    color: var(--fg-3);
+    text-decoration: none;
+    border-radius: var(--contai-radius-md);
+    font-size: 13px;
+    font-weight: 500;
+}
+.contai-app :where(.contai-sidebar-menu a .dashicons) {
+    color: var(--contai-neutral-400);
+    font-size: 17px; width: 17px; height: 17px;
+}
+.contai-app :where(.contai-sidebar-menu a:hover) {
+    background: var(--bg-2);
+    color: var(--fg-1);
+}
+.contai-app :where(.contai-sidebar-menu a:hover .dashicons) {
+    color: var(--fg-2);
+}
+.contai-app :where(.contai-sidebar-menu li.is-active a) {
+    background: var(--contai-primary-glow);
+    color: var(--contai-primary);
+    font-weight: 600;
+    position: relative;
+}
+.contai-app :where(.contai-sidebar-menu li.is-active a .dashicons) {
+    color: var(--contai-primary);
+}
+.contai-app :where(.contai-sidebar-menu li.is-active a::before) {
+    content: "";
+    position: absolute;
+    left: -10px;
+    top: 6px;
+    bottom: 6px;
+    width: 3px;
+    background: var(--contai-primary);
+    border-radius: 0 3px 3px 0;
+}
+.contai-app :where(.contai-sidebar-menu .contai-sidebar-badge) {
+    margin-left: auto;
+    background: var(--bg-3);
+    color: var(--fg-3);
+    font-size: 10.5px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: var(--contai-radius-pill);
+    min-width: 16px;
+    text-align: center;
+}
+.contai-app :where(.contai-sidebar-menu li.is-active .contai-sidebar-badge) {
+    background: var(--contai-primary);
+    color: #fff;
+}
+.contai-app :where(.contai-sidebar-badge.is-new) {
+    background: var(--contai-info);
+    color: #fff;
+}
+.contai-app :where(.contai-sidebar-foot) {
+    padding: 12px 18px;
+    border-top: 1px solid var(--border-1);
+    background: var(--bg-2);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 11.5px;
+    color: var(--fg-3);
+}
+.contai-app :where(.contai-sidebar-status) {
+    display: flex; align-items: center; gap: 7px;
+}
+.contai-app :where(.contai-sidebar-status .contai-status-dot) {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--contai-success);
+    box-shadow: 0 0 0 3px rgba(0, 163, 42, .18);
+}
+
+
+/* ─── Connection gate ──────────────────────────────────────── */
+.contai-app :where(.contai-gate) {
+    background: #fff;
+    border: 1px solid var(--border-1);
+    border-radius: var(--contai-radius-md);
+    box-shadow: var(--contai-shadow-xs);
+    padding: 28px;
+    max-width: 720px;
+    display: grid;
+    grid-template-columns: 64px 1fr;
+    gap: 18px;
+}
+.contai-app :where(.contai-gate-lock) {
+    width: 56px; height: 56px;
+    background: var(--contai-primary-glow);
+    color: var(--contai-primary);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+}
+.contai-app :where(.contai-gate-lock .dashicons) {
+    font-size: 28px; width: 28px; height: 28px;
+}
+.contai-app :where(.contai-gate-title) {
+    margin: 2px 0 6px;
+    font-family: var(--contai-font-heading);
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+.contai-app :where(.contai-gate-body) {
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--fg-2);
+    margin: 0 0 12px;
+    max-width: 540px;
+}
+.contai-app :where(.contai-gate-checks) {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 0 0 16px;
+    padding: 12px 14px;
+    background: var(--bg-2);
+    border-radius: var(--contai-radius-md);
+    border: 1px solid var(--border-1);
+    max-width: 540px;
+}
+.contai-app :where(.contai-gate-check) {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 12.5px; color: var(--fg-2);
+}
+.contai-app :where(.contai-gate-check .dashicons) {
+    color: var(--contai-success);
+    font-size: 15px; width: 15px; height: 15px;
+}
+.contai-app :where(.contai-gate-check.is-off) { color: var(--fg-3); }
+.contai-app :where(.contai-gate-check.is-off .dashicons) { color: var(--contai-neutral-300); }
+.contai-app :where(.contai-gate-actions) {
+    display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+}
+
+
+/* ─── Modal ────────────────────────────────────────────────── */
+.contai-app :where(.contai-modal-backdrop),
+:where(body.contai-app .contai-modal-backdrop) {
+    position: fixed;
+    inset: 0;
+    background: rgba(30, 30, 30, .55);
+    z-index: 99999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+}
+.contai-app :where(.contai-modal) {
+    background: #fff;
+    border-radius: var(--contai-radius-md);
+    box-shadow: var(--contai-shadow-lg);
+    width: 100%;
+    max-width: 460px;
+    overflow: hidden;
+    position: relative;
+    font-family: var(--contai-font-sans);
+    color: var(--fg-1);
+}
+.contai-app :where(.contai-modal-head) {
+    padding: 18px 20px 4px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+}
+.contai-app :where(.contai-modal-icon) {
+    width: 36px; height: 36px;
+    border-radius: var(--contai-radius-md);
+    display: flex; align-items: center; justify-content: center;
+    flex: none;
+}
+.contai-app :where(.contai-modal-icon.is-danger) {
+    background: var(--contai-error-bg);
+    color: var(--contai-error);
+}
+.contai-app :where(.contai-modal-icon.is-primary) {
+    background: var(--contai-primary-glow);
+    color: var(--contai-primary);
+}
+.contai-app :where(.contai-modal-icon .dashicons) {
+    font-size: 18px; width: 18px; height: 18px;
+}
+.contai-app :where(.contai-modal-title) {
+    margin: 0;
+    font-family: var(--contai-font-heading);
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+.contai-app :where(.contai-modal-desc) {
+    margin: 4px 0 0;
+    font-size: 13px;
+    color: var(--fg-3);
+    line-height: 1.5;
+}
+.contai-app :where(.contai-modal-body) {
+    padding: 12px 20px 18px;
+}
+.contai-app :where(.contai-modal-foot) {
+    border-top: 1px solid var(--border-1);
+    background: var(--bg-2);
+    padding: 12px 20px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+.contai-app :where(.contai-modal-close) {
+    position: absolute;
+    top: 12px; right: 14px;
+    background: none;
+    border: none;
+    color: var(--fg-3);
+    font-size: 18px;
+    cursor: pointer;
+    padding: 4px;
+    line-height: 1;
+}
+.contai-app :where(.contai-modal-close:hover) { color: var(--fg-1); }
+
+
+/* ─── Toasts ───────────────────────────────────────────────── */
+#contai-toasts {
+    position: fixed;
+    top: 46px;
+    right: 16px;
+    z-index: 100000;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 440px;
+    width: calc(100vw - 32px);
+    pointer-events: none;
+    font-family: var(--contai-font-sans);
+}
+#contai-toasts :where(.contai-toast) {
+    background: #fff;
+    border: 1px solid var(--border-1);
+    border-left-width: 3px;
+    border-radius: var(--contai-radius-md);
+    box-shadow: var(--contai-shadow-md);
+    padding: 12px 14px;
+    display: grid;
+    grid-template-columns: 22px 1fr auto;
+    gap: 10px;
+    align-items: flex-start;
+    position: relative;
+    overflow: hidden;
+    pointer-events: auto;
+    color: var(--fg-1);
+    animation: contai-toast-in 220ms var(--contai-ease) both;
+}
+#contai-toasts :where(.contai-toast.is-leaving) {
+    animation: contai-toast-out 180ms var(--contai-ease) both;
+}
+@keyframes contai-toast-in {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes contai-toast-out {
+    from { opacity: 1; transform: translateY(0); }
+    to   { opacity: 0; transform: translateY(-8px); }
+}
+#contai-toasts :where(.contai-toast .dashicons) {
+    font-size: 18px; width: 18px; height: 18px; margin-top: 1px;
+}
+#contai-toasts :where(.contai-toast-title) {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--fg-1);
+    margin: 0 0 2px;
+    line-height: 1.35;
+}
+#contai-toasts :where(.contai-toast-body) {
+    font-size: 12px;
+    color: var(--fg-3);
+    margin: 0;
+    line-height: 1.4;
+}
+#contai-toasts :where(.contai-toast-actions) {
+    display: flex; gap: 4px; margin-top: 6px;
+}
+#contai-toasts :where(.contai-toast-actions button) {
+    background: transparent;
+    border: none;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 2px 8px;
+    border-radius: var(--contai-radius-sm);
+    color: var(--contai-primary);
+}
+#contai-toasts :where(.contai-toast-close) {
+    background: transparent;
+    border: 0;
+    color: var(--fg-3);
+    font-size: 16px;
+    padding: 0 6px;
+    cursor: pointer;
+    line-height: 1;
+}
+#contai-toasts :where(.contai-toast-timer) {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 2px;
+    width: 100%;
+    transform-origin: left;
+    opacity: .7;
+}
+#contai-toasts :where(.contai-toast.is-success) { border-left-color: var(--contai-success); }
+#contai-toasts :where(.contai-toast.is-success .dashicons) { color: var(--contai-success); }
+#contai-toasts :where(.contai-toast.is-success .contai-toast-timer) { background: var(--contai-success); }
+#contai-toasts :where(.contai-toast.is-error) { border-left-color: var(--contai-error); }
+#contai-toasts :where(.contai-toast.is-error .dashicons) { color: var(--contai-error); }
+#contai-toasts :where(.contai-toast.is-error .contai-toast-timer) { background: var(--contai-error); }
+#contai-toasts :where(.contai-toast.is-warning) { border-left-color: var(--contai-warning); }
+#contai-toasts :where(.contai-toast.is-warning .dashicons) { color: var(--contai-warning); }
+#contai-toasts :where(.contai-toast.is-warning .contai-toast-timer) { background: var(--contai-warning); }
+#contai-toasts :where(.contai-toast.is-info) { border-left-color: var(--contai-info); }
+#contai-toasts :where(.contai-toast.is-info .dashicons) { color: var(--contai-info); }
+#contai-toasts :where(.contai-toast.is-info .contai-toast-timer) { background: var(--contai-info); }
+
+
+/* ─── Empty state (standalone card) ────────────────────────── */
+.contai-app :where(.contai-empty) {
+    border: 1px solid var(--border-1);
+    border-radius: var(--contai-radius-md);
+    padding: 28px 20px;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    text-align: center;
+    min-height: 220px;
+    justify-content: center;
+}
+.contai-app :where(.contai-empty-icon) {
+    width: 52px; height: 52px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+}
+.contai-app :where(.contai-empty-icon.is-primary) {
+    background: var(--contai-primary-glow);
+    color: var(--contai-primary);
+}
+.contai-app :where(.contai-empty-icon.is-neutral) {
+    background: var(--bg-3);
+    color: var(--fg-3);
+}
+.contai-app :where(.contai-empty-icon.is-danger) {
+    background: var(--contai-error-bg);
+    color: var(--contai-error);
+}
+.contai-app :where(.contai-empty-icon .dashicons) {
+    font-size: 26px; width: 26px; height: 26px;
+}
+.contai-app :where(.contai-empty-title) {
+    font-family: var(--contai-font-heading);
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin: 0;
+}
+.contai-app :where(.contai-empty-desc) {
+    font-size: 13px;
+    color: var(--fg-3);
+    line-height: 1.5;
+    margin: 0;
+    max-width: 320px;
+}
+.contai-app :where(.contai-empty-actions) {
+    display: flex; gap: 8px; margin-top: 4px;
+}
+
+
+/* ─── Wizard stepper ───────────────────────────────────────── */
+.contai-app :where(.contai-stepper) {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0;
+    padding: 16px 4px;
+}
+.contai-app :where(.contai-step) {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+    position: relative;
+    min-width: 0;
+}
+.contai-app :where(.contai-step::after) {
+    content: "";
+    position: absolute;
+    top: 14px;
+    left: calc(50% + 18px);
+    right: calc(-50% + 18px);
+    height: 2px;
+    background: var(--contai-neutral-200);
+    z-index: 0;
+}
+.contai-app :where(.contai-step:last-child::after) { display: none; }
+.contai-app :where(.contai-step.is-done::after) { background: var(--contai-primary); }
+.contai-app :where(.contai-step-dot) {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    background: #fff;
+    border: 2px solid var(--contai-neutral-300);
+    color: var(--fg-3);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    z-index: 1;
+    position: relative;
+}
+.contai-app :where(.contai-step.is-done .contai-step-dot) {
+    background: var(--contai-primary);
+    border-color: var(--contai-primary);
+    color: #fff;
+}
+.contai-app :where(.contai-step.is-active .contai-step-dot) {
+    background: #fff;
+    border-color: var(--contai-primary);
+    color: var(--contai-primary);
+    box-shadow: 0 0 0 4px var(--contai-primary-glow);
+}
+.contai-app :where(.contai-step .contai-step-dot .dashicons) {
+    font-size: 15px; width: 15px; height: 15px;
+}
+.contai-app :where(.contai-step-label) {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--fg-3);
+    text-align: center;
+    line-height: 1.3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+.contai-app :where(.contai-step.is-done .contai-step-label),
+.contai-app :where(.contai-step.is-active .contai-step-label) {
+    color: var(--fg-1);
+}
+
+
+/* ─── Loading states ───────────────────────────────────────── */
+@keyframes contai-shimmer {
+    0%   { background-position: -300px 0; }
+    100% { background-position:  300px 0; }
+}
+.contai-app :where(.contai-skeleton) {
+    background: linear-gradient(
+        90deg,
+        var(--contai-neutral-100) 0%,
+        var(--contai-neutral-200) 50%,
+        var(--contai-neutral-100) 100%
+    );
+    background-size: 600px 100%;
+    animation: contai-shimmer 1.4s ease-in-out infinite;
+    border-radius: var(--contai-radius-sm);
+    display: inline-block;
+    height: 10px;
+}
+
+@keyframes contai-spin { to { transform: rotate(360deg); } }
+.contai-app :where(.contai-spinner) {
+    width: 22px;
+    height: 22px;
+    border: 2.5px solid var(--border-1);
+    border-top-color: var(--contai-primary);
+    border-radius: 50%;
+    animation: contai-spin .8s linear infinite;
+    display: inline-block;
+}
+
+@keyframes contai-progress-indeterminate {
+    0%   { width: 0;   margin-left: 0; }
+    50%  { width: 70%; margin-left: 15%; }
+    100% { width: 0;   margin-left: 100%; }
+}
+.contai-app :where(.contai-progress.is-indeterminate .contai-progress-fill) {
+    width: 0;
+    animation: contai-progress-indeterminate 2s ease-in-out infinite;
+}
+
+@keyframes contai-dots-bounce {
+    0%, 60%, 100% { transform: translateY(0);  opacity: .4; }
+    30%           { transform: translateY(-4px); opacity: 1; }
+}
+.contai-app :where(.contai-dots) {
+    display: inline-flex;
+    gap: 4px;
+    align-items: center;
+}
+.contai-app :where(.contai-dots span) {
+    width: 6px; height: 6px;
+    background: var(--contai-primary);
+    border-radius: 50%;
+    animation: contai-dots-bounce 1.2s ease-in-out infinite;
+}
+.contai-app :where(.contai-dots span:nth-child(2)) { animation-delay: .15s; }
+.contai-app :where(.contai-dots span:nth-child(3)) { animation-delay: .3s; }
+
+
+/* ─── Responsive ───────────────────────────────────────────── */
+@media (max-width: 960px) {
+    .contai-app :where(.contai-stat-grid) { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 720px) {
+    .contai-app :where(.contai-stat-grid) { grid-template-columns: 1fr; }
+    .contai-app :where(.contai-page) { padding: 16px; }
+    .contai-app :where(.contai-page-subtitle) { margin-left: 0; }
+    .contai-app :where(.contai-tabs-vertical) { grid-template-columns: 1fr; }
+    .contai-app :where(.contai-tabs-vertical .contai-rail) {
+        border-right: 0;
+        border-bottom: 1px solid var(--border-1);
+        padding-right: 0;
+        padding-bottom: 8px;
+    }
+    .contai-app :where(.contai-gate) { grid-template-columns: 1fr; }
+}

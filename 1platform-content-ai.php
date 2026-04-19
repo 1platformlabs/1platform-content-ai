@@ -21,6 +21,7 @@ if (!defined('ABSPATH')) exit;
 define('CONTAI_VERSION', '2.31.3');
 
 require_once plugin_dir_path(__FILE__) . 'includes/helpers/security.php';
+require_once plugin_dir_path(__FILE__) . 'includes/helpers/ui-flag.php';
 require_once plugin_dir_path(__FILE__) . 'includes/helpers/crypto.php';
 require_once plugin_dir_path(__FILE__) . 'includes/helpers/asset-version.php';
 require_once plugin_dir_path(__FILE__) . 'includes/helpers/site-generation.php';
