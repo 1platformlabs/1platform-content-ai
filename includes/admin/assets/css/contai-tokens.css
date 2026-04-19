@@ -1,0 +1,154 @@
+/* ============================================================
+   1Platform Content AI — Colors & Type
+   Source: includes/admin/content-generator/assets/css/base.css
+   Aligned with WordPress Admin palette.
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Funnel+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  /* ── Primary (WP Admin Blue) ── */
+  --contai-primary:        #2271b1;
+  --contai-primary-dark:   #135e96;
+  --contai-primary-darker: #0a4b78;
+  --contai-primary-light:  #72aee6;
+  --contai-primary-lighter:#a7d5f2;
+  --contai-primary-glow:   rgba(34, 113, 177, 0.08);
+  --contai-primary-border: #72aee6;
+
+  /* ── Semantic ── */
+  --contai-success:        #00a32a;
+  --contai-success-bg:     #edfaef;
+  --contai-success-border: #68de7c;
+  --contai-success-text:   #00450c;
+  --contai-error:          #d63638;
+  --contai-error-bg:       #fcf0f1;
+  --contai-error-border:   #f0b8b8;
+  --contai-error-text:     #8a2424;
+  --contai-warning:        #dba617;
+  --contai-warning-bg:     #fcf9e8;
+  --contai-warning-border: #f0d33d;
+  --contai-warning-text:   #6e520d;
+  --contai-info:           #72aee6;
+  --contai-info-bg:        #f0f6fc;
+  --contai-info-border:    #72aee6;
+  --contai-info-text:      #135e96;
+
+  /* ── Neutrals (WP Admin Grays) ── */
+  --contai-neutral-50:  #f6f7f7;
+  --contai-neutral-100: #f0f0f1;
+  --contai-neutral-200: #dcdcde;
+  --contai-neutral-300: #c3c4c7;
+  --contai-neutral-400: #a7aaad;
+  --contai-neutral-500: #646970;
+  --contai-neutral-600: #50575e;
+  --contai-neutral-700: #1e1e1e;
+
+  /* ── Foreground / surface aliases ── */
+  --fg-1: var(--contai-neutral-700);
+  --fg-2: var(--contai-neutral-600);
+  --fg-3: var(--contai-neutral-500);
+  --fg-4: var(--contai-neutral-400);
+  --bg-1: #ffffff;
+  --bg-2: var(--contai-neutral-50);
+  --bg-3: var(--contai-neutral-100);
+  --border-1: var(--contai-neutral-200);
+  --border-2: var(--contai-neutral-300);
+
+  /* ── Spacing ── */
+  --contai-spacing-xs: 8px;
+  --contai-spacing-sm: 12px;
+  --contai-spacing-md: 16px;
+  --contai-spacing-lg: 24px;
+  --contai-spacing-xl: 32px;
+
+  /* ── Radius ── */
+  --contai-radius-sm:  4px;
+  --contai-radius-md:  8px;
+  --contai-radius-lg:  8px;
+  --contai-radius-pill: 9999px;
+
+  /* ── Shadows ── */
+  --contai-shadow-xs:  0 1px 2px rgba(0,0,0,0.05);
+  --contai-shadow-sm:  0 1px 3px rgba(0,0,0,0.07);
+  --contai-shadow-md:  0 4px 12px rgba(0,0,0,0.06);
+  --contai-shadow-lg:  0 8px 24px rgba(0,0,0,0.08);
+  --contai-shadow-glow:0 0 0 3px rgba(34,113,177,0.12);
+
+  /* ── Typography ── */
+  --contai-font-heading: 'Funnel Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --contai-font-sans:    'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --contai-font-mono:    'JetBrains Mono', 'Fira Code', 'SF Mono', Consolas, monospace;
+
+  /* ── Animation ── */
+  --contai-ease:           cubic-bezier(0.16, 1, 0.3, 1);
+  --contai-duration-fast:  200ms;
+  --contai-duration-normal:300ms;
+}
+
+/* ── Semantic typographic helpers ── */
+body, .text-body {
+  font-family: var(--contai-font-sans);
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--fg-1);
+}
+
+h1, .text-h1 {
+  font-family: var(--contai-font-heading);
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+  color: var(--fg-1);
+}
+
+h2, .text-h2 {
+  font-family: var(--contai-font-heading);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--fg-1);
+}
+
+h3, .text-h3 {
+  font-family: var(--contai-font-heading);
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--fg-1);
+}
+
+.text-label {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--fg-1);
+}
+
+.text-help, .text-subtitle {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--fg-3);
+}
+
+.text-overline {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--fg-3);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.text-mono, code, pre {
+  font-family: var(--contai-font-mono);
+  font-size: 12.5px;
+}
+
+.text-stat {
+  font-family: var(--contai-font-heading);
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  color: var(--fg-1);
+}
