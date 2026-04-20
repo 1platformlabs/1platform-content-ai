@@ -7,45 +7,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 require_once __DIR__ . '/init-configuration/site-configuration-form.php';
 require_once __DIR__ . '/../providers/WebsiteProvider.php';
 
-function contai_enqueue_website_settings_styles() {
-	$screen = get_current_screen();
-	if ( $screen && strpos( $screen->id, 'contai-website-settings' ) !== false ) {
-		contai_enqueue_style_with_version(
-			'contai-content-generator-base',
-			plugin_dir_url( __FILE__ ) . 'content-generator/assets/css/base.css',
-			array()
-		);
-
-		contai_enqueue_style_with_version(
-			'contai-admin-init-configuration',
-			plugin_dir_url( __FILE__ ) . 'assets/css/admin-init-configuration.css',
-			array( 'contai-content-generator-base' )
-		);
-	}
-}
-add_action( 'admin_enqueue_scripts', 'contai_enqueue_website_settings_styles', 20 );
-
 /**
  * Handle "Save Site Configuration" via admin-post.php.
  *
  * Saves all form fields to WP options and sends category_id + lang
  * to the external API via PATCH /users/websites/{website_id}.
- *
- * cURL examples (import to Postman):
- *
- * # PATCH website with category and language
- * curl -X PATCH http://127.0.0.1:8000/api/v1/users/websites/{website_id} \
- *   -H "Content-Type: application/json" \
- *   -H "Authorization: Bearer <APP_ACCESS_TOKEN>" \
- *   -H "x-user-token: <USER_ACCESS_TOKEN>" \
- *   -d '{"category_id": "698248ea782d9290d094c506", "lang": "en"}'
- *
- * # Error case (website not found)
- * curl -X PATCH http://127.0.0.1:8000/api/v1/users/websites/000000000000000000000000 \
- *   -H "Content-Type: application/json" \
- *   -H "Authorization: Bearer <APP_ACCESS_TOKEN>" \
- *   -H "x-user-token: <USER_ACCESS_TOKEN>" \
- *   -d '{"category_id": "698248ea782d9290d094c506", "lang": "es"}'
  */
 function contai_handle_save_site_configuration() {
 	check_admin_referer( 'contai_save_site_configuration', 'contai_nonce' );
@@ -68,7 +34,6 @@ function contai_handle_save_site_configuration() {
 		$wordpress_theme = 'astra';
 	}
 
-	// Save all fields to WP options
 	if ( ! empty( $site_topic ) ) {
 		update_option( 'contai_site_theme', $site_topic );
 	}
@@ -78,7 +43,6 @@ function contai_handle_save_site_configuration() {
 	}
 	update_option( 'contai_wordpress_theme', $wordpress_theme );
 
-	// Validate required fields for API call
 	if ( empty( $site_category ) ) {
 		set_transient(
 			'contai_site_config_notice',
@@ -93,14 +57,12 @@ function contai_handle_save_site_configuration() {
 		exit;
 	}
 
-	// Convert form language to API code
 	$language_map = array(
 		'english' => 'en',
 		'spanish' => 'es',
 	);
 	$lang_code = $language_map[ $site_language ] ?? 'en';
 
-	// Send PATCH to external API
 	$website_provider = new ContaiWebsiteProvider();
 	$api_response     = $website_provider->updateWebsite(
 		array(
@@ -128,7 +90,7 @@ function contai_handle_save_site_configuration() {
 			array(
 				'type'    => 'error',
 				'message' => ! empty( $api_message )
-					? sprintf( __( 'Settings saved locally, but API sync failed: %s', '1platform-content-ai' ), $api_message )
+					? sprintf( /* translators: %s: API error message */ __( 'Settings saved locally, but API sync failed: %s', '1platform-content-ai' ), $api_message )
 					: __( 'Settings saved locally, but API sync failed.', '1platform-content-ai' ),
 			),
 			30
@@ -156,32 +118,45 @@ function contai_display_site_config_notice() {
 		return;
 	}
 
-	printf(
-		'<div class="notice notice-%s is-dismissible"><p>%s</p></div>',
-		esc_attr( $type ),
-		esc_html( $message )
+	$icons = array(
+		'success' => 'dashicons-yes-alt',
+		'error'   => 'dashicons-dismiss',
+		'warning' => 'dashicons-warning',
+		'info'    => 'dashicons-info',
 	);
+	$icon = $icons[ $type ] ?? 'dashicons-info';
+	?>
+	<div class="contai-notice contai-notice-<?php echo esc_attr( $type ); ?>" role="status">
+		<span class="dashicons <?php echo esc_attr( $icon ); ?>" aria-hidden="true"></span>
+		<p><?php echo esc_html( $message ); ?></p>
+		<div class="contai-notice-actions"></div>
+	</div>
+	<?php
 }
 
 function contai_website_settings_page() {
 	if ( contai_render_connection_required_notice() ) {
 		return;
 	}
-
-	contai_display_site_config_notice();
 	?>
-	<div class="wrap contai-settings-wrap">
-		<h1>
-			<span class="dashicons dashicons-admin-settings"></span>
-			<?php esc_html_e( 'Settings', '1platform-content-ai' ); ?>
-		</h1>
-
-		<div class="contai-page-description">
-			<p>
-				<?php esc_html_e( 'Configure your website settings, language, and theme.', '1platform-content-ai' ); ?>
-			</p>
+	<div class="wrap contai-app contai-page">
+		<div class="contai-page-header">
+			<div class="contai-page-header-row">
+				<div>
+					<h1 class="contai-page-title">
+						<span class="contai-tile" aria-hidden="true">
+							<span class="dashicons dashicons-admin-settings"></span>
+						</span>
+						<?php esc_html_e( 'Settings', '1platform-content-ai' ); ?>
+					</h1>
+					<p class="contai-page-subtitle">
+						<?php esc_html_e( 'Configure your website settings, language, and theme.', '1platform-content-ai' ); ?>
+					</p>
+				</div>
+			</div>
 		</div>
 
+		<?php contai_display_site_config_notice(); ?>
 		<?php contai_render_site_configuration_form(); ?>
 	</div>
 	<?php
