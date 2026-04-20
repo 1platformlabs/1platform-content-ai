@@ -1,8 +1,0 @@
-/**
- * Apps Base Styles
- *
- * Base CSS variables and styles are loaded from content-generator/assets/css/base.css
- * via the contai_enqueue_apps_styles() function in includes/admin/admin-apps.php
- *
- * This file is kept for potential apps-specific base styles in the future.
- */

@@ -77,85 +77,46 @@ function contai_handle_publisuites_form_submission()
 }
 add_action('admin_init', 'contai_handle_publisuites_form_submission');
 
-function contai_enqueue_apps_styles()
+function contai_enqueue_apps_scripts()
 {
     $screen = get_current_screen();
 
-    if ($screen && strpos($screen->id, 'contai-apps') !== false) {
-        // Enqueue content-generator base CSS first (contains CSS variables)
-        $content_gen_base_url = plugin_dir_url(__FILE__) . 'content-generator/assets/css/base.css';
-        contai_enqueue_style_with_version(
-            'contai-content-generator-base',
-            $content_gen_base_url,
-            []
+    if ( ! $screen || strpos( $screen->id, 'contai-apps' ) === false ) {
+        return;
+    }
+
+    // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display-only section navigation parameter.
+    $section = sanitize_key( $_GET['section'] ?? 'toc' );
+
+    $section_js_map = array(
+        'ads-manager' => 'publisher-panel.js',
+    );
+
+    if ( isset( $section_js_map[ $section ] ) ) {
+        $js_base_url = plugin_dir_url( __FILE__ ) . 'apps/assets/js/';
+        contai_enqueue_script_with_version(
+            "contai-apps-{$section}",
+            $js_base_url . $section_js_map[ $section ],
+            array(),
+            true
         );
+    }
 
-        // Enqueue apps base CSS with dependency on content-generator base
-        $css_base_url = plugin_dir_url(__FILE__) . 'apps/assets/css/';
-        contai_enqueue_style_with_version(
-            'contai-apps-base',
-            $css_base_url . 'base.css',
-            ['contai-content-generator-base']
+    if ( $section === 'ads-manager' ) {
+        $js_base_url = plugin_dir_url( __FILE__ ) . 'apps/assets/js/';
+        contai_enqueue_script_with_version(
+            'contai-adsense-account',
+            $js_base_url . 'adsense-account.js',
+            array(),
+            true
         );
-
-        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display-only section navigation parameter.
-        $section = sanitize_key($_GET['section'] ?? 'toc');
-        $section_css_map = [
-            'toc' => 'toc.css',
-            'internal-links' => 'internal-links.css',
-            'search-console' => 'search-console.css',
-            'publisuites' => 'publisuites.css',
-            'ads-manager' => 'publisher-panel.css',
-        ];
-
-        if (isset($section_css_map[$section])) {
-            contai_enqueue_style_with_version(
-                "contai-apps-{$section}",
-                $css_base_url . $section_css_map[$section],
-                ['contai-apps-base']
-            );
-        }
-
-        // AdSense Account tab CSS (loaded alongside ads-manager)
-        if ($section === 'ads-manager') {
-            contai_enqueue_style_with_version(
-                'contai-adsense-account',
-                $css_base_url . 'adsense-account.css',
-                ['contai-apps-base']
-            );
-        }
-
-        $section_js_map = [
-            'ads-manager' => 'publisher-panel.js',
-        ];
-
-        if (isset($section_js_map[$section])) {
-            $js_base_url = plugin_dir_url(__FILE__) . 'apps/assets/js/';
-            contai_enqueue_script_with_version(
-                "contai-apps-{$section}",
-                $js_base_url . $section_js_map[$section],
-                [],
-                true
-            );
-        }
-
-        // AdSense Account tab JS (loaded alongside ads-manager)
-        if ($section === 'ads-manager') {
-            $js_base_url = plugin_dir_url(__FILE__) . 'apps/assets/js/';
-            contai_enqueue_script_with_version(
-                'contai-adsense-account',
-                $js_base_url . 'adsense-account.js',
-                [],
-                true
-            );
-            wp_localize_script('contai-adsense-account', 'contaiAdsense', [
-                'restUrl' => esc_url_raw(rest_url('contai/v1/adsense/')),
-                'nonce'   => wp_create_nonce('wp_rest'),
-            ]);
-        }
+        wp_localize_script( 'contai-adsense-account', 'contaiAdsense', array(
+            'restUrl' => esc_url_raw( rest_url( 'contai/v1/adsense/' ) ),
+            'nonce'   => wp_create_nonce( 'wp_rest' ),
+        ) );
     }
 }
-add_action('admin_enqueue_scripts', 'contai_enqueue_apps_styles', 20);
+add_action( 'admin_enqueue_scripts', 'contai_enqueue_apps_scripts', 20 );
 
 function contai_apps_page()
 {
