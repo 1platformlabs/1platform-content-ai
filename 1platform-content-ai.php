@@ -283,7 +283,6 @@ add_action( 'admin_enqueue_scripts', function( $hook ) {
     if ( strpos( $hook, 'contai-agents' ) === false ) {
         return;
     }
-    wp_enqueue_style( 'contai-agents-admin', plugin_dir_url( __FILE__ ) . 'includes/admin/agents/contai-agents-admin.css', array(), CONTAI_VERSION );
     wp_enqueue_script( 'contai-agents-admin', plugin_dir_url( __FILE__ ) . 'includes/admin/agents/contai-agents-admin.js', array(), CONTAI_VERSION, true );
     wp_localize_script( 'contai-agents-admin', 'contaiAgents', array(
         'restUrl'  => rest_url( 'contai/v1/' ),

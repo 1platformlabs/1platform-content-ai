@@ -1815,6 +1815,143 @@
 }
 
 
+/* ─── Agents screen additions ──────────────────────────────── */
+.contai-app :where(.contai-agents-section) {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+.contai-app :where(.contai-agents-grid) {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
+.contai-app :where(.contai-agent-card) {
+    background: #fff;
+    border: 1px solid var(--border-1);
+    border-radius: var(--contai-radius-md);
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    transition: border-color var(--contai-duration-fast) var(--contai-ease),
+                box-shadow var(--contai-duration-fast) var(--contai-ease);
+    text-decoration: none;
+    color: inherit;
+}
+.contai-app :where(.contai-agent-card:hover) {
+    border-color: var(--contai-primary-border);
+    box-shadow: var(--contai-shadow-md);
+}
+.contai-app :where(.contai-agent-card:focus-visible) {
+    outline: none;
+    box-shadow: var(--contai-shadow-glow);
+    border-color: var(--contai-primary);
+}
+.contai-app :where(.contai-agent-card-icon) {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--contai-radius-md);
+    background: var(--contai-primary-glow);
+    color: var(--contai-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.contai-app :where(.contai-agent-card-icon .dashicons) {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+}
+.contai-app :where(.contai-agent-card-title) {
+    margin: 0;
+    font-family: var(--contai-font-heading);
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--fg-1);
+    letter-spacing: -0.01em;
+}
+.contai-app :where(.contai-agent-card-desc) {
+    margin: 0;
+    font-size: 12.5px;
+    color: var(--fg-3);
+    line-height: 1.5;
+}
+.contai-app :where(.contai-agent-card-cta) {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--contai-primary);
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: auto;
+}
+.contai-app :where(.contai-agent-actions-bar) {
+    display: flex;
+    gap: 8px;
+    padding: 14px 0;
+    flex-wrap: wrap;
+}
+.contai-app :where(.contai-wizard-messages) {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-height: 180px;
+    max-height: 420px;
+    overflow-y: auto;
+}
+.contai-app :where(.contai-wizard-msg) {
+    padding: 10px 14px;
+    border-radius: var(--contai-radius-md);
+    max-width: 80%;
+    font-size: 13px;
+    line-height: 1.5;
+}
+.contai-app :where(.contai-wizard-msg.assistant) {
+    background: var(--bg-2);
+    color: var(--fg-1);
+    align-self: flex-start;
+}
+.contai-app :where(.contai-wizard-msg.user) {
+    background: var(--contai-primary);
+    color: #fff;
+    align-self: flex-end;
+}
+.contai-app :where(.contai-wizard-msg-typing) {
+    color: var(--fg-3);
+    font-style: italic;
+}
+.contai-app :where(.contai-iteration-card) {
+    background: #fff;
+    border: 1px solid var(--border-1);
+    border-radius: var(--contai-radius-md);
+    margin-bottom: 8px;
+    overflow: hidden;
+}
+.contai-app :where(.contai-iteration-header) {
+    padding: 12px 16px;
+    background: var(--bg-2);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 13px;
+}
+.contai-app :where(.contai-iteration-header:hover) {
+    background: var(--contai-neutral-100);
+}
+.contai-app :where(.contai-iteration-body) {
+    display: none;
+    padding: 16px;
+    font-size: 13px;
+    color: var(--fg-2);
+}
+.contai-app :where(.contai-iteration-body.is-open) {
+    display: block;
+}
+
+
 /* ─── Responsive ───────────────────────────────────────────── */
 @media (max-width: 960px) {
     .contai-app :where(.contai-stat-grid) { grid-template-columns: repeat(2, 1fr); }
@@ -1831,4 +1968,8 @@
         padding-bottom: 8px;
     }
     .contai-app :where(.contai-gate) { grid-template-columns: 1fr; }
+    .contai-app :where(.contai-agents-grid) { grid-template-columns: 1fr; }
+}
+@media (max-width: 960px) {
+    .contai-app :where(.contai-agents-grid) { grid-template-columns: repeat(2, 1fr); }
 }
