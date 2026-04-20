@@ -264,8 +264,9 @@ function contai_agents_page() {
 /**
  * Enqueue the UI v3 foundation (tokens + components + JS helpers) on every
  * plugin admin page. Loads unconditionally — no feature flag, no per-screen
- * gate. Per-screen stylesheets/JS are layered on top by each panel's own
- * enqueue hook.
+ * gate. Registered at a high priority so foundation tokens/components print
+ * AFTER any per-screen stylesheets: this guarantees `contai-tokens.css` wins
+ * the `:root` cascade while legacy per-screen CSS is phased out.
  */
 add_action( 'admin_enqueue_scripts', function( $hook ) {
     if ( strpos( (string) $hook, 'contai' ) === false ) {
@@ -276,7 +277,7 @@ add_action( 'admin_enqueue_scripts', function( $hook ) {
     wp_enqueue_style( 'contai-components', $base . 'css/contai-components.css', array( 'contai-tokens' ), CONTAI_VERSION );
     wp_enqueue_style( 'dashicons' );
     wp_enqueue_script( 'contai-ui', $base . 'js/contai-ui.js', array(), CONTAI_VERSION, true );
-}, 5 );
+}, 999 );
 
 add_action( 'admin_enqueue_scripts', function( $hook ) {
     if ( strpos( $hook, 'contai-agents' ) === false ) {

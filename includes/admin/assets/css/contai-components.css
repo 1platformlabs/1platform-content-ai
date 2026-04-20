@@ -1733,6 +1733,26 @@
 .contai-app :where(.contai-heatmap .is-l4) { background: var(--contai-primary); }
 
 
+/* ─── Content layout (sidebar + main) ──────────────────────── */
+.contai-app :where(.contai-content-layout) {
+    display: flex;
+    gap: var(--contai-spacing-lg);
+    align-items: flex-start;
+    margin-top: var(--contai-spacing-md);
+}
+.contai-app :where(.contai-content-main) {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--contai-spacing-md);
+}
+@media (max-width: 960px) {
+    .contai-app :where(.contai-content-layout) { flex-direction: column; }
+    .contai-app :where(.contai-sidebar) { width: 100%; }
+}
+
+
 /* ─── Responsive ───────────────────────────────────────────── */
 @media (max-width: 960px) {
     .contai-app :where(.contai-stat-grid) { grid-template-columns: repeat(2, 1fr); }
