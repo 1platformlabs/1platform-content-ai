@@ -216,25 +216,25 @@ class ContaiGenerateCommentsPanel {
 
     private function render_generation_form(): void {
         ?>
-        <div class="contai-settings-panel">
-            <div class="contai-panel-header">
-                <div class="contai-panel-title-group">
+        <div class="contai-panel">
+            <div class="contai-panel-head">
+                <div class="contai-panel-head-main">
                     <h2 class="contai-panel-title">
                         <span class="dashicons dashicons-admin-comments"></span>
                         <?php esc_html_e('Generate Comments', '1platform-content-ai'); ?>
                     </h2>
-                    <p class="contai-panel-description">
+                    <p class="contai-panel-desc">
                         <?php esc_html_e('Create AI-powered comments for your blog posts', '1platform-content-ai'); ?>
                     </p>
                 </div>
             </div>
 
             <div class="contai-panel-body">
-                <div class="contai-info-box contai-info-box-warning">
-                    <div class="contai-info-box-icon">
+                <div class="contai-notice contai-notice-warning">
+                    <div class="contai-notice-icon">
                         <span class="dashicons dashicons-info"></span>
                     </div>
-                    <div class="contai-info-box-content">
+                    <div class="contai-notice-body">
                         <p><?php esc_html_e('Make sure you have completed the setup wizard and configured your site topic before generating comments.', '1platform-content-ai'); ?></p>
                     </div>
                 </div>
@@ -280,14 +280,14 @@ class ContaiGenerateCommentsPanel {
 
     private function render_results_table(): void {
         ?>
-        <div class="contai-settings-panel">
-            <div class="contai-panel-header">
-                <div class="contai-panel-title-group">
+        <div class="contai-panel">
+            <div class="contai-panel-head">
+                <div class="contai-panel-head-main">
                     <h2 class="contai-panel-title">
                         <span class="dashicons dashicons-yes-alt"></span>
                         <?php esc_html_e('Generated Comments', '1platform-content-ai'); ?>
                     </h2>
-                    <p class="contai-panel-description">
+                    <p class="contai-panel-desc">
                         <?php
                         printf(
                             /* translators: %d: number of comments created */

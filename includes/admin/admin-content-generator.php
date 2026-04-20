@@ -135,11 +135,7 @@ function contai_enqueue_content_generator_styles() {
 
         // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display-only section navigation parameter.
 		$section = sanitize_key( $_GET['section'] ?? 'keyword-extractor' );
-		$section_css_map = array(
-			'post-maintenance'  => 'post-maintenance.css',
-			'generate-comments' => 'generate-comments.css',
-			'legal-pages'       => 'legal-pages.css',
-		);
+		$section_css_map = array();
 
 		$section_js_map = array(
 			'keywords-list' => 'keywords-list.js',
