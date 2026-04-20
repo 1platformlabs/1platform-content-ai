@@ -33,8 +33,6 @@ class WPContentAILicensePanel
 
     public function render(): void
     {
-        $this->enqueueStyles();
-
         // Check for success messages after redirect
         // phpcs:disable WordPress.Security.NonceVerification.Recommended -- Display-only read of GET params after redirect.
         if ( isset( $_GET['license_activated'] ) && sanitize_key( wp_unslash( $_GET['license_activated'] ) ) === '1' ) {
@@ -388,14 +386,17 @@ class WPContentAILicensePanel
 
     private function renderMessage(): void
     {
-        $classMap = [
-            'success' => 'notice-success',
-            'error'   => 'notice-error',
-            'warning' => 'notice-warning',
+        $validTypes = ['success', 'error', 'warning', 'info'];
+        $noticeType = in_array($this->messageType, $validTypes, true) ? $this->messageType : 'info';
+        $iconMap = [
+            'success' => 'dashicons-yes-alt',
+            'error'   => 'dashicons-warning',
+            'warning' => 'dashicons-warning',
+            'info'    => 'dashicons-info',
         ];
-        $class = $classMap[$this->messageType] ?? 'notice-info';
         ?>
-        <div class="notice <?php echo esc_attr($class); ?> is-dismissible">
+        <div class="contai-notice contai-notice-<?php echo esc_attr($noticeType); ?>">
+            <span class="dashicons <?php echo esc_attr($iconMap[$noticeType]); ?>" aria-hidden="true"></span>
             <p><?php echo esc_html($this->message); ?></p>
         </div>
         <?php
@@ -404,42 +405,45 @@ class WPContentAILicensePanel
     private function renderError(string $message): void
     {
         ?>
-        <div class="contai-settings-panel contai-license-panel">
-            <div class="contai-panel-header">
-                <div class="contai-panel-title-group">
-                    <h2 class="contai-panel-title">
+        <div class="contai-panel">
+            <div class="contai-panel-head">
+                <div class="contai-panel-head-main">
+                    <div class="contai-tile" aria-hidden="true">
                         <span class="dashicons dashicons-superhero-alt"></span>
-                        <?php esc_html_e('Content AI License', '1platform-content-ai'); ?>
-                    </h2>
+                    </div>
+                    <div>
+                        <h2 class="contai-panel-title"><?php esc_html_e('Content AI License', '1platform-content-ai'); ?></h2>
+                    </div>
                 </div>
             </div>
-
-            <div class="contai-panel-body">
-                <div class="contai-info-box contai-info-box-error">
-                    <div class="contai-info-box-icon">
-                        <span class="dashicons dashicons-warning"></span>
-                    </div>
-                    <div class="contai-info-box-content">
-                        <p><strong><?php esc_html_e('Connection Error', '1platform-content-ai'); ?></strong></p>
-                        <p><?php echo esc_html($message); ?></p>
+            <form method="post">
+                <?php wp_nonce_field(self::NONCE_ACTION, self::NONCE_FIELD); ?>
+                <div class="contai-panel-body">
+                    <div class="contai-notice contai-notice-error">
+                        <span class="dashicons dashicons-warning" aria-hidden="true"></span>
+                        <div>
+                            <p><strong><?php esc_html_e('Connection Error', '1platform-content-ai'); ?></strong></p>
+                            <p><?php echo esc_html($message); ?></p>
+                        </div>
                     </div>
                 </div>
-
-                <form method="post" class="contai-license-form">
-                    <?php wp_nonce_field(self::NONCE_ACTION, self::NONCE_FIELD); ?>
-                    <div class="contai-form-actions">
-                        <button type="submit" name="contai_refresh_profile" class="button button-primary">
-                            <span class="dashicons dashicons-update"></span>
+                <div class="contai-panel-foot">
+                    <span class="contai-panel-foot-meta">
+                        <?php esc_html_e('Retry to re-check the connection, or remove the license.', '1platform-content-ai'); ?>
+                    </span>
+                    <div class="contai-panel-foot-actions">
+                        <button type="submit" name="contai_refresh_profile" class="contai-btn contai-btn-primary">
+                            <span class="dashicons dashicons-update" aria-hidden="true"></span>
                             <?php esc_html_e('Retry Connection', '1platform-content-ai'); ?>
                         </button>
-                        <button type="submit" name="contai_deactivate_license" class="button button-secondary"
+                        <button type="submit" name="contai_deactivate_license" class="contai-btn contai-btn-danger"
                                 onclick="return confirm('<?php echo esc_js(__('Are you sure you want to remove the license?', '1platform-content-ai')); ?>');">
-                            <span class="dashicons dashicons-dismiss"></span>
+                            <span class="dashicons dashicons-dismiss" aria-hidden="true"></span>
                             <?php esc_html_e('Remove License', '1platform-content-ai'); ?>
                         </button>
                     </div>
-                </form>
-            </div>
+                </div>
+            </form>
         </div>
         <?php
     }
@@ -470,19 +474,6 @@ class WPContentAILicensePanel
         }
 
         return $session;
-    }
-
-    private function enqueueStyles(): void
-    {
-        $cssFile = __DIR__ . '/assets/css/license.css';
-        $cssUrl = plugins_url('assets/css/license.css', __FILE__);
-
-        wp_enqueue_style(
-            'contai-license',
-            $cssUrl,
-            array('contai-admin-licenses'),
-            file_exists($cssFile) ? filemtime($cssFile) : '1.0.0'
-        );
     }
 
     private function enqueueOnboardingAssets(): void

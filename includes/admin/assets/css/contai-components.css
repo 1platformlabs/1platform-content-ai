@@ -1815,6 +1815,37 @@
 }
 
 
+/* ─── Licenses screen additions (amount selector) ─────────── */
+.contai-app :where(.contai-amount-group) {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.contai-app :where(.contai-amount-btn) {
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: 600;
+    background: #fff;
+    border: 1px solid var(--border-2);
+    border-radius: var(--contai-radius-md);
+    cursor: pointer;
+    color: var(--fg-2);
+    font-family: inherit;
+    transition: border-color var(--contai-duration-fast) var(--contai-ease),
+                color var(--contai-duration-fast) var(--contai-ease),
+                background var(--contai-duration-fast) var(--contai-ease);
+}
+.contai-app :where(.contai-amount-btn:hover) {
+    border-color: var(--contai-primary-light);
+    color: var(--contai-primary);
+}
+.contai-app :where(.contai-amount-btn.active) {
+    background: var(--contai-primary);
+    border-color: var(--contai-primary);
+    color: #fff;
+}
+
+
 /* ─── Agents screen additions ──────────────────────────────── */
 .contai-app :where(.contai-agents-section) {
     display: flex;

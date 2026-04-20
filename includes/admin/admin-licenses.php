@@ -15,37 +15,23 @@ function contai_handle_license_form_submission() {
 }
 add_action('admin_init', 'contai_handle_license_form_submission');
 
-function contai_enqueue_licenses_styles() {
-    $screen = get_current_screen();
-
-    if ($screen && strpos($screen->id, 'contai-licenses') !== false) {
-        contai_enqueue_style_with_version(
-            'contai-content-generator-base',
-            plugin_dir_url(__FILE__) . 'content-generator/assets/css/base.css',
-            array()
-        );
-
-        contai_enqueue_style_with_version(
-            'contai-admin-licenses',
-            plugin_dir_url(__FILE__) . 'assets/css/admin-licenses.css',
-            array('contai-content-generator-base')
-        );
-    }
-}
-add_action('admin_enqueue_scripts', 'contai_enqueue_licenses_styles', 20);
-
 function contai_licenses_page() {
     ?>
-    <div class="wrap contai-settings-wrap">
-        <h1>
-            <span class="dashicons dashicons-lock"></span>
-            <?php esc_html_e('License', '1platform-content-ai'); ?>
-        </h1>
-
-        <div class="contai-page-description">
-            <p>
-                <?php esc_html_e('Manage your license and connect with Content AI services.', '1platform-content-ai'); ?>
-            </p>
+    <div class="wrap contai-app contai-page">
+        <div class="contai-page-header">
+            <div class="contai-page-header-row">
+                <div>
+                    <h1 class="contai-page-title">
+                        <span class="contai-tile" aria-hidden="true">
+                            <span class="dashicons dashicons-lock"></span>
+                        </span>
+                        <?php esc_html_e( 'License', '1platform-content-ai' ); ?>
+                    </h1>
+                    <p class="contai-page-subtitle">
+                        <?php esc_html_e( 'Manage your license and connect with Content AI services.', '1platform-content-ai' ); ?>
+                    </p>
+                </div>
+            </div>
         </div>
 
         <?php
