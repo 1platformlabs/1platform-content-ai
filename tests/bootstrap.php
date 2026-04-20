@@ -46,6 +46,7 @@ class_alias('ContaiKeywordRepository', 'KeywordRepository');
 // ── Helpers ─────────────────────────────────────────────────────
 require_once __DIR__ . '/../includes/helpers/crypto.php';
 require_once __DIR__ . '/../includes/helpers/security.php';
+require_once __DIR__ . '/../includes/helpers/ui-flag.php';
 require_once __DIR__ . '/../includes/helpers/TimestampHelper.php';
 require_once __DIR__ . '/../includes/helpers/JobDetailsFormatter.php';
 
