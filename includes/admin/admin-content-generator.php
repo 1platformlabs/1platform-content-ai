@@ -120,54 +120,32 @@ function contai_ajax_save_keywords() {
 	);
 }
 
-function contai_enqueue_content_generator_styles() {
+function contai_enqueue_content_generator_scripts() {
 	$screen = get_current_screen();
 
-	if ( $screen && strpos( $screen->id, 'contai-content-generator' ) !== false ) {
-		$css_base_url = plugin_dir_url( __FILE__ ) . 'content-generator/assets/css/';
+	if ( ! $screen || strpos( $screen->id, 'contai-content-generator' ) === false ) {
+		return;
+	}
+
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display-only section navigation parameter.
+	$section = sanitize_key( $_GET['section'] ?? 'keyword-extractor' );
+
+	$section_js_map = array(
+		'keywords-list' => 'keywords-list.js',
+	);
+
+	if ( isset( $section_js_map[ $section ] ) ) {
 		$js_base_url = plugin_dir_url( __FILE__ ) . 'content-generator/assets/js/';
-
-		contai_enqueue_style_with_version(
-			'contai-content-generator-base',
-			$css_base_url . 'base.css',
-			array()
+		wp_enqueue_script(
+			"contai-content-generator-{$section}",
+			$js_base_url . $section_js_map[ $section ],
+			array( 'jquery' ),
+			filemtime( plugin_dir_path( __FILE__ ) . "content-generator/assets/js/{$section_js_map[$section]}" ),
+			true
 		);
-
-        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display-only section navigation parameter.
-		$section = sanitize_key( $_GET['section'] ?? 'keyword-extractor' );
-		$section_css_map = array(
-			'keyword-extractor' => 'keyword-extractor.css',
-			'post-generator' => 'post-generator.css',
-			'keywords-list' => 'keywords-list.css',
-			'post-maintenance' => 'post-maintenance.css',
-			'generate-comments' => 'generate-comments.css',
-			'legal-pages' => 'legal-pages.css',
-		);
-
-		$section_js_map = array(
-			'keywords-list' => 'keywords-list.js',
-		);
-
-		if ( isset( $section_css_map[ $section ] ) ) {
-			contai_enqueue_style_with_version(
-				"contai-content-generator-{$section}",
-				$css_base_url . $section_css_map[ $section ],
-				array( 'contai-content-generator-base' )
-			);
-		}
-
-		if ( isset( $section_js_map[ $section ] ) ) {
-			wp_enqueue_script(
-				"contai-content-generator-{$section}",
-				$js_base_url . $section_js_map[ $section ],
-				array( 'jquery' ),
-				filemtime( plugin_dir_path( __FILE__ ) . "content-generator/assets/js/{$section_js_map[$section]}" ),
-				true
-			);
-		}
 	}
 }
-add_action( 'admin_enqueue_scripts', 'contai_enqueue_content_generator_styles', 20 );
+add_action( 'admin_enqueue_scripts', 'contai_enqueue_content_generator_scripts', 20 );
 
 function contai_content_generator_page() {
 	if ( contai_render_connection_required_notice() ) {

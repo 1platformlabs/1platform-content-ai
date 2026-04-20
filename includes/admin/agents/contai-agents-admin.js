@@ -115,7 +115,7 @@
             error:     { cls: 'red',    icon: 'dashicons-dismiss',  label: 'Error' }
         };
         var s = map[(status || '').toLowerCase()] || map.pending;
-        return '<span class="contai-status-badge contai-badge-' + s.cls + '">' +
+        return '<span class="contai-badge contai-badge-' + s.cls + '">' +
                '<span class="dashicons ' + s.icon + '"></span> ' + esc(s.label) +
                '</span>';
     }
@@ -125,7 +125,7 @@
         type = type || 'success';
         var iconMap = { success: 'dashicons-yes-alt', error: 'dashicons-dismiss', info: 'dashicons-info' };
         var el = document.createElement('div');
-        el.className = 'contai-toast contai-toast-' + type;
+        el.className = 'contai-toast is-' + type;
         el.setAttribute('role', 'alert');
         el.innerHTML = '<span class="dashicons ' + (iconMap[type] || iconMap.info) + '"></span> ' + esc(message);
         document.body.appendChild(el);
@@ -157,12 +157,12 @@
     /** Set a button to loading state. */
     function btnLoading(btn, loading) {
         if (loading) {
-            btn.classList.add('contai-btn-loading');
+            btn.classList.add('is-loading');
             btn.disabled = true;
             btn._prevHTML = btn.innerHTML;
             btn.innerHTML = '<span class="dashicons dashicons-update"></span> Processing...';
         } else {
-            btn.classList.remove('contai-btn-loading');
+            btn.classList.remove('is-loading');
             btn.disabled = false;
             if (btn._prevHTML) {
                 btn.innerHTML = btn._prevHTML;
@@ -191,7 +191,7 @@
     function initCatalog() {
         var container = document.getElementById('contai-agents-catalog');
         var grid      = container.querySelector('.contai-agents-grid');
-        var empty     = container.querySelector('.contai-empty-state');
+        var empty     = container.querySelector('.contai-empty');
 
         apiFetch('agents/catalog')
             .then(function (data) {
@@ -221,7 +221,7 @@
             .catch(function (err) {
                 grid.style.display = 'none';
                 empty.querySelector('.contai-empty-title').textContent = 'Error loading templates';
-                empty.querySelector('.contai-empty-text').textContent = err.message || 'Please try again.';
+                empty.querySelector('.contai-empty-desc').textContent = err.message || 'Please try again.';
                 empty.style.display = '';
                 showToast(err.message || 'Could not load catalog.', 'error');
             });
@@ -234,7 +234,7 @@
         var container = document.getElementById('contai-agents-list');
         var tbody     = document.getElementById('contai-agents-tbody');
         var tableCard = container.querySelector('.contai-table-card');
-        var empty     = container.querySelector('.contai-empty-state');
+        var empty     = container.querySelector('.contai-empty');
 
         apiFetch('agents')
             .then(function (data) {
@@ -327,9 +327,9 @@
         function setStep(num) {
             steps.forEach(function (s) {
                 var sn = parseInt(s.getAttribute('data-step'), 10);
-                s.classList.remove('active', 'completed');
-                if (sn < num) s.classList.add('completed');
-                if (sn === num) s.classList.add('active');
+                s.classList.remove('is-active', 'is-done');
+                if (sn < num) s.classList.add('is-done');
+                if (sn === num) s.classList.add('is-active');
             });
         }
 
@@ -598,7 +598,7 @@
         var agentId   = container.getAttribute('data-agent-id');
         var tbody     = document.getElementById('contai-runs-tbody');
         var tableCard = container.querySelector('.contai-table-card');
-        var empty     = container.querySelector('.contai-empty-state');
+        var empty     = container.querySelector('.contai-empty');
         var refreshTimer = null;
 
         function loadRuns() {
@@ -800,7 +800,7 @@
         var container = document.getElementById('contai-agents-actions');
         var tbody     = document.getElementById('contai-actions-tbody');
         var tableCard = container.querySelector('.contai-table-card');
-        var empty     = container.querySelector('.contai-empty-state');
+        var empty     = container.querySelector('.contai-empty');
         var filter    = document.getElementById('contai-actions-status-filter');
 
         function loadActions() {

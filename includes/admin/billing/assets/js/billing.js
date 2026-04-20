@@ -1,78 +1,76 @@
-(function($) {
+(function ($) {
     'use strict';
 
     var BillingModal = {
-        init: function() {
-            this.$overlay = $('#contai-topup-modal');
-            this.$modal = this.$overlay.find('.contai-billing-modal');
-            this.$openBtn = $('#contai-open-topup-modal');
-            this.$closeBtn = $('#contai-close-topup-modal');
-            this.$amountInput = $('#contai_topup_amount');
-            this.$form = this.$overlay.find('form');
-
-            if (!this.$overlay.length) {
+        init: function () {
+            this.$backdrop = $('#contai-topup-modal');
+            if (!this.$backdrop.length) {
                 return;
             }
 
-            this.$overlay.attr({
-                'role': 'dialog',
-                'aria-modal': 'true',
-                'aria-label': this.$overlay.find('.contai-billing-modal-header h3').text()
+            this.$modal = this.$backdrop.find('.contai-modal');
+            this.$openBtn = $('#contai-open-topup-modal');
+            this.$closeBtn = $('#contai-close-topup-modal');
+            this.$amountInput = $('#contai_topup_amount');
+            this.$form = this.$backdrop.find('form');
+            this.submitting = false;
+
+            this.$backdrop.attr({
+                'aria-label': this.$modal.find('h3').text()
             });
 
             this.bindEvents();
         },
 
-        bindEvents: function() {
+        bindEvents: function () {
             var self = this;
 
-            this.$openBtn.on('click', function() {
+            this.$openBtn.on('click', function () {
                 self.open();
             });
 
-            this.$closeBtn.on('click', function() {
+            this.$closeBtn.on('click', function () {
                 self.close();
             });
 
-            this.$overlay.on('click', function(e) {
-                if (e.target === self.$overlay[0]) {
+            this.$backdrop.on('click', function (e) {
+                if (e.target === self.$backdrop[0]) {
                     self.close();
                 }
             });
 
-            $(document).on('keydown', function(e) {
-                if (e.key === 'Escape' && self.$overlay.is(':visible')) {
+            $(document).on('keydown', function (e) {
+                if (e.key === 'Escape' && self.$backdrop.is(':visible')) {
                     self.close();
                 }
             });
 
-            this.$form.on('submit', function(e) {
+            this.$form.on('submit', function (e) {
                 if (self.submitting) {
                     e.preventDefault();
                     return;
                 }
                 self.submitting = true;
                 var $submitBtn = self.$form.find('button[type="submit"]');
-                $submitBtn.addClass('disabled').text($submitBtn.data('loading') || 'Processing...');
+                $submitBtn.addClass('is-loading').prop('disabled', true);
             });
         },
 
-        open: function() {
-            this.$overlay.show();
-            this.$amountInput.val('').focus();
+        open: function () {
+            this.$backdrop.css('display', 'flex');
+            this.$amountInput.val('').trigger('focus');
         },
 
-        close: function() {
-            this.$overlay.hide();
+        close: function () {
+            this.$backdrop.hide();
             this.$amountInput.val('');
             this.submitting = false;
             var $submitBtn = this.$form.find('button[type="submit"]');
-            $submitBtn.removeClass('disabled');
+            $submitBtn.removeClass('is-loading').prop('disabled', false);
         }
     };
 
-    $(document).ready(function() {
+    $(document).ready(function () {
         BillingModal.init();
     });
-
 })(jQuery);

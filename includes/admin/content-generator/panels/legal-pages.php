@@ -98,25 +98,25 @@ class ContaiLegalPagesPanel {
     private function render_legal_information_section(): void {
         $site_topic = esc_attr(get_option('contai_site_theme', ''));
         ?>
-        <div class="contai-settings-panel contai-panel-legal-info">
-            <div class="contai-panel-header">
-                <div class="contai-panel-title-group">
+        <div class="contai-panel contai-panel-legal-info">
+            <div class="contai-panel-head">
+                <div class="contai-panel-head-main">
                     <h2 class="contai-panel-title">
                         <span class="dashicons dashicons-businessman"></span>
                         <?php esc_html_e('Legal Information', '1platform-content-ai'); ?>
                     </h2>
-                    <p class="contai-panel-description">
+                    <p class="contai-panel-desc">
                         <?php esc_html_e('Configure the legal information used to generate your legal pages', '1platform-content-ai'); ?>
                     </p>
                 </div>
             </div>
 
             <div class="contai-panel-body">
-                <div class="contai-info-box contai-info-box-warning">
-                    <div class="contai-info-box-icon">
+                <div class="contai-notice contai-notice-warning">
+                    <div class="contai-notice-icon">
                         <span class="dashicons dashicons-warning"></span>
                     </div>
-                    <div class="contai-info-box-content">
+                    <div class="contai-notice-body">
                         <p><?php esc_html_e('All fields are required to generate legal pages via the API. Please fill in all information before generating.', '1platform-content-ai'); ?></p>
                     </div>
                 </div>
@@ -235,25 +235,25 @@ class ContaiLegalPagesPanel {
 
     private function render_generate_pages_section(): void {
         ?>
-        <div class="contai-settings-panel contai-panel-generate-pages">
-            <div class="contai-panel-header">
-                <div class="contai-panel-title-group">
+        <div class="contai-panel contai-panel-generate-pages">
+            <div class="contai-panel-head">
+                <div class="contai-panel-head-main">
                     <h2 class="contai-panel-title">
                         <span class="dashicons dashicons-media-text"></span>
                         <?php esc_html_e('Generate Legal Pages', '1platform-content-ai'); ?>
                     </h2>
-                    <p class="contai-panel-description">
+                    <p class="contai-panel-desc">
                         <?php esc_html_e('Generate legal pages via the WPContentAI API that comply with GDPR and AdSense policies', '1platform-content-ai'); ?>
                     </p>
                 </div>
             </div>
 
             <div class="contai-panel-body">
-                <div class="contai-info-box contai-info-box-info">
-                    <div class="contai-info-box-icon">
+                <div class="contai-notice contai-notice-info">
+                    <div class="contai-notice-icon">
                         <span class="dashicons dashicons-info"></span>
                     </div>
-                    <div class="contai-info-box-content">
+                    <div class="contai-notice-body">
                         <h4><?php esc_html_e('How it works', '1platform-content-ai'); ?></h4>
                         <ul>
                             <li><?php esc_html_e('The API generates legal pages based on your legal information and site topic.', '1platform-content-ai'); ?></li>
@@ -380,14 +380,14 @@ class ContaiLegalPagesPanel {
         $current_text = get_option('contai_cookie_notice_text', ContaiLegalPagesHelper::get_cookie_text());
         $consent_mode = get_option('contai_consent_mode', 'opt_out');
         ?>
-        <div class="contai-settings-panel contai-panel-cookie-notice">
-            <div class="contai-panel-header">
-                <div class="contai-panel-title-group">
+        <div class="contai-panel contai-panel-cookie-notice">
+            <div class="contai-panel-head">
+                <div class="contai-panel-head-main">
                     <h2 class="contai-panel-title">
                         <span class="dashicons dashicons-privacy"></span>
                         <?php esc_html_e('Cookie Notice Settings', '1platform-content-ai'); ?>
                     </h2>
-                    <p class="contai-panel-description">
+                    <p class="contai-panel-desc">
                         <?php esc_html_e('Manage cookie consent banner for your website', '1platform-content-ai'); ?>
                     </p>
                 </div>

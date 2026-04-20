@@ -21,7 +21,6 @@ if (!defined('ABSPATH')) exit;
 define('CONTAI_VERSION', '2.31.3');
 
 require_once plugin_dir_path(__FILE__) . 'includes/helpers/security.php';
-require_once plugin_dir_path(__FILE__) . 'includes/helpers/ui-flag.php';
 require_once plugin_dir_path(__FILE__) . 'includes/helpers/crypto.php';
 require_once plugin_dir_path(__FILE__) . 'includes/helpers/asset-version.php';
 require_once plugin_dir_path(__FILE__) . 'includes/helpers/site-generation.php';
@@ -262,11 +261,28 @@ function contai_agents_page() {
     ContaiAgentsAdminPage::render();
 }
 
+/**
+ * Enqueue the UI v3 foundation (tokens + components + JS helpers) on every
+ * plugin admin page. Loads unconditionally — no feature flag, no per-screen
+ * gate. Registered at a high priority so foundation tokens/components print
+ * AFTER any per-screen stylesheets: this guarantees `contai-tokens.css` wins
+ * the `:root` cascade while legacy per-screen CSS is phased out.
+ */
+add_action( 'admin_enqueue_scripts', function( $hook ) {
+    if ( strpos( (string) $hook, 'contai' ) === false ) {
+        return;
+    }
+    $base = plugin_dir_url( __FILE__ ) . 'includes/admin/assets/';
+    wp_enqueue_style( 'contai-tokens', $base . 'css/contai-tokens.css', array(), CONTAI_VERSION );
+    wp_enqueue_style( 'contai-components', $base . 'css/contai-components.css', array( 'contai-tokens' ), CONTAI_VERSION );
+    wp_enqueue_style( 'dashicons' );
+    wp_enqueue_script( 'contai-ui', $base . 'js/contai-ui.js', array(), CONTAI_VERSION, true );
+}, 999 );
+
 add_action( 'admin_enqueue_scripts', function( $hook ) {
     if ( strpos( $hook, 'contai-agents' ) === false ) {
         return;
     }
-    wp_enqueue_style( 'contai-agents-admin', plugin_dir_url( __FILE__ ) . 'includes/admin/agents/contai-agents-admin.css', array(), CONTAI_VERSION );
     wp_enqueue_script( 'contai-agents-admin', plugin_dir_url( __FILE__ ) . 'includes/admin/agents/contai-agents-admin.js', array(), CONTAI_VERSION, true );
     wp_localize_script( 'contai-agents-admin', 'contaiAgents', array(
         'restUrl'  => rest_url( 'contai/v1/' ),

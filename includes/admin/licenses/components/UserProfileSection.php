@@ -1,170 +1,187 @@
 <?php
+/**
+ * User profile section (UI v3).
+ *
+ * @package OnePlatformContentAI
+ */
 
-if (!defined('ABSPATH')) exit;
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
 
-class ContaiUserProfileSection
-{
-    private array $profile;
-    private string $nonceAction;
-    private string $nonceField;
-    private ?array $websiteConfig;
-    private bool $isConnected;
+class ContaiUserProfileSection {
 
-    public function __construct(
-        array $profile,
-        string $nonceAction,
-        string $nonceField,
-        ?array $websiteConfig = null,
-        bool $isConnected = true
-    ) {
-        $this->profile = $profile;
-        $this->nonceAction = $nonceAction;
-        $this->nonceField = $nonceField;
-        $this->websiteConfig = $websiteConfig;
-        $this->isConnected = $isConnected;
-    }
+	private array $profile;
+	private string $nonceAction;
+	private string $nonceField;
+	private ?array $websiteConfig;
+	private bool $isConnected;
 
-    public function render(): void
-    {
-        ?>
-        <div class="contai-settings-panel contai-license-panel contai-license-active">
-            <div class="contai-panel-header">
-                <div class="contai-panel-title-group">
-                    <h2 class="contai-panel-title">
-                        <span class="dashicons dashicons-superhero-alt"></span>
-                        <?php esc_html_e('Content AI License', '1platform-content-ai'); ?>
-                    </h2>
-                    <p class="contai-panel-description">
-                        <?php if ($this->isConnected) : ?>
-                            <?php esc_html_e('Your license is active and connected to Content AI', '1platform-content-ai'); ?>
-                        <?php else : ?>
-                            <?php esc_html_e('Your license is active but the connection could not be verified', '1platform-content-ai'); ?>
-                        <?php endif; ?>
-                    </p>
-                </div>
-            </div>
+	public function __construct(
+		array $profile,
+		string $nonceAction,
+		string $nonceField,
+		?array $websiteConfig = null,
+		bool $isConnected = true
+	) {
+		$this->profile       = $profile;
+		$this->nonceAction   = $nonceAction;
+		$this->nonceField    = $nonceField;
+		$this->websiteConfig = $websiteConfig;
+		$this->isConnected   = $isConnected;
+	}
 
-            <div class="contai-panel-body">
-                <?php $this->renderLicenseStatus(); ?>
-                <?php $this->renderUserInfo(); ?>
-                <?php $this->renderActions(); ?>
-            </div>
-        </div>
-        <?php
-    }
+	public function render(): void {
+		?>
+		<div class="contai-panel">
+			<div class="contai-panel-head">
+				<div class="contai-panel-head-main">
+					<div class="contai-tile" aria-hidden="true">
+						<span class="dashicons dashicons-superhero-alt"></span>
+					</div>
+					<div>
+						<h2 class="contai-panel-title"><?php esc_html_e( 'Content AI License', '1platform-content-ai' ); ?></h2>
+						<p class="contai-panel-desc">
+							<?php
+							echo esc_html(
+								$this->isConnected
+									? __( 'Your license is active and connected to Content AI.', '1platform-content-ai' )
+									: __( 'Your license is active but the connection could not be verified.', '1platform-content-ai' )
+							);
+							?>
+						</p>
+					</div>
+				</div>
+			</div>
 
-    private function renderLicenseStatus(): void
-    {
-        $isActive = ($this->profile['status'] ?? '') === 'active';
-        $statusClass = $isActive ? 'contai-status-active' : 'contai-status-inactive';
-        $statusText = $isActive ? __('Active', '1platform-content-ai') : __('Inactive', '1platform-content-ai');
+			<div class="contai-panel-body">
+				<?php $this->renderLicenseStatus(); ?>
+				<?php $this->renderUserInfo(); ?>
+			</div>
 
-        $connectionClass = $this->isConnected ? 'contai-status-active' : 'contai-status-inactive';
-        $connectionText = $this->isConnected ? __('Connected', '1platform-content-ai') : __('Disconnected', '1platform-content-ai');
-        $connectionIcon = $this->isConnected ? 'yes-alt' : 'warning';
-        ?>
-        <div class="contai-license-status-card <?php echo esc_attr($statusClass); ?>">
-            <div class="contai-status-icon">
-                <span class="dashicons dashicons-<?php echo esc_attr( $isActive ? 'yes-alt' : 'warning' ); ?>"></span>
-            </div>
-            <div class="contai-status-content">
-                <span class="contai-status-label"><?php esc_html_e('License Status', '1platform-content-ai'); ?></span>
-                <span class="contai-status-value"><?php echo esc_html($statusText); ?></span>
-            </div>
-        </div>
-        <div class="contai-license-status-card <?php echo esc_attr($connectionClass); ?>">
-            <div class="contai-status-icon">
-                <span class="dashicons dashicons-<?php echo esc_attr($connectionIcon); ?>"></span>
-            </div>
-            <div class="contai-status-content">
-                <span class="contai-status-label"><?php esc_html_e('API Connection', '1platform-content-ai'); ?></span>
-                <span class="contai-status-value"><?php echo esc_html($connectionText); ?></span>
-            </div>
-        </div>
-        <?php
-    }
+			<?php $this->renderActions(); ?>
+		</div>
+		<?php
+	}
 
-    private function renderUserInfo(): void
-    {
-        ?>
-        <div class="contai-user-info-section">
-            <h3 class="contai-section-subtitle">
-                <span class="dashicons dashicons-admin-users"></span>
-                <?php esc_html_e('Account Information', '1platform-content-ai'); ?>
-            </h3>
+	private function renderLicenseStatus(): void {
+		$isActive = ( $this->profile['status'] ?? '' ) === 'active';
 
-            <div class="contai-info-grid">
-                <div class="contai-info-item">
-                    <span class="contai-info-label"><?php esc_html_e('User ID', '1platform-content-ai'); ?></span>
-                    <span class="contai-info-value contai-text-mono"><?php echo esc_html($this->profile['userId'] ?? '-'); ?></span>
-                </div>
-                <div class="contai-info-item">
-                    <span class="contai-info-label"><?php esc_html_e('Username', '1platform-content-ai'); ?></span>
-                    <span class="contai-info-value"><?php echo esc_html($this->profile['username'] ?? '-'); ?></span>
-                </div>
-                <div class="contai-info-item">
-                    <span class="contai-info-label"><?php esc_html_e('Account Status', '1platform-content-ai'); ?></span>
-                    <span class="contai-status-badge <?php echo esc_attr( ($this->profile['status'] ?? '') === 'active' ? 'contai-status-active' : 'contai-status-inactive' ); ?>">
-                        <?php echo esc_html(ucfirst($this->profile['status'] ?? 'unknown')); ?>
-                    </span>
-                </div>
-            </div>
-        </div>
-        <?php
-    }
+		?>
+		<div class="contai-stat-grid" style="grid-template-columns: repeat(2, 1fr);">
+			<div class="contai-stat">
+				<div class="contai-stat-head">
+					<span class="contai-stat-label"><?php esc_html_e( 'License Status', '1platform-content-ai' ); ?></span>
+					<span class="contai-stat-icon" aria-hidden="true">
+						<span class="dashicons dashicons-<?php echo esc_attr( $isActive ? 'yes-alt' : 'warning' ); ?>"></span>
+					</span>
+				</div>
+				<div class="contai-stat-value">
+					<span class="contai-badge <?php echo esc_attr( $isActive ? 'contai-badge-success' : 'contai-badge-danger' ); ?>">
+						<?php echo esc_html( $isActive ? __( 'Active', '1platform-content-ai' ) : __( 'Inactive', '1platform-content-ai' ) ); ?>
+					</span>
+				</div>
+			</div>
+			<div class="contai-stat">
+				<div class="contai-stat-head">
+					<span class="contai-stat-label"><?php esc_html_e( 'API Connection', '1platform-content-ai' ); ?></span>
+					<span class="contai-stat-icon" aria-hidden="true">
+						<span class="dashicons dashicons-<?php echo esc_attr( $this->isConnected ? 'yes-alt' : 'warning' ); ?>"></span>
+					</span>
+				</div>
+				<div class="contai-stat-value">
+					<span class="contai-badge <?php echo esc_attr( $this->isConnected ? 'contai-badge-success' : 'contai-badge-warning' ); ?>">
+						<?php echo esc_html( $this->isConnected ? __( 'Connected', '1platform-content-ai' ) : __( 'Disconnected', '1platform-content-ai' ) ); ?>
+					</span>
+				</div>
+			</div>
+		</div>
+		<?php
+	}
 
-    private function renderActions(): void
-    {
-        $hasWebsite = $this->websiteConfig && !empty($this->websiteConfig['websiteId']);
-        ?>
-        <div class="contai-license-actions">
-            <form method="post" class="contai-license-form">
-                <?php wp_nonce_field($this->nonceAction, $this->nonceField); ?>
+	private function renderUserInfo(): void {
+		?>
+		<h3 class="contai-panel-title" style="font-size: 14px; margin: 24px 0 12px;">
+			<?php esc_html_e( 'Account Information', '1platform-content-ai' ); ?>
+		</h3>
+		<div class="contai-form-grid">
+			<div class="contai-field">
+				<div class="contai-field-head">
+					<span class="contai-label">
+						<span class="dashicons dashicons-id-alt" aria-hidden="true"></span>
+						<?php esc_html_e( 'User ID', '1platform-content-ai' ); ?>
+					</span>
+				</div>
+				<code class="contai-input contai-mono" style="background: var(--bg-2);">
+					<?php echo esc_html( $this->profile['userId'] ?? '-' ); ?>
+				</code>
+			</div>
+			<div class="contai-field">
+				<div class="contai-field-head">
+					<span class="contai-label">
+						<span class="dashicons dashicons-admin-users" aria-hidden="true"></span>
+						<?php esc_html_e( 'Username', '1platform-content-ai' ); ?>
+					</span>
+				</div>
+				<p class="contai-input" style="margin: 0;">
+					<?php echo esc_html( $this->profile['username'] ?? '-' ); ?>
+				</p>
+			</div>
+		</div>
+		<?php
+	}
 
-                <div class="contai-actions-row">
-                    <button type="submit" name="contai_refresh_profile" class="button button-secondary">
-                        <span class="dashicons dashicons-update"></span>
-                        <?php esc_html_e('Refresh Profile', '1platform-content-ai'); ?>
-                    </button>
-                    <button type="submit" name="contai_refresh_tokens" class="button button-secondary">
-                        <span class="dashicons dashicons-superhero"></span>
-                        <?php esc_html_e('Refresh Tokens', '1platform-content-ai'); ?>
-                    </button>
-                </div>
+	private function renderActions(): void {
+		$hasWebsite = $this->websiteConfig && ! empty( $this->websiteConfig['websiteId'] );
+		?>
+		<div class="contai-panel-foot">
+			<form method="post" style="display: contents;">
+				<?php wp_nonce_field( $this->nonceAction, $this->nonceField ); ?>
+				<span class="contai-panel-foot-meta">
+					<?php esc_html_e( 'Refresh profile or tokens if the connection is stale.', '1platform-content-ai' ); ?>
+				</span>
+				<div class="contai-panel-foot-actions">
+					<button type="submit" name="contai_refresh_profile" class="contai-btn contai-btn-secondary">
+						<span class="dashicons dashicons-update" aria-hidden="true"></span>
+						<?php esc_html_e( 'Refresh Profile', '1platform-content-ai' ); ?>
+					</button>
+					<button type="submit" name="contai_refresh_tokens" class="contai-btn contai-btn-secondary">
+						<span class="dashicons dashicons-superhero" aria-hidden="true"></span>
+						<?php esc_html_e( 'Refresh Tokens', '1platform-content-ai' ); ?>
+					</button>
+				</div>
+			</form>
+		</div>
 
-                <div class="contai-danger-zone">
-                    <h4 class="contai-danger-title">
-                        <span class="dashicons dashicons-warning"></span>
-                        <?php esc_html_e('Danger Zone', '1platform-content-ai'); ?>
-                    </h4>
+		<div class="contai-panel-body" style="border-top: 1px solid var(--border-1); background: var(--contai-error-bg);">
+			<h4 class="contai-panel-title" style="font-size: 14px; color: var(--contai-error-text); margin: 0 0 8px; display: flex; align-items: center; gap: 6px;">
+				<span class="dashicons dashicons-warning" aria-hidden="true"></span>
+				<?php esc_html_e( 'Danger Zone', '1platform-content-ai' ); ?>
+			</h4>
+			<form method="post">
+				<?php wp_nonce_field( $this->nonceAction, $this->nonceField ); ?>
+				<p class="contai-field-help" style="margin-bottom: 12px;">
+					<?php esc_html_e( 'Deactivating your license will disconnect this site from Content AI services. Your website data will be preserved on the server.', '1platform-content-ai' ); ?>
+				</p>
+				<button type="submit" name="contai_deactivate_license" class="contai-btn contai-btn-danger"
+					onclick="return confirm('<?php echo esc_js( __( 'Are you sure you want to deactivate your license? This will disconnect your site from Content AI services.', '1platform-content-ai' ) ); ?>');">
+					<span class="dashicons dashicons-dismiss" aria-hidden="true"></span>
+					<?php esc_html_e( 'Deactivate License', '1platform-content-ai' ); ?>
+				</button>
 
-                    <div class="contai-danger-content">
-                        <p class="contai-danger-description">
-                            <?php esc_html_e('Deactivating your license will disconnect this site from Content AI services. Your website data will be preserved on the server.', '1platform-content-ai'); ?>
-                        </p>
-                        <button type="submit" name="contai_deactivate_license" class="button button-danger"
-                                onclick="return confirm('<?php echo esc_js(__('Are you sure you want to deactivate your license? This will disconnect your site from Content AI services.', '1platform-content-ai')); ?>');">
-                            <span class="dashicons dashicons-dismiss"></span>
-                            <?php esc_html_e('Deactivate License', '1platform-content-ai'); ?>
-                        </button>
-                    </div>
-
-                    <?php if ($hasWebsite) : ?>
-                    <hr class="contai-danger-separator" />
-                    <div class="contai-danger-content">
-                        <p class="contai-danger-description">
-                            <?php esc_html_e('Permanently delete this website from Content AI servers. This action cannot be undone.', '1platform-content-ai'); ?>
-                        </p>
-                        <button type="submit" name="contai_delete_website" class="button button-danger"
-                                onclick="return confirm('<?php echo esc_js(__('Are you sure you want to permanently delete this website? This action cannot be undone and will remove all website data from Content AI servers.', '1platform-content-ai')); ?>');">
-                            <span class="dashicons dashicons-trash"></span>
-                            <?php esc_html_e('Delete Website', '1platform-content-ai'); ?>
-                        </button>
-                    </div>
-                    <?php endif; ?>
-                </div>
-            </form>
-        </div>
-        <?php
-    }
+				<?php if ( $hasWebsite ) : ?>
+					<hr style="margin: 16px 0; border: none; border-top: 1px solid var(--contai-error-border);">
+					<p class="contai-field-help" style="margin-bottom: 12px;">
+						<?php esc_html_e( 'Permanently delete this website from Content AI servers. This action cannot be undone.', '1platform-content-ai' ); ?>
+					</p>
+					<button type="submit" name="contai_delete_website" class="contai-btn contai-btn-danger"
+						onclick="return confirm('<?php echo esc_js( __( 'Are you sure you want to permanently delete this website? This action cannot be undone and will remove all website data from Content AI servers.', '1platform-content-ai' ) ); ?>');">
+						<span class="dashicons dashicons-trash" aria-hidden="true"></span>
+						<?php esc_html_e( 'Delete Website', '1platform-content-ai' ); ?>
+					</button>
+				<?php endif; ?>
+			</form>
+		</div>
+		<?php
+	}
 }

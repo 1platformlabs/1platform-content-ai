@@ -75,6 +75,9 @@
   --contai-shadow-lg:  0 8px 24px rgba(0,0,0,0.08);
   --contai-shadow-glow:0 0 0 3px rgba(34,113,177,0.12);
 
+  /* ── Overlay ── */
+  --contai-overlay: rgba(30,30,30,0.55);
+
   /* ── Typography ── */
   --contai-font-heading: 'Funnel Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --contai-font-sans:    'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;

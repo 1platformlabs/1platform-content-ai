@@ -42,14 +42,14 @@
 
         submitBtn.disabled  = true;
         var originalText    = submitBtn.innerHTML;
-        submitBtn.innerHTML = '<span class="dashicons dashicons-update-alt contai-spinning"></span> ' + contaiSiteGenI18n.starting;
-        submitBtn.classList.add('contai-btn-loading');
+        submitBtn.innerHTML = '<span class="contai-spinner" aria-hidden="true"></span>' + contaiSiteGenI18n.starting;
+        submitBtn.classList.add('is-loading');
 
         setTimeout(function () {
             if (!form.checkValidity()) {
                 submitBtn.disabled  = false;
                 submitBtn.innerHTML = originalText;
-                submitBtn.classList.remove('contai-btn-loading');
+                submitBtn.classList.remove('is-loading');
                 isSubmitting = false;
             }
         }, 100);

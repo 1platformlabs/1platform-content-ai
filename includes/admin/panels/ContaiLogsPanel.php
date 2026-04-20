@@ -26,21 +26,7 @@ class ContaiLogsPanel {
         $this->loadFilters();
         $this->fetchLogs();
 
-        // Enqueue CSS using admin-level base URL (avoids /../ in URLs)
-        $admin_base_url = plugin_dir_url(dirname(__FILE__));
-
-        contai_enqueue_style_with_version(
-            'contai-base',
-            $admin_base_url . 'content-generator/assets/css/base.css'
-        );
-
-        contai_enqueue_style_with_version(
-            'contai-logs-panel',
-            $admin_base_url . 'logs/assets/css/logs-panel.css',
-            ['contai-base']
-        );
-
-        echo '<div class="wrap">';
+        echo '<div class="wrap contai-app contai-page">';
         $this->renderPageHeader();
         $this->renderNotices();
         $this->renderPendingBufferBanner();
@@ -479,11 +465,10 @@ class ContaiLogsPanel {
         echo '<div class="contai-logs-table-card">';
 
         // Detail header with status
-        $dotClass = $detail['success'] ? 'contai-logs-status-dot--success' : 'contai-logs-status-dot--error';
-        $successBadge = $detail['success']
-            ? '<span class="contai-badge contai-badge-success">Success</span>'
-            : '<span class="contai-badge contai-badge-danger">Error</span>';
-        $badgeClass = ContaiLogsAdapter::getStatusBadgeClass($detail['response_status']);
+        $dotClass      = $detail['success'] ? 'contai-logs-status-dot--success' : 'contai-logs-status-dot--error';
+        $badgeVariant  = $detail['success'] ? 'contai-badge-success' : 'contai-badge-danger';
+        $badgeLabel    = $detail['success'] ? __( 'Success', '1platform-content-ai' ) : __( 'Error', '1platform-content-ai' );
+        $badgeClass    = ContaiLogsAdapter::getStatusBadgeClass( $detail['response_status'] );
         $statusDisplay = $detail['response_status'] > 0 ? $detail['response_status'] : 'N/A';
 
         echo '<div class="contai-logs-detail-header">';
@@ -491,7 +476,7 @@ class ContaiLogsPanel {
         echo '<h3>' . esc_html__('Log Detail', '1platform-content-ai') . '</h3>';
         echo '<div class="contai-logs-detail-header-meta">';
         echo '<span class="contai-logs-status-dot ' . esc_attr($dotClass) . '"></span>';
-        echo $successBadge;
+        echo '<span class="contai-badge ' . esc_attr( $badgeVariant ) . '">' . esc_html( $badgeLabel ) . '</span>';
         echo '<span class="contai-badge ' . esc_attr($badgeClass) . '">' . esc_html($statusDisplay) . '</span>';
         if (!empty($detail['trace_id'])) {
             echo '<code style="font-size:11px;color:var(--contai-neutral-400);font-family:var(--contai-font-mono);">' . esc_html($detail['trace_id']) . '</code>';

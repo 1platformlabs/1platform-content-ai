@@ -41,7 +41,7 @@ class ContaiPostMaintenancePanel {
     public function render(): void {
         $this->render_notices();
         ?>
-        <div class="contai-settings-panel contai-panel-maintenance">
+        <div class="contai-panel contai-panel-maintenance">
             <div class="contai-panel-body">
                 <div class="contai-maintenance-grid">
                     <div class="contai-maintenance-item">
