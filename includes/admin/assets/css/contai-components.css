@@ -1500,6 +1500,239 @@
 .contai-app :where(.contai-dots span:nth-child(3)) { animation-delay: .3s; }
 
 
+/* ─── Form validation ──────────────────────────────────────── */
+.contai-app :where(.contai-validation-summary) {
+    background: var(--contai-error-bg);
+    border: 1px solid var(--contai-error-border);
+    border-left: 3px solid var(--contai-error);
+    border-radius: var(--contai-radius-sm);
+    padding: 12px 14px;
+    display: flex;
+    gap: 10px;
+}
+.contai-app :where(.contai-validation-summary .dashicons) {
+    color: var(--contai-error);
+    font-size: 18px; width: 18px; height: 18px;
+    flex: none;
+    margin-top: 1px;
+}
+.contai-app :where(.contai-validation-summary h4) {
+    margin: 0 0 4px;
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--contai-error-text);
+}
+.contai-app :where(.contai-validation-summary ul) {
+    margin: 0;
+    padding-left: 16px;
+    font-size: 12.5px;
+    color: var(--contai-error-text);
+    line-height: 1.6;
+}
+.contai-app :where(.contai-validation-summary a) {
+    color: var(--contai-error-text);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.contai-app :where(.contai-field.is-success .contai-input),
+.contai-app :where(.contai-field.is-success .contai-select),
+.contai-app :where(.contai-field.is-success .contai-textarea) {
+    border-color: var(--contai-success);
+}
+.contai-app :where(.contai-field-success) {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 6px 0 0;
+    color: var(--contai-success);
+    font-size: 11.5px;
+    line-height: 1.5;
+}
+.contai-app :where(.contai-field-success .dashicons) {
+    color: var(--contai-success);
+    font-size: 14px; width: 14px; height: 14px;
+}
+
+.contai-app :where(.contai-counter) {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11.5px;
+    color: var(--fg-3);
+    margin: 6px 0 0;
+}
+.contai-app :where(.contai-counter-value) {
+    font-family: var(--contai-font-mono);
+}
+.contai-app :where(.contai-counter.is-near) { color: var(--contai-warning-text); }
+.contai-app :where(.contai-counter.is-over) { color: var(--contai-error); }
+
+.contai-app :where(.contai-strength) {
+    display: flex;
+    gap: 3px;
+    margin-top: 4px;
+}
+.contai-app :where(.contai-strength span) {
+    flex: 1;
+    height: 4px;
+    border-radius: var(--contai-radius-pill);
+    background: var(--bg-3);
+}
+.contai-app :where(.contai-strength[data-level="1"] span:nth-child(-n+1)) { background: var(--contai-error); }
+.contai-app :where(.contai-strength[data-level="2"] span:nth-child(-n+2)) { background: var(--contai-warning); }
+.contai-app :where(.contai-strength[data-level="3"] span:nth-child(-n+3)) { background: var(--contai-info); }
+.contai-app :where(.contai-strength[data-level="4"] span)                 { background: var(--contai-success); }
+
+
+/* ─── Data viz primitives ──────────────────────────────────── */
+.contai-app :where(.contai-spark) {
+    height: 40px;
+    width: 100%;
+    display: block;
+}
+
+.contai-app :where(.contai-bars) {
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    height: 60px;
+}
+.contai-app :where(.contai-bars span) {
+    flex: 1;
+    background: var(--contai-primary);
+    border-radius: 2px 2px 0 0;
+    min-height: 3px;
+    opacity: .85;
+}
+.contai-app :where(.contai-bars span:last-child) { opacity: 1; }
+.contai-app :where(.contai-bars-axis) {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--contai-font-mono);
+    font-size: 9.5px;
+    color: var(--fg-3);
+}
+
+.contai-app :where(.contai-donut) {
+    --contai-donut-pct: 0;
+    --contai-donut-color: var(--contai-primary);
+    width: 72px; height: 72px;
+    border-radius: 50%;
+    background: conic-gradient(var(--contai-donut-color) calc(var(--contai-donut-pct) * 1%), var(--bg-3) 0);
+    position: relative;
+    flex: none;
+}
+.contai-app :where(.contai-donut::after) {
+    content: "";
+    position: absolute;
+    inset: 11px;
+    background: #fff;
+    border-radius: 50%;
+}
+.contai-app :where(.contai-donut-value) {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--contai-font-heading);
+    font-size: 16px;
+    font-weight: 700;
+    z-index: 1;
+}
+.contai-app :where(.contai-donut-legend) {
+    font-size: 11.5px;
+    color: var(--fg-2);
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+.contai-app :where(.contai-donut-legend i) {
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 2px;
+    margin-right: 6px;
+    vertical-align: middle;
+}
+
+.contai-app :where(.contai-hbar-row) {
+    display: grid;
+    grid-template-columns: 1fr 40px;
+    gap: 8px;
+    align-items: center;
+    font-size: 11.5px;
+    padding: 3px 0;
+}
+.contai-app :where(.contai-hbar-row .contai-hbar-name) {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.contai-app :where(.contai-hbar-row .contai-hbar-count) {
+    font-family: var(--contai-font-mono);
+    font-size: 10.5px;
+    color: var(--fg-3);
+    text-align: right;
+}
+.contai-app :where(.contai-hbar) {
+    grid-column: 1 / 3;
+    height: 4px;
+    background: var(--bg-3);
+    border-radius: var(--contai-radius-pill);
+    overflow: hidden;
+    margin-top: -2px;
+}
+.contai-app :where(.contai-hbar-fill) {
+    height: 100%;
+    background: var(--contai-primary);
+    border-radius: var(--contai-radius-pill);
+}
+
+.contai-app :where(.contai-pring) {
+    width: 64px; height: 64px;
+    flex: none;
+    position: relative;
+}
+.contai-app :where(.contai-pring svg) {
+    transform: rotate(-90deg);
+}
+.contai-app :where(.contai-pring circle) {
+    fill: none;
+    stroke-width: 6;
+}
+.contai-app :where(.contai-pring .contai-pring-track) { stroke: var(--bg-3); }
+.contai-app :where(.contai-pring .contai-pring-fill) {
+    stroke: var(--contai-success);
+    stroke-linecap: round;
+    transition: var(--contai-duration-normal) var(--contai-ease);
+}
+.contai-app :where(.contai-pring-value) {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--contai-font-heading);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.contai-app :where(.contai-heatmap) {
+    display: grid;
+    grid-template-columns: repeat(14, 1fr);
+    gap: 3px;
+}
+.contai-app :where(.contai-heatmap span) {
+    aspect-ratio: 1;
+    border-radius: 2px;
+    background: var(--bg-3);
+}
+.contai-app :where(.contai-heatmap .is-l1) { background: var(--contai-primary-lighter); }
+.contai-app :where(.contai-heatmap .is-l2) { background: var(--contai-primary-light); }
+.contai-app :where(.contai-heatmap .is-l3) { background: var(--contai-primary-dark); }
+.contai-app :where(.contai-heatmap .is-l4) { background: var(--contai-primary); }
+
+
 /* ─── Responsive ───────────────────────────────────────────── */
 @media (max-width: 960px) {
     .contai-app :where(.contai-stat-grid) { grid-template-columns: repeat(2, 1fr); }
