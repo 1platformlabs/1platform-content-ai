@@ -1,263 +1,276 @@
 <?php
+/**
+ * Keywords List panel (UI v3).
+ *
+ * @package OnePlatformContentAI
+ */
 
-if (!defined('ABSPATH')) exit;
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
 
 require_once __DIR__ . '/../../../database/repositories/KeywordRepository.php';
 require_once __DIR__ . '/../../../services/PaginationService.php';
 
 class ContaiKeywordsListPanel {
 
-    private const ITEMS_PER_PAGE = 50;
+	private const ITEMS_PER_PAGE = 50;
 
-    private ContaiKeywordRepository $repository;
+	private ContaiKeywordRepository $repository;
 
-    public function __construct() {
-        $this->repository = new ContaiKeywordRepository();
-    }
+	public function __construct() {
+		$this->repository = new ContaiKeywordRepository();
+	}
 
-    public function render(): void {
-        ?>
-        <div class="contai-settings-panel contai-panel-keywords-list">
-            <div class="contai-panel-body">
-                <?php $this->render_keywords_table(); ?>
-            </div>
-        </div>
-        <?php
-    }
+	public function render(): void {
+		$filters    = $this->getFiltersFromRequest();
+		$totalItems = $this->repository->countWithFilters( $filters['search'], $filters['status'] );
 
-    private function render_keywords_table(): void {
-        $filters = $this->getFiltersFromRequest();
-        $totalItems = $this->repository->countWithFilters($filters['search'], $filters['status']);
+		if ( $totalItems === 0 ) {
+			$this->render_empty_state();
+			return;
+		}
 
-        if ($totalItems === 0) {
-            $this->render_empty_state();
-            return;
-        }
+		$pagination = new ContaiPaginationService(
+			$filters['page'],
+			$totalItems,
+			self::ITEMS_PER_PAGE
+		);
 
-        $pagination = new ContaiPaginationService(
-            $filters['page'],
-            $totalItems,
-            self::ITEMS_PER_PAGE
-        );
+		$keywords = $this->repository->findWithFilters(
+			$filters['search'],
+			$filters['status'],
+			$filters['orderby'],
+			$filters['order'],
+			self::ITEMS_PER_PAGE,
+			$pagination->getOffset()
+		);
 
-        $keywords = $this->repository->findWithFilters(
-            $filters['search'],
-            $filters['status'],
-            $filters['orderby'],
-            $filters['order'],
-            self::ITEMS_PER_PAGE,
-            $pagination->getOffset()
-        );
+		?>
+		<div class="contai-panel">
+			<div class="contai-panel-head">
+				<div class="contai-panel-head-main">
+					<div class="contai-tile" aria-hidden="true">
+						<span class="dashicons dashicons-list-view"></span>
+					</div>
+					<div>
+						<h2 class="contai-panel-title"><?php esc_html_e( 'Keywords', '1platform-content-ai' ); ?></h2>
+						<p class="contai-panel-desc">
+							<?php
+							printf(
+								/* translators: %d: total keywords */
+								esc_html__( '%d extracted keywords available for content generation.', '1platform-content-ai' ),
+								intval( $totalItems )
+							);
+							?>
+						</p>
+					</div>
+				</div>
+			</div>
+			<div class="contai-panel-body" style="padding: 0;">
+				<div class="contai-table-wrap">
+					<?php $this->render_toolbar( $filters ); ?>
+					<table class="contai-table">
+						<thead>
+							<tr>
+								<?php $this->render_sortable_header( 'keyword', __( 'Keyword', '1platform-content-ai' ), $filters ); ?>
+								<?php $this->render_sortable_header( 'title', __( 'Title', '1platform-content-ai' ), $filters ); ?>
+								<?php $this->render_sortable_header( 'volume', __( 'Volume', '1platform-content-ai' ), $filters ); ?>
+								<?php $this->render_sortable_header( 'status', __( 'Status', '1platform-content-ai' ), $filters ); ?>
+							</tr>
+						</thead>
+						<tbody>
+							<?php foreach ( $keywords as $keyword ) : ?>
+								<tr id="keyword-<?php echo esc_attr( $keyword->getId() ); ?>">
+									<td><strong><?php echo esc_html( $keyword->getKeyword() ); ?></strong></td>
+									<td><?php echo esc_html( $keyword->getTitle() ); ?></td>
+									<td class="contai-mono"><?php echo esc_html( number_format( $keyword->getVolume() ) ); ?></td>
+									<td>
+										<span class="contai-badge <?php echo esc_attr( $this->getStatusBadgeVariant( $keyword->getStatus() ) ); ?>">
+											<?php echo esc_html( ucfirst( $keyword->getStatus() ) ); ?>
+										</span>
+									</td>
+								</tr>
+							<?php endforeach; ?>
+						</tbody>
+					</table>
+				</div>
+			</div>
+			<?php $this->render_pagination( $pagination ); ?>
+		</div>
+		<?php
+	}
 
-        ?>
-        <div class="contai-keywords-list-container">
-            <?php $this->render_filters($filters); ?>
-            <?php $this->render_table_header($filters); ?>
-            <table class="contai-keywords-table">
-                <thead>
-                    <tr>
-                        <?php $this->render_sortable_header('keyword', esc_html__('ContaiKeyword', '1platform-content-ai'), $filters); ?>
-                        <?php $this->render_sortable_header('title', esc_html__('Title', '1platform-content-ai'), $filters); ?>
-                        <?php $this->render_sortable_header('volume', esc_html__('Volume', '1platform-content-ai'), $filters); ?>
-                        <?php $this->render_sortable_header('status', esc_html__('Status', '1platform-content-ai'), $filters); ?>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($keywords as $keyword): ?>
-                        <tr id="keyword-<?php echo esc_attr($keyword->getId()); ?>">
-                            <td><strong><?php echo esc_html($keyword->getKeyword()); ?></strong></td>
-                            <td><?php echo esc_html($keyword->getTitle()); ?></td>
-                            <td><?php echo esc_html(number_format($keyword->getVolume())); ?></td>
-                            <td>
-                                <span class="contai-status-badge contai-status-<?php echo esc_attr($keyword->getStatus()); ?>">
-                                    <?php echo esc_html(ucfirst($keyword->getStatus())); ?>
-                                </span>
-                            </td>
-                        </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
-            <?php $this->render_pagination($pagination); ?>
-        </div>
-        <?php
-    }
+	private function getFiltersFromRequest(): array {
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- Display-only filter/sort/pagination params.
+		return array(
+			'page'    => isset( $_GET['paged'] ) ? max( 1, absint( wp_unslash( $_GET['paged'] ) ) ) : 1,
+			'search'  => isset( $_GET['s'] ) ? sanitize_text_field( wp_unslash( $_GET['s'] ) ) : null,
+			'status'  => isset( $_GET['status'] ) ? sanitize_text_field( wp_unslash( $_GET['status'] ) ) : null,
+			'orderby' => isset( $_GET['orderby'] ) ? sanitize_key( wp_unslash( $_GET['orderby'] ) ) : 'volume',
+			'order'   => isset( $_GET['order'] ) ? sanitize_key( wp_unslash( $_GET['order'] ) ) : 'DESC',
+		);
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
+	}
 
-    private function getFiltersFromRequest(): array {
-        // phpcs:disable WordPress.Security.NonceVerification.Recommended -- Display-only filter/sort/pagination parameters.
-        return [
-            'page' => isset($_GET['paged']) ? max(1, absint( wp_unslash( $_GET['paged'] ) )) : 1,
-            'search' => isset($_GET['s']) ? sanitize_text_field( wp_unslash( $_GET['s'] ) ) : null,
-            'status' => isset($_GET['status']) ? sanitize_text_field( wp_unslash( $_GET['status'] ) ) : null,
-            'orderby' => isset($_GET['orderby']) ? sanitize_key( wp_unslash( $_GET['orderby'] ) ) : 'volume',
-            'order' => isset($_GET['order']) ? sanitize_key( wp_unslash( $_GET['order'] ) ) : 'DESC',
-        ];
-        // phpcs:enable WordPress.Security.NonceVerification.Recommended
-    }
+	private function render_toolbar( array $filters ): void {
+		?>
+		<div class="contai-table-toolbar">
+			<div class="contai-table-toolbar-left">
+				<div class="contai-table-search">
+					<span class="dashicons dashicons-search" aria-hidden="true"></span>
+					<input
+						type="text"
+						id="contai-keyword-search"
+						class="contai-input"
+						placeholder="<?php esc_attr_e( 'Search keywords or titles…', '1platform-content-ai' ); ?>"
+						value="<?php echo esc_attr( $filters['search'] ?? '' ); ?>">
+				</div>
+				<button type="button" class="contai-btn contai-btn-secondary contai-btn-sm contai-search-button">
+					<span class="dashicons dashicons-search" aria-hidden="true"></span>
+					<?php esc_html_e( 'Search', '1platform-content-ai' ); ?>
+				</button>
+				<select id="contai-status-filter" class="contai-select" style="width: auto;">
+					<option value="all" <?php selected( $filters['status'], null ); ?>>
+						<?php esc_html_e( 'All Statuses', '1platform-content-ai' ); ?>
+					</option>
+					<option value="active" <?php selected( $filters['status'], 'active' ); ?>>
+						<?php esc_html_e( 'Active', '1platform-content-ai' ); ?>
+					</option>
+					<option value="inactive" <?php selected( $filters['status'], 'inactive' ); ?>>
+						<?php esc_html_e( 'Inactive', '1platform-content-ai' ); ?>
+					</option>
+					<option value="pending" <?php selected( $filters['status'], 'pending' ); ?>>
+						<?php esc_html_e( 'Pending', '1platform-content-ai' ); ?>
+					</option>
+				</select>
+				<?php if ( $filters['search'] || $filters['status'] ) : ?>
+					<button type="button" class="contai-btn contai-btn-ghost contai-btn-sm contai-clear-filters">
+						<?php esc_html_e( 'Clear Filters', '1platform-content-ai' ); ?>
+					</button>
+				<?php endif; ?>
+			</div>
+		</div>
+		<?php
+	}
 
-    private function render_filters(array $filters): void {
-        ?>
-        <div class="contai-keywords-filters">
-            <div class="contai-filter-group">
-                <input
-                    type="text"
-                    id="contai-keyword-search"
-                    class="contai-search-input"
-                    placeholder="<?php esc_attr_e('Search keywords or titles...', '1platform-content-ai'); ?>"
-                    value="<?php echo esc_attr($filters['search'] ?? ''); ?>"
-                >
-                <button type="button" class="button contai-search-button">
-                    <span class="dashicons dashicons-search"></span>
-                    <?php esc_html_e('Search', '1platform-content-ai'); ?>
-                </button>
-            </div>
+	private function render_sortable_header( string $column, string $label, array $filters ): void {
+		$isSorted     = $filters['orderby'] === $column;
+		$currentOrder = $filters['order'];
+		$nextOrder    = ( $isSorted && $currentOrder === 'ASC' ) ? 'DESC' : 'ASC';
+		$sortClass    = $isSorted ? 'sort sorted' : 'sort';
 
-            <div class="contai-filter-group">
-                <select id="contai-status-filter" class="contai-status-select">
-                    <option value="all" <?php selected($filters['status'], null); ?>>
-                        <?php esc_html_e('All Statuses', '1platform-content-ai'); ?>
-                    </option>
-                    <option value="active" <?php selected($filters['status'], 'active'); ?>>
-                        <?php esc_html_e('Active', '1platform-content-ai'); ?>
-                    </option>
-                    <option value="inactive" <?php selected($filters['status'], 'inactive'); ?>>
-                        <?php esc_html_e('Inactive', '1platform-content-ai'); ?>
-                    </option>
-                    <option value="pending" <?php selected($filters['status'], 'pending'); ?>>
-                        <?php esc_html_e('Pending', '1platform-content-ai'); ?>
-                    </option>
-                </select>
-            </div>
+		$url = add_query_arg(
+			array(
+				'orderby' => $column,
+				'order'   => $nextOrder,
+				's'       => $filters['search'],
+				'status'  => $filters['status'],
+				'paged'   => 1,
+			)
+		);
+		?>
+		<th class="<?php echo esc_attr( $sortClass ); ?>">
+			<a href="<?php echo esc_url( $url ); ?>" style="color: inherit; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
+				<?php echo esc_html( $label ); ?>
+				<?php if ( $isSorted ) : ?>
+					<span class="dashicons dashicons-arrow-<?php echo esc_attr( $currentOrder === 'ASC' ? 'up' : 'down' ); ?>" aria-hidden="true"></span>
+				<?php endif; ?>
+			</a>
+		</th>
+		<?php
+	}
 
-            <?php if ($filters['search'] || $filters['status']): ?>
-                <button type="button" class="button contai-clear-filters">
-                    <?php esc_html_e('Clear Filters', '1platform-content-ai'); ?>
-                </button>
-            <?php endif; ?>
-        </div>
-        <?php
-    }
+	private function render_pagination( ContaiPaginationService $pagination ): void {
+		if ( ! $pagination->hasPages() ) {
+			return;
+		}
 
-    private function render_table_header(array $filters): void {
-        $totalItems = $this->repository->countWithFilters($filters['search'], $filters['status']);
-        ?>
-        <div class="contai-table-header">
-            <p class="contai-items-count">
-                <?php
-                printf(
-                    /* translators: %d: total number of keywords */
-                    esc_html__('Showing %d keywords', '1platform-content-ai'),
-                    intval($totalItems)
-                );
-                ?>
-            </p>
-        </div>
-        <?php
-    }
+		$filters    = $this->getFiltersFromRequest();
+		$totalItems = $this->repository->countWithFilters( $filters['search'], $filters['status'] );
+		?>
+		<div class="contai-panel-foot">
+			<span class="contai-panel-foot-meta">
+				<?php
+				printf(
+					/* translators: %1$d: start item, %2$d: end item, %3$d: total items */
+					esc_html__( 'Showing %1$d to %2$d of %3$d items', '1platform-content-ai' ),
+					intval( $pagination->getStartItemNumber() ),
+					intval( $pagination->getEndItemNumber() ),
+					intval( $totalItems )
+				);
+				?>
+			</span>
+			<div class="contai-panel-foot-actions">
+				<?php if ( $pagination->hasPreviousPage() ) : ?>
+					<a href="<?php echo esc_url( $this->getPaginationUrl( $pagination->getPreviousPage() ) ); ?>" class="contai-btn contai-btn-secondary contai-btn-sm">
+						<span class="dashicons dashicons-arrow-left-alt2" aria-hidden="true"></span>
+						<?php esc_html_e( 'Previous', '1platform-content-ai' ); ?>
+					</a>
+				<?php endif; ?>
+				<?php foreach ( $pagination->getVisiblePages() as $page ) : ?>
+					<?php if ( $page === $pagination->getCurrentPage() ) : ?>
+						<span class="contai-btn contai-btn-primary contai-btn-sm" aria-current="page"><?php echo esc_html( $page ); ?></span>
+					<?php else : ?>
+						<a href="<?php echo esc_url( $this->getPaginationUrl( $page ) ); ?>" class="contai-btn contai-btn-ghost contai-btn-sm">
+							<?php echo esc_html( $page ); ?>
+						</a>
+					<?php endif; ?>
+				<?php endforeach; ?>
+				<?php if ( $pagination->hasNextPage() ) : ?>
+					<a href="<?php echo esc_url( $this->getPaginationUrl( $pagination->getNextPage() ) ); ?>" class="contai-btn contai-btn-secondary contai-btn-sm">
+						<?php esc_html_e( 'Next', '1platform-content-ai' ); ?>
+						<span class="dashicons dashicons-arrow-right-alt2" aria-hidden="true"></span>
+					</a>
+				<?php endif; ?>
+			</div>
+		</div>
+		<?php
+	}
 
-    private function render_sortable_header(string $column, string $label, array $filters): void {
-        $isSorted = $filters['orderby'] === $column;
-        $currentOrder = $filters['order'];
-        $nextOrder = ($isSorted && $currentOrder === 'ASC') ? 'DESC' : 'ASC';
-        $sortClass = $isSorted ? 'sorted ' . strtolower($currentOrder) : 'sortable';
+	private function getPaginationUrl( int $page ): string {
+		$filters = $this->getFiltersFromRequest();
+		return add_query_arg(
+			array(
+				'paged'   => $page,
+				's'       => $filters['search'],
+				'status'  => $filters['status'],
+				'orderby' => $filters['orderby'],
+				'order'   => $filters['order'],
+			)
+		);
+	}
 
-        $url = add_query_arg([
-            'orderby' => $column,
-            'order' => $nextOrder,
-            's' => $filters['search'],
-            'status' => $filters['status'],
-            'paged' => 1,
-        ]);
-        ?>
-        <th class="<?php echo esc_attr($sortClass); ?>">
-            <a href="<?php echo esc_url($url); ?>">
-                <?php echo esc_html($label); ?>
-                <?php if ($isSorted): ?>
-                    <span class="dashicons dashicons-arrow-<?php echo esc_attr( $currentOrder === 'ASC' ? 'up' : 'down' ); ?>"></span>
-                <?php endif; ?>
-            </a>
-        </th>
-        <?php
-    }
+	private function getStatusBadgeVariant( string $status ): string {
+		$map = array(
+			'active'   => 'contai-badge-success',
+			'done'     => 'contai-badge-success',
+			'inactive' => 'contai-badge-neutral',
+			'pending'  => 'contai-badge-warning',
+			'failed'   => 'contai-badge-danger',
+		);
+		return $map[ strtolower( $status ) ] ?? 'contai-badge-neutral';
+	}
 
-    private function render_pagination(ContaiPaginationService $pagination): void {
-        if (!$pagination->hasPages()) {
-            return;
-        }
-
-        $filters = $this->getFiltersFromRequest();
-        ?>
-        <div class="contai-pagination">
-            <div class="contai-pagination-info">
-                <?php
-                printf(
-                    /* translators: %1$d: start item number, %2$d: end item number, %3$d: total number of items */
-                    esc_html__('Showing %1$d to %2$d of %3$d items', '1platform-content-ai'),
-                    intval($pagination->getStartItemNumber()),
-                    intval($pagination->getEndItemNumber()),
-                    intval($this->repository->countWithFilters($filters['search'], $filters['status']))
-                );
-                ?>
-            </div>
-
-            <div class="contai-pagination-links">
-                <?php if ($pagination->hasPreviousPage()): ?>
-                    <a href="<?php echo esc_url($this->getPaginationUrl($pagination->getPreviousPage())); ?>"
-                       class="contai-page-link contai-prev-page">
-                        <span class="dashicons dashicons-arrow-left-alt2"></span>
-                        <?php esc_html_e('Previous', '1platform-content-ai'); ?>
-                    </a>
-                <?php endif; ?>
-
-                <div class="contai-page-numbers">
-                    <?php foreach ($pagination->getVisiblePages() as $page): ?>
-                        <?php if ($page === $pagination->getCurrentPage()): ?>
-                            <span class="contai-page-number contai-current-page"><?php echo esc_html($page); ?></span>
-                        <?php else: ?>
-                            <a href="<?php echo esc_url($this->getPaginationUrl($page)); ?>"
-                               class="contai-page-number">
-                                <?php echo esc_html($page); ?>
-                            </a>
-                        <?php endif; ?>
-                    <?php endforeach; ?>
-                </div>
-
-                <?php if ($pagination->hasNextPage()): ?>
-                    <a href="<?php echo esc_url($this->getPaginationUrl($pagination->getNextPage())); ?>"
-                       class="contai-page-link contai-next-page">
-                        <?php esc_html_e('Next', '1platform-content-ai'); ?>
-                        <span class="dashicons dashicons-arrow-right-alt2"></span>
-                    </a>
-                <?php endif; ?>
-            </div>
-        </div>
-        <?php
-    }
-
-    private function getPaginationUrl(int $page): string {
-        $filters = $this->getFiltersFromRequest();
-        return add_query_arg([
-            'paged' => $page,
-            's' => $filters['search'],
-            'status' => $filters['status'],
-            'orderby' => $filters['orderby'],
-            'order' => $filters['order'],
-        ]);
-    }
-
-    private function render_empty_state(): void {
-        ?>
-        <div class="contai-notice contai-notice-info">
-            <span class="dashicons dashicons-info"></span>
-            <div>
-                <p><?php esc_html_e('No keywords have been extracted yet.', '1platform-content-ai'); ?></p>
-                <p>
-                    <a href="<?php echo esc_url(add_query_arg('section', 'keyword-extractor', admin_url('admin.php?page=contai-content-generator'))); ?>"
-                       class="button button-primary">
-                        <?php esc_html_e('Extract Keywords Now', '1platform-content-ai'); ?>
-                    </a>
-                </p>
-            </div>
-        </div>
-        <?php
-    }
+	private function render_empty_state(): void {
+		?>
+		<div class="contai-empty">
+			<div class="contai-empty-icon is-primary" aria-hidden="true">
+				<span class="dashicons dashicons-search"></span>
+			</div>
+			<h3 class="contai-empty-title">
+				<?php esc_html_e( 'No keywords yet', '1platform-content-ai' ); ?>
+			</h3>
+			<p class="contai-empty-desc">
+				<?php esc_html_e( 'Extract keywords from any topic to start generating content.', '1platform-content-ai' ); ?>
+			</p>
+			<div class="contai-empty-actions">
+				<a href="<?php echo esc_url( add_query_arg( 'section', 'keyword-extractor', admin_url( 'admin.php?page=contai-content-generator' ) ) ); ?>" class="contai-btn contai-btn-primary">
+					<span class="dashicons dashicons-search" aria-hidden="true"></span>
+					<?php esc_html_e( 'Extract Keywords Now', '1platform-content-ai' ); ?>
+				</a>
+			</div>
+		</div>
+		<?php
+	}
 }
