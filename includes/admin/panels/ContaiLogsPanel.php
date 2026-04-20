@@ -26,21 +26,7 @@ class ContaiLogsPanel {
         $this->loadFilters();
         $this->fetchLogs();
 
-        // Enqueue CSS using admin-level base URL (avoids /../ in URLs)
-        $admin_base_url = plugin_dir_url(dirname(__FILE__));
-
-        contai_enqueue_style_with_version(
-            'contai-base',
-            $admin_base_url . 'content-generator/assets/css/base.css'
-        );
-
-        contai_enqueue_style_with_version(
-            'contai-logs-panel',
-            $admin_base_url . 'logs/assets/css/logs-panel.css',
-            ['contai-base']
-        );
-
-        echo '<div class="wrap">';
+        echo '<div class="wrap contai-app contai-page">';
         $this->renderPageHeader();
         $this->renderNotices();
         $this->renderPendingBufferBanner();

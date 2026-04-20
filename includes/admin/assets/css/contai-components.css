@@ -988,7 +988,7 @@
     width: 32px; height: 32px;
     border-radius: var(--contai-radius-md);
     overflow: hidden;
-    background: #0a0a0f;
+    background: var(--contai-neutral-700);
     display: flex; align-items: center; justify-content: center;
     flex: none;
 }

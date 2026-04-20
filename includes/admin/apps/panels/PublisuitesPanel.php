@@ -316,16 +316,5 @@ class ContaiPublisuitesPanel
             );
         }
 
-        $cssFile = $baseDir . '/assets/css/publisuites.css';
-        $cssUrl  = plugins_url('assets/css/publisuites.css', $baseDir . '/dummy.php');
-
-        if (file_exists($cssFile)) {
-            wp_enqueue_style(
-                'contai-publisuites',
-                $cssUrl,
-                [],
-                filemtime($cssFile)
-            );
-        }
     }
 }
