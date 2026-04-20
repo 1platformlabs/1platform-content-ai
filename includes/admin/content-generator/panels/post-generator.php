@@ -103,8 +103,8 @@ class ContaiPostGeneratorPanel {
 								</label>
 							</div>
 							<select id="contai_image_provider" name="image_provider" class="contai-select" required>
-								<option value="pexels" <?php selected( get_option( 'contai_image_provider', 'pexels' ), 'pexels' ); ?>>Pexels</option>
-								<option value="pixabay" <?php selected( get_option( 'contai_image_provider', 'pexels' ), 'pixabay' ); ?>>Pixabay</option>
+								<option value="pexels" <?php selected( get_option( 'contai_image_provider', 'pexels' ), 'pexels' ); ?>><?php esc_html_e( 'Stock Photos (Free)', '1platform-content-ai' ); ?></option>
+								<option value="pixabay" <?php selected( get_option( 'contai_image_provider', 'pexels' ), 'pixabay' ); ?>><?php esc_html_e( 'Stock Images (Free)', '1platform-content-ai' ); ?></option>
 							</select>
 							<p class="contai-field-help">
 								<span class="dashicons dashicons-info" aria-hidden="true"></span>

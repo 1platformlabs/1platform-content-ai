@@ -221,7 +221,7 @@
             .catch(function (err) {
                 grid.style.display = 'none';
                 empty.querySelector('.contai-empty-title').textContent = 'Error loading templates';
-                empty.querySelector('.contai-empty-text').textContent = err.message || 'Please try again.';
+                empty.querySelector('.contai-empty-desc').textContent = err.message || 'Please try again.';
                 empty.style.display = '';
                 showToast(err.message || 'Could not load catalog.', 'error');
             });
