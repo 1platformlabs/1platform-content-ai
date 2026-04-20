@@ -1,4 +1,13 @@
 <?php
+/**
+ * Site Wizard admin screen.
+ *
+ * Ported to UI v3 design system.
+ * Foundation CSS/JS is enqueued globally from the main plugin file on every
+ * plugin admin page, so no per-screen enqueue is needed here.
+ *
+ * @package OnePlatformContentAI
+ */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -9,36 +18,12 @@ require_once __DIR__ . '/../database/repositories/JobRepository.php';
 require_once __DIR__ . '/../database/models/Job.php';
 require_once __DIR__ . '/../services/category-api/CategoryAPIService.php';
 
-function contai_enqueue_ai_site_generator_styles() {
-	$screen = get_current_screen();
-
-	if ( ! $screen ) {
-		return;
-	}
-
-	if ( strpos( $screen->id, 'contai-ai-site-generator' ) !== false ) {
-		contai_enqueue_style_with_version(
-			'contai-content-generator-base',
-			plugin_dir_url( __FILE__ ) . 'content-generator/assets/css/base.css',
-			array()
-		);
-
-		contai_enqueue_style_with_version(
-			'contai-ai-site-generator',
-			plugin_dir_url( __FILE__ ) . 'assets/css/admin-ai-site-generator.css',
-			array( 'contai-content-generator-base' )
-		);
-	}
-}
-add_action( 'admin_enqueue_scripts', 'contai_enqueue_ai_site_generator_styles', 20 );
-
 function contai_handle_ai_site_generator_submission() {
-    // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce is verified below via wp_verify_nonce().
+	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce is verified below via wp_verify_nonce().
 	if ( ! isset( $_POST['contai_start_site_generation'] ) ) {
 		return;
 	}
 
-	// Verify nonce — show inline error instead of redirecting to avoid silent refresh (#54)
 	$nonce_value = isset( $_POST['contai_site_generator_nonce'] )
 		? sanitize_key( wp_unslash( $_POST['contai_site_generator_nonce'] ) )
 		: '';
@@ -71,17 +56,7 @@ function contai_handle_ai_site_generator_submission() {
 	}
 }
 
-/**
- * Process the site generation form submission.
- *
- * Returns an error array on validation failure (displayed inline without
- * redirect so the user keeps their form data). Returns null on success
- * and redirects to show the progress panel (#54).
- *
- * @return array|null Error notice array on failure, null on success (redirects).
- */
 function contai_process_site_generation_submission() {
-	// Validate that category is configured
 	$site_category = sanitize_text_field( wp_unslash( $_POST['contai_site_category'] ?? '' ) );
 	if ( empty( $site_category ) ) {
 		return array(
@@ -90,7 +65,6 @@ function contai_process_site_generation_submission() {
 		);
 	}
 
-	// Validate credits before starting site generation
 	require_once __DIR__ . '/../services/billing/CreditGuard.php';
 	$creditGuard = new ContaiCreditGuard();
 	$creditCheck = $creditGuard->validateCredits();
@@ -167,14 +141,11 @@ function contai_process_site_generation_submission() {
 		);
 	}
 
-	// Save site configuration to options for use by other services
 	update_option( 'contai_site_language', $site_language );
 	if ( ! empty( $_POST['contai_site_category'] ) ) {
 		update_option( 'contai_site_category', sanitize_text_field( wp_unslash( $_POST['contai_site_category'] ) ) );
 	}
 
-	// Save AdSense publisher ID immediately so it appears in Ads Manager
-	// before the background job completes (fixes #12)
 	$adsense_publisher = sanitize_text_field( wp_unslash( $_POST['contai_adsense_publisher'] ?? '' ) );
 	if ( ! empty( $adsense_publisher ) && preg_match( '/^pub-\d+$/', $adsense_publisher ) ) {
 		update_option( 'contai_adsense_publishers', $adsense_publisher );
@@ -203,10 +174,8 @@ function contai_ai_site_generator_page() {
 	$activeJob = $jobRepository->findActiveSiteGenerationJob();
 	$hasActiveJob = ! empty( $activeJob );
 
-	// Display inline notice from current POST (no redirect needed — form data preserved)
 	$notice = $GLOBALS['contai_site_gen_inline_notice'] ?? null;
 
-	// Fallback: check transient (from success redirect)
 	if ( ! $notice ) {
 		$notice = get_transient( 'contai_site_gen_notice' );
 		if ( ! empty( $notice ) && is_array( $notice ) ) {
@@ -220,24 +189,35 @@ function contai_ai_site_generator_page() {
 		$type = in_array( $notice['type'], array( 'success', 'error', 'warning', 'info' ), true ) ? $notice['type'] : 'info';
 		$msg  = $notice['message'] ?? '';
 		if ( ! empty( $msg ) ) {
+			$icon_map = array(
+				'success' => 'dashicons-yes-alt',
+				'error'   => 'dashicons-warning',
+				'warning' => 'dashicons-warning',
+				'info'    => 'dashicons-info',
+			);
 			printf(
-				'<div class="notice notice-%s is-dismissible"><p>%s</p></div>',
+				'<div class="contai-app contai-notice contai-notice-%1$s"><span class="dashicons %2$s" aria-hidden="true"></span><p>%3$s</p></div>',
 				esc_attr( $type ),
+				esc_attr( $icon_map[ $type ] ),
 				esc_html( $msg )
 			);
 		}
 	}
 
 	?>
-	<div class="wrap contai-wizard-wrap">
-		<div class="contai-wizard-header">
-			<div class="contai-wizard-header-content">
-				<div class="contai-wizard-icon">
-					<span class="dashicons dashicons-admin-site-alt3"></span>
-				</div>
-				<div class="contai-wizard-header-text">
-					<h1><?php esc_html_e( 'Site Wizard', '1platform-content-ai' ); ?></h1>
-					<p><?php esc_html_e( 'Set up your entire website with AI-powered automation. Configure your settings and let the wizard handle the rest.', '1platform-content-ai' ); ?></p>
+	<div class="wrap contai-app contai-page">
+		<div class="contai-page-header">
+			<div class="contai-page-header-row">
+				<div>
+					<h1 class="contai-page-title">
+						<span class="contai-tile" aria-hidden="true">
+							<span class="dashicons dashicons-admin-site-alt3"></span>
+						</span>
+						<?php esc_html_e( 'Site Wizard', '1platform-content-ai' ); ?>
+					</h1>
+					<p class="contai-page-subtitle">
+						<?php esc_html_e( 'Set up your entire website with AI-powered automation. Configure your settings and let the wizard handle the rest.', '1platform-content-ai' ); ?>
+					</p>
 				</div>
 			</div>
 		</div>
@@ -253,10 +233,7 @@ function contai_ai_site_generator_page() {
 }
 
 /**
- * Render a notice about the last site generation job (failed or completed).
- *
- * Shows error details for failed jobs so the user understands what went wrong
- * before re-running the wizard. Without this, failed jobs are invisible (#55).
+ * Render a notice about the last failed site generation job.
  *
  * @param ContaiJobRepository $jobRepository The job repository instance.
  */
@@ -268,111 +245,130 @@ function contai_render_last_job_notice( ContaiJobRepository $jobRepository ) {
 	}
 
 	$status = $lastJob->getStatus();
-
-	if ( $status === 'failed' ) {
-		$errorMessage = $lastJob->getErrorMessage() ?? __( 'Unknown error', '1platform-content-ai' );
-		$completedSteps = $lastJob->getPayload()['progress']['completed_steps'] ?? array();
-		$totalSteps     = $lastJob->getPayload()['progress']['total_steps'] ?? 0;
-		$failedStep     = $lastJob->getPayload()['progress']['current_step_name'] ?? '';
-
-		?>
-		<div class="contai-info-box contai-info-box-error" style="margin-bottom: 20px;">
-			<div class="contai-info-box-icon">
-				<span class="dashicons dashicons-warning"></span>
-			</div>
-			<div class="contai-info-box-content">
-				<h4><?php esc_html_e( 'Previous Generation Failed', '1platform-content-ai' ); ?></h4>
-				<p>
-					<?php
-					printf(
-						/* translators: %1$d: completed steps, %2$d: total steps */
-						esc_html__( 'The last site generation failed after completing %1$d of %2$d steps.', '1platform-content-ai' ),
-						count( $completedSteps ),
-						intval( $totalSteps )
-					);
-					?>
-				</p>
-				<?php if ( ! empty( $failedStep ) ) : ?>
-					<p>
-						<strong><?php esc_html_e( 'Failed at:', '1platform-content-ai' ); ?></strong>
-						<?php echo esc_html( ucwords( str_replace( '_', ' ', $failedStep ) ) ); ?>
-					</p>
-				<?php endif; ?>
-				<p>
-					<strong><?php esc_html_e( 'Error:', '1platform-content-ai' ); ?></strong>
-					<?php echo esc_html( $errorMessage ); ?>
-				</p>
-				<p style="margin-top: 10px; color: #666;">
-					<?php esc_html_e( 'You can re-run the wizard below to retry. Previously completed steps will be re-applied.', '1platform-content-ai' ); ?>
-				</p>
-			</div>
-		</div>
-		<?php
+	if ( $status !== 'failed' ) {
+		return;
 	}
+
+	$errorMessage   = $lastJob->getErrorMessage() ?? __( 'Unknown error', '1platform-content-ai' );
+	$completedSteps = $lastJob->getPayload()['progress']['completed_steps'] ?? array();
+	$totalSteps     = $lastJob->getPayload()['progress']['total_steps'] ?? 0;
+	$failedStep     = $lastJob->getPayload()['progress']['current_step_name'] ?? '';
+
+	// Failed job notice (#55) — status === 'failed'
+	?>
+	<div class="contai-notice contai-notice-error">
+		<span class="dashicons dashicons-warning" aria-hidden="true"></span>
+		<div>
+			<p><strong><?php esc_html_e( 'Previous Generation Failed', '1platform-content-ai' ); ?></strong></p>
+			<p>
+				<?php
+				printf(
+					/* translators: %1$d: completed steps, %2$d: total steps */
+					esc_html__( 'The last site generation failed after completing %1$d of %2$d steps.', '1platform-content-ai' ),
+					count( $completedSteps ),
+					intval( $totalSteps )
+				);
+				?>
+			</p>
+			<?php if ( ! empty( $failedStep ) ) : ?>
+				<p>
+					<strong><?php esc_html_e( 'Failed at:', '1platform-content-ai' ); ?></strong>
+					<?php echo esc_html( ucwords( str_replace( '_', ' ', $failedStep ) ) ); ?>
+				</p>
+			<?php endif; ?>
+			<p>
+				<strong><?php esc_html_e( 'Error:', '1platform-content-ai' ); ?></strong>
+				<?php echo esc_html( $errorMessage ); ?>
+			</p>
+			<p><?php esc_html_e( 'You can re-run the wizard below to retry. Previously completed steps will be re-applied.', '1platform-content-ai' ); ?></p>
+		</div>
+	</div>
+	<?php
 }
 
 function contai_render_active_job_status( $job ) {
 	require_once __DIR__ . '/../services/billing/CreditGuard.php';
-	$payload = $job->getPayload();
-	$progress = $payload['progress'] ?? array();
-	$currentStep = $progress['current_step_name'] ?? 'Unknown';
+	$payload        = $job->getPayload();
+	$progress       = $payload['progress'] ?? array();
+	$currentStep    = $progress['current_step_name'] ?? 'Unknown';
 	$completedSteps = $progress['completed_steps'] ?? array();
-	$totalSteps = $progress['total_steps'] ?? ( new ContaiSiteGenerationJob() )->getStepCount();
+	$totalSteps     = $progress['total_steps'] ?? ( new ContaiSiteGenerationJob() )->getStepCount();
 	$completedCount = count( $completedSteps );
-	$percentage = $totalSteps > 0 ? round( ( $completedCount / $totalSteps ) * 100 ) : 0;
-	$status = $job->getStatus();
+	$percentage     = $totalSteps > 0 ? round( ( $completedCount / $totalSteps ) * 100 ) : 0;
+	$status         = $job->getStatus();
+
+	$statusLower  = strtolower( $status );
+	$statusBadge  = 'contai-badge-info';
+	if ( in_array( $statusLower, array( 'done', 'completed', 'success' ), true ) ) {
+		$statusBadge = 'contai-badge-success';
+	} elseif ( in_array( $statusLower, array( 'failed', 'error' ), true ) ) {
+		$statusBadge = 'contai-badge-danger';
+	} elseif ( in_array( $statusLower, array( 'processing', 'running' ), true ) ) {
+		$statusBadge = 'contai-badge-info';
+	} elseif ( in_array( $statusLower, array( 'pending', 'queued' ), true ) ) {
+		$statusBadge = 'contai-badge-neutral';
+	}
 
 	?>
-	<div class="contai-settings-panel">
-		<div class="contai-panel-header">
-			<div class="contai-panel-title-group">
-				<h2 class="contai-panel-title">
+	<div class="contai-panel">
+		<div class="contai-panel-head">
+			<div class="contai-panel-head-main">
+				<div class="contai-tile" aria-hidden="true">
 					<span class="dashicons dashicons-update"></span>
-					<?php esc_html_e( 'Site Generation In Progress', '1platform-content-ai' ); ?>
-				</h2>
-				<p class="contai-panel-description">
-					<?php esc_html_e( 'Your website is being generated. This process may take several hours depending on the number of posts.', '1platform-content-ai' ); ?>
-				</p>
+				</div>
+				<div>
+					<h2 class="contai-panel-title"><?php esc_html_e( 'Site Generation In Progress', '1platform-content-ai' ); ?></h2>
+					<p class="contai-panel-desc"><?php esc_html_e( 'Your website is being generated. This process may take several hours depending on the number of posts.', '1platform-content-ai' ); ?></p>
+				</div>
 			</div>
+			<span class="contai-badge <?php echo esc_attr( $statusBadge ); ?>">
+				<?php echo esc_html( $status ); ?>
+			</span>
 		</div>
 
 		<div class="contai-panel-body">
-			<div class="contai-progress-container">
-				<div class="contai-progress-bar" role="progressbar" aria-valuenow="<?php echo esc_attr( $percentage ); ?>" aria-valuemin="0" aria-valuemax="100" aria-label="<?php esc_attr_e( 'Site generation progress', '1platform-content-ai' ); ?>">
-					<div class="contai-progress-fill" style="width: <?php echo esc_attr( $percentage ); ?>%;"></div>
-				</div>
-				<div class="contai-progress-text" aria-live="polite">
-					<?php
-					printf(
-						/* translators: %1$d: completion percentage, %2$d: number of completed steps, %3$d: total number of steps */
-						esc_html__( '%1$d%% Complete – %2$d of %3$d Steps', '1platform-content-ai' ),
-						intval( $percentage ),
-						intval( $completedCount ),
-						intval( $totalSteps )
-					);
-					?>
-				</div>
+			<div class="contai-progress" role="progressbar"
+				aria-valuenow="<?php echo esc_attr( $percentage ); ?>"
+				aria-valuemin="0" aria-valuemax="100"
+				aria-label="<?php esc_attr_e( 'Site generation progress', '1platform-content-ai' ); ?>">
+				<div class="contai-progress-fill" style="width: <?php echo esc_attr( $percentage ); ?>%;"></div>
 			</div>
+			<p class="contai-field-help" aria-live="polite" style="margin-top: 10px;">
+				<?php
+				printf(
+					/* translators: %1$d: completion percentage, %2$d: completed steps, %3$d: total steps */
+					esc_html__( '%1$d%% Complete — %2$d of %3$d steps', '1platform-content-ai' ),
+					intval( $percentage ),
+					intval( $completedCount ),
+					intval( $totalSteps )
+				);
+				?>
+			</p>
 
-			<div class="contai-current-step">
-				<strong><?php esc_html_e( 'Current Step:', '1platform-content-ai' ); ?></strong>
-				<span><?php echo esc_html( ucwords( str_replace( '_', ' ', $currentStep ) ) ); ?></span>
-			</div>
-
-			<div class="contai-job-status">
-				<strong><?php esc_html_e( 'Status:', '1platform-content-ai' ); ?></strong>
-				<span class="contai-status-badge contai-status-<?php echo esc_attr( strtolower( $status ) ); ?>">
-					<?php echo esc_html( $status ); ?>
-				</span>
+			<div class="contai-field" style="margin-top: 16px;">
+				<div class="contai-field-head">
+					<span class="contai-label">
+						<span class="dashicons dashicons-controls-play" aria-hidden="true"></span>
+						<?php esc_html_e( 'Current Step', '1platform-content-ai' ); ?>
+					</span>
+				</div>
+				<p class="contai-field-help">
+					<?php echo esc_html( ucwords( str_replace( '_', ' ', $currentStep ) ) ); ?>
+				</p>
 			</div>
 
 			<?php if ( ! empty( $completedSteps ) ) : ?>
-				<div class="contai-completed-steps">
-					<h3><?php esc_html_e( 'Completed Steps:', '1platform-content-ai' ); ?></h3>
-					<ul>
+				<div class="contai-field" style="margin-top: 16px;">
+					<div class="contai-field-head">
+						<span class="contai-label">
+							<span class="dashicons dashicons-yes" aria-hidden="true"></span>
+							<?php esc_html_e( 'Completed Steps', '1platform-content-ai' ); ?>
+						</span>
+					</div>
+					<ul class="contai-step-list">
 						<?php foreach ( $completedSteps as $step ) : ?>
 							<li>
-								<span class="dashicons dashicons-yes"></span>
+								<span class="dashicons dashicons-yes-alt" aria-hidden="true"></span>
 								<?php echo esc_html( ucwords( str_replace( '_', ' ', $step ) ) ); ?>
 							</li>
 						<?php endforeach; ?>
@@ -380,44 +376,49 @@ function contai_render_active_job_status( $job ) {
 				</div>
 			<?php endif; ?>
 
-			<div class="contai-button-group" style="margin-top: 20px;">
-				<a href="<?php echo esc_url( admin_url( 'admin.php?page=contai-ai-site-generator' ) ); ?>" class="button button-primary" aria-label="<?php esc_attr_e( 'Refresh page to see updated status', '1platform-content-ai' ); ?>">
-					<span class="dashicons dashicons-update" aria-hidden="true"></span>
-					<?php esc_html_e( 'Refresh Status', '1platform-content-ai' ); ?>
-				</a>
-			</div>
-
-			<?php if ( $status === 'FAILED' ) :
-				$jobError = $job->getErrorMessage() ?? 'Unknown error';
+			<?php if ( strtoupper( $status ) === 'FAILED' ) :
+				$jobError       = $job->getErrorMessage() ?? __( 'Unknown error', '1platform-content-ai' );
 				$isBalanceError = ContaiCreditGuard::isInsufficientCreditsError( $jobError )
 					|| stripos( $jobError, 'Insufficient balance' ) !== false;
-			?>
+				?>
 				<?php if ( $isBalanceError ) : ?>
-					<div class="contai-info-box contai-info-box-warning" style="margin-top: 20px;">
-						<div class="contai-info-box-icon">
-							<span class="dashicons dashicons-warning"></span>
-						</div>
-						<div class="contai-info-box-content">
-							<h4><?php esc_html_e( 'Insufficient Credits', '1platform-content-ai' ); ?></h4>
+					<div class="contai-notice contai-notice-warning" style="margin-top: 16px;">
+						<span class="dashicons dashicons-warning" aria-hidden="true"></span>
+						<div>
+							<p><strong><?php esc_html_e( 'Insufficient Credits', '1platform-content-ai' ); ?></strong></p>
 							<p><?php esc_html_e( 'Content generation could not complete due to insufficient balance.', '1platform-content-ai' ); ?></p>
-							<a href="<?php echo esc_url( admin_url( 'admin.php?page=contai-billing' ) ); ?>" class="button button-primary" style="margin-top: 10px;">
-								<span class="dashicons dashicons-plus-alt2" style="margin-top: 3px;"></span>
-								<?php esc_html_e( 'Add Credits', '1platform-content-ai' ); ?>
-							</a>
+							<p>
+								<a href="<?php echo esc_url( admin_url( 'admin.php?page=contai-billing' ) ); ?>" class="contai-btn contai-btn-primary">
+									<span class="dashicons dashicons-plus-alt2" aria-hidden="true"></span>
+									<?php esc_html_e( 'Add Credits', '1platform-content-ai' ); ?>
+								</a>
+							</p>
 						</div>
 					</div>
 				<?php else : ?>
-					<div class="contai-info-box contai-info-box-error" style="margin-top: 20px;">
-						<div class="contai-info-box-icon">
-							<span class="dashicons dashicons-warning"></span>
-						</div>
-						<div class="contai-info-box-content">
-							<h4><?php esc_html_e( 'Error', '1platform-content-ai' ); ?></h4>
+					<div class="contai-notice contai-notice-error" style="margin-top: 16px;">
+						<span class="dashicons dashicons-warning" aria-hidden="true"></span>
+						<div>
+							<p><strong><?php esc_html_e( 'Error', '1platform-content-ai' ); ?></strong></p>
 							<p><?php echo esc_html( $jobError ); ?></p>
 						</div>
 					</div>
 				<?php endif; ?>
 			<?php endif; ?>
+		</div>
+
+		<div class="contai-panel-foot">
+			<span class="contai-panel-foot-meta">
+				<?php esc_html_e( 'Refresh the page to update progress.', '1platform-content-ai' ); ?>
+			</span>
+			<div class="contai-panel-foot-actions">
+				<a href="<?php echo esc_url( admin_url( 'admin.php?page=contai-ai-site-generator' ) ); ?>"
+					class="contai-btn contai-btn-secondary"
+					aria-label="<?php esc_attr_e( 'Refresh page to see updated status', '1platform-content-ai' ); ?>">
+					<span class="dashicons dashicons-update" aria-hidden="true"></span>
+					<?php esc_html_e( 'Refresh Status', '1platform-content-ai' ); ?>
+				</a>
+			</div>
 		</div>
 	</div>
 	<?php

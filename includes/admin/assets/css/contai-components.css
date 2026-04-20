@@ -240,6 +240,18 @@
     cursor: not-allowed;
     pointer-events: none;
 }
+.contai-app :where(.contai-btn.is-loading) {
+    opacity: .85;
+    cursor: wait;
+    pointer-events: none;
+}
+.contai-app :where(.contai-btn.is-loading .contai-spinner) {
+    width: 14px;
+    height: 14px;
+    border-width: 2px;
+    border-color: rgba(255, 255, 255, .3);
+    border-top-color: #fff;
+}
 .contai-app :where(.contai-btn-sm) {
     height: 28px;
     padding: 0 12px;
@@ -252,6 +264,22 @@
     height: 44px;
     padding: 0 22px;
     font-size: 14.5px;
+}
+
+
+/* ─── Form grid ────────────────────────────────────────────── */
+.contai-app :where(.contai-form-grid) {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px 22px;
+}
+.contai-app :where(.contai-form-grid-full) {
+    grid-column: 1 / -1;
+}
+@media (max-width: 782px) {
+    .contai-app :where(.contai-form-grid) {
+        grid-template-columns: 1fr;
+    }
 }
 
 
@@ -285,6 +313,17 @@
     color: var(--fg-3);
     text-transform: uppercase;
     letter-spacing: .06em;
+}
+.contai-app :where(.contai-optional) {
+    font-weight: 400;
+    font-size: 12px;
+    color: var(--fg-3);
+    margin-left: 4px;
+}
+.contai-app :where(.contai-required) {
+    color: var(--contai-error);
+    margin-left: 2px;
+    font-weight: 600;
 }
 .contai-app :where(.contai-input),
 .contai-app :where(.contai-select),
@@ -1438,6 +1477,29 @@
 .contai-app :where(.contai-step.is-done .contai-step-label),
 .contai-app :where(.contai-step.is-active .contai-step-label) {
     color: var(--fg-1);
+}
+
+.contai-app :where(.contai-step-list) {
+    list-style: none;
+    margin: 8px 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--fg-2);
+}
+.contai-app :where(.contai-step-list li) {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+}
+.contai-app :where(.contai-step-list .dashicons) {
+    color: var(--contai-success);
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
 }
 
 
