@@ -25,47 +25,10 @@ function contai_handle_billing_topup_submission() {
 }
 add_action( 'admin_init', 'contai_handle_billing_topup_submission' );
 
-function contai_enqueue_billing_styles() {
-	$screen = get_current_screen();
-
-	if ( ! $screen || strpos( $screen->id, 'contai-billing' ) === false ) {
+function contai_billing_page() {
+	if ( contai_render_connection_required_notice() ) {
 		return;
 	}
-
-	$content_gen_base_url = plugin_dir_url( __FILE__ ) . 'content-generator/assets/css/base.css';
-	contai_enqueue_style_with_version(
-		'contai-content-generator-base',
-		$content_gen_base_url,
-		array()
-	);
-
-	$css_base_url = plugin_dir_url( __FILE__ ) . 'billing/assets/css/';
-	contai_enqueue_style_with_version(
-		'contai-billing-base',
-		$css_base_url . 'base.css',
-		array( 'contai-content-generator-base' )
-	);
-
-    // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display-only section navigation parameter.
-	$section = sanitize_key( wp_unslash( $_GET['section'] ?? 'overview' ) );
-	$section_css_map = array(
-		'overview' => 'overview.css',
-		'billing-history' => 'billing-history.css',
-	);
-
-	if ( isset( $section_css_map[ $section ] ) ) {
-		contai_enqueue_style_with_version(
-			"contai-billing-{$section}",
-			$css_base_url . $section_css_map[ $section ],
-			array( 'contai-billing-base' )
-		);
-	}
-}
-add_action( 'admin_enqueue_scripts', 'contai_enqueue_billing_styles', 20 );
-
-function contai_billing_page() {
-	if ( !contai_render_connection_required_notice() ) {
-		
 
     // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display-only section navigation parameter.
 	$section = sanitize_key( wp_unslash( $_GET['section'] ?? 'overview' ) );
@@ -101,6 +64,4 @@ function contai_billing_page() {
 	}
 
 	$layout->render_footer();
-	}
-
 }
