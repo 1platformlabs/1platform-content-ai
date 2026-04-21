@@ -1,6 +1,6 @@
-=== 1Platform Content AI ===
+=== 1Platform Content AI – AI Blog Writer, SEO & Internal Linking for WordPress ===
 Contributors: 1platform
-Tags: ai content, seo, content generation, internal links, table of contents
+Tags: ai content, ai writer, seo, internal links, keyword research
 Requires at least: 5.9
 Tested up to: 6.9
 Requires PHP: 7.4
@@ -8,7 +8,7 @@ Stable tag: 2.34.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-AI-powered blog posts, internal linking, tables of contents, and content strategy from your WordPress dashboard.
+AI blog post generator with SEO meta, keyword research, internal linking, tables of contents, and guided site setup — cloud-powered.
 
 == Description ==
 
