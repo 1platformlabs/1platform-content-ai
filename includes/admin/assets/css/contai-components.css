@@ -1809,6 +1809,9 @@
     flex-direction: column;
     gap: var(--contai-spacing-md);
 }
+.contai-app .contai-content-main {
+    max-width: 1200px;
+}
 @media (max-width: 960px) {
     .contai-app :where(.contai-content-layout) { flex-direction: column; }
     .contai-app :where(.contai-sidebar) { width: 100%; }
@@ -2097,6 +2100,238 @@
     color: var(--fg-3);
     background: var(--bg-3);
     border-radius: var(--contai-radius-pill);
+}
+
+
+/* ─── TOC Settings form ───────────────────────────────────── */
+.contai-app :where(.contai-toc-form) {
+    display: flex;
+    flex-direction: column;
+}
+.contai-app :where(.contai-settings-section) {
+    padding: var(--contai-spacing-lg);
+    border-bottom: 1px solid var(--border-1);
+}
+.contai-app :where(.contai-settings-section:last-of-type) {
+    border-bottom: none;
+}
+.contai-app :where(.contai-section-title) {
+    display: flex;
+    align-items: center;
+    gap: var(--contai-spacing-xs);
+    margin: 0 0 var(--contai-spacing-md);
+    padding-bottom: var(--contai-spacing-sm);
+    border-bottom: 1px solid var(--border-1);
+    font-family: var(--contai-font-heading);
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--fg-1);
+}
+.contai-app :where(.contai-section-title .dashicons) {
+    color: var(--contai-primary);
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+}
+.contai-app :where(.contai-settings-row) {
+    padding: var(--contai-spacing-md) 0;
+    border-bottom: 1px dashed var(--border-1);
+}
+.contai-app :where(.contai-settings-row:first-of-type) {
+    padding-top: 0;
+}
+.contai-app :where(.contai-settings-row:last-of-type) {
+    padding-bottom: 0;
+    border-bottom: none;
+}
+.contai-app :where(.contai-settings-label) {
+    display: block;
+    margin: 0 0 6px;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--fg-1);
+}
+.contai-app :where(.contai-settings-label input[type="checkbox"]) {
+    margin: 0 6px 0 0;
+    vertical-align: middle;
+}
+.contai-app :where(.contai-settings-label > span) {
+    vertical-align: middle;
+}
+.contai-app :where(.contai-settings-help) {
+    margin: 6px 0 0;
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--fg-3);
+}
+.contai-app :where(.contai-settings-help code) {
+    background: var(--bg-3);
+    padding: 1px 6px;
+    border-radius: var(--contai-radius-sm);
+    font-family: var(--contai-font-mono);
+    font-size: 11.5px;
+    color: var(--fg-1);
+}
+
+/* Form controls */
+.contai-app :where(.contai-input-text),
+.contai-app :where(.contai-input-number),
+.contai-app :where(.contai-select),
+.contai-app :where(.contai-textarea) {
+    width: 100%;
+    max-width: 480px;
+    padding: 8px 12px;
+    border: 1px solid var(--border-2);
+    border-radius: var(--contai-radius-md);
+    background: #fff;
+    font-family: inherit;
+    font-size: 13.5px;
+    color: var(--fg-1);
+    line-height: 1.4;
+    box-shadow: var(--contai-shadow-xs);
+    transition: border-color var(--contai-duration-fast) var(--contai-ease),
+                box-shadow var(--contai-duration-fast) var(--contai-ease);
+}
+.contai-app :where(.contai-input-text:focus),
+.contai-app :where(.contai-input-number:focus),
+.contai-app :where(.contai-select:focus),
+.contai-app :where(.contai-textarea:focus) {
+    border-color: var(--contai-primary);
+    box-shadow: var(--contai-shadow-glow);
+    outline: none;
+}
+.contai-app :where(.contai-input-number) {
+    max-width: 110px;
+}
+.contai-app :where(.contai-textarea) {
+    min-height: 110px;
+    font-family: var(--contai-font-mono);
+    font-size: 12.5px;
+    resize: vertical;
+}
+
+/* Checkbox groups */
+.contai-app :where(.contai-checkbox-group) {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 4px;
+}
+.contai-app :where(.contai-checkbox-group-inline) {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: var(--contai-spacing-xs);
+}
+.contai-app :where(.contai-checkbox-item) {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border: 1px solid var(--border-1);
+    border-radius: var(--contai-radius-md);
+    background: var(--bg-2);
+    font-size: 13px;
+    color: var(--fg-1);
+    cursor: pointer;
+    transition: background var(--contai-duration-fast) var(--contai-ease),
+                border-color var(--contai-duration-fast) var(--contai-ease);
+}
+.contai-app :where(.contai-checkbox-item:hover) {
+    background: var(--bg-3);
+    border-color: var(--border-2);
+}
+.contai-app :where(.contai-checkbox-item input[type="checkbox"]) {
+    margin: 0;
+}
+
+/* Theme selector */
+.contai-app :where(.contai-theme-selector) {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: var(--contai-spacing-sm);
+    margin-top: 4px;
+    max-width: 720px;
+}
+.contai-app :where(.contai-theme-option) {
+    display: block;
+    cursor: pointer;
+}
+.contai-app :where(.contai-theme-option input[type="radio"]) {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+.contai-app :where(.contai-theme-preview) {
+    display: block;
+    padding: 14px var(--contai-spacing-sm);
+    border: 2px solid var(--border-2);
+    border-radius: var(--contai-radius-md);
+    text-align: center;
+    font-size: 13px;
+    font-weight: 600;
+    transition: border-color var(--contai-duration-fast) var(--contai-ease),
+                box-shadow var(--contai-duration-fast) var(--contai-ease),
+                transform var(--contai-duration-fast) var(--contai-ease);
+}
+.contai-app :where(.contai-theme-option:hover .contai-theme-preview) {
+    border-color: var(--contai-primary-light);
+    transform: translateY(-1px);
+}
+.contai-app :where(.contai-theme-option input[type="radio"]:checked + .contai-theme-preview) {
+    border-color: var(--contai-primary);
+    box-shadow: var(--contai-shadow-glow);
+}
+.contai-app :where(.contai-theme-option input[type="radio"]:focus-visible + .contai-theme-preview) {
+    box-shadow: var(--contai-shadow-glow);
+}
+.contai-app :where(.contai-theme-grey) {
+    background: var(--contai-neutral-100);
+    color: var(--contai-neutral-700);
+}
+.contai-app :where(.contai-theme-light-blue) {
+    background: var(--contai-info-bg);
+    color: var(--contai-info-text);
+}
+.contai-app :where(.contai-theme-white) {
+    background: #fff;
+    color: var(--contai-neutral-700);
+}
+.contai-app :where(.contai-theme-black) {
+    background: var(--contai-neutral-700);
+    color: #fff;
+}
+.contai-app :where(.contai-theme-transparent) {
+    background: transparent;
+    color: var(--contai-neutral-700);
+    border-style: dashed;
+}
+
+/* Form actions */
+.contai-app :where(.contai-form-actions) {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--contai-spacing-sm);
+    align-items: center;
+    padding: var(--contai-spacing-md) var(--contai-spacing-lg);
+    background: var(--bg-2);
+    border-top: 1px solid var(--border-1);
+}
+
+@media (max-width: 600px) {
+    .contai-app :where(.contai-input-text),
+    .contai-app :where(.contai-select),
+    .contai-app :where(.contai-textarea) {
+        max-width: 100%;
+    }
+    .contai-app :where(.contai-form-actions) {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .contai-app :where(.contai-form-actions .button) {
+        width: 100%;
+        text-align: center;
+    }
 }
 
 
