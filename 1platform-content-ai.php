@@ -273,10 +273,10 @@ add_action( 'admin_enqueue_scripts', function( $hook ) {
         return;
     }
     $base = plugin_dir_url( __FILE__ ) . 'includes/admin/assets/';
-    wp_enqueue_style( 'contai-tokens', $base . 'css/contai-tokens.css', array(), CONTAI_VERSION );
-    wp_enqueue_style( 'contai-components', $base . 'css/contai-components.css', array( 'contai-tokens' ), CONTAI_VERSION );
+    contai_enqueue_style_with_version( 'contai-tokens', $base . 'css/contai-tokens.css' );
+    contai_enqueue_style_with_version( 'contai-components', $base . 'css/contai-components.css', array( 'contai-tokens' ) );
     wp_enqueue_style( 'dashicons' );
-    wp_enqueue_script( 'contai-ui', $base . 'js/contai-ui.js', array(), CONTAI_VERSION, true );
+    contai_enqueue_script_with_version( 'contai-ui', $base . 'js/contai-ui.js', array(), true );
 }, 999 );
 
 add_action( 'admin_enqueue_scripts', function( $hook ) {

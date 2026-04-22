@@ -88,6 +88,30 @@ function contai_enqueue_apps_scripts()
     // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display-only section navigation parameter.
     $section = sanitize_key( $_GET['section'] ?? 'toc' );
 
+    $css_base_url    = plugin_dir_url( __FILE__ ) . 'apps/assets/css/';
+    $section_css_map = array(
+        'internal-links' => 'internal-links.css',
+        'search-console' => 'search-console.css',
+        'publisuites'    => 'publisuites.css',
+        'ads-manager'    => 'publisher-panel.css',
+    );
+
+    if ( isset( $section_css_map[ $section ] ) ) {
+        contai_enqueue_style_with_version(
+            "contai-apps-{$section}",
+            $css_base_url . $section_css_map[ $section ],
+            array( 'contai-tokens' )
+        );
+    }
+
+    if ( $section === 'ads-manager' ) {
+        contai_enqueue_style_with_version(
+            'contai-adsense-account',
+            $css_base_url . 'adsense-account.css',
+            array( 'contai-tokens' )
+        );
+    }
+
     $section_js_map = array(
         'ads-manager' => 'publisher-panel.js',
     );
