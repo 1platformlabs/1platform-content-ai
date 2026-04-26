@@ -4,7 +4,7 @@
  * Plugin Name: 1Platform Content AI
  * Plugin URI: https://1platform.pro/
  * Description: SaaS client for AI-powered content generation, SEO optimization, and site management. All AI processing happens on 1Platform external servers. Includes free local tools: Table of Contents and Internal Links.
- * Version: 2.34.2
+ * Version: 2.35.0
  * Author: 1Platform
  * License: GPLv2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
