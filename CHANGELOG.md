@@ -4,7 +4,60 @@ All notable changes to Content AI are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [2.31.3] - 2026-04-16
+## [2.34.2] - 2026-04-21
+
+### Fixed
+- **Missing CSS on Tools panels after UI redesign**: `Internal Links`, `Publisuites`, `Search Console`, and `AdSense Account` tabs rendered with unstyled markup after the UI v3 rollout because their per-screen CSS files had been removed in favor of the shared component library, but the Apps page (`admin-apps.php`) was still the only entry point that loaded them. The apps enqueue helper now re-registers these stylesheets on the Apps screen so every tab picks up its panel-specific styles in addition to the unified foundation (#111).
+
+### Added
+- **Admin Apps enqueue regression tests**: New `AdminAppsEnqueueTest` pins which stylesheets must load on the `toplevel_page_1platform-content-ai-apps` screen so the next UI migration cannot silently drop them again.
+
+## [2.34.1] - 2026-04-21
+
+### Fixed
+- **Stale component CSS and README assets after UI redesign rollout** (#108): The 2.34.0 release landed with an incomplete copy of `contai-components.css` and an out-of-date WordPress.org `README.md` asset — republished as a hotfix on the same day so upgraders pick up the full component stylesheet.
+
+## [2.34.0] - 2026-04-21
+
+### Changed
+- **Full admin UI redesign** (#106): 12 screens migrated to the new design system — Jobs, Settings, Post Generator, Site Wizard, Billing Overview, Billing History, Keyword Extractor, Keywords List, License, Logs, Post Maintenance, Legal Pages. All panels now render with `.contai-app` + `.contai-page` wrappers using shared `contai-panel`, `contai-field`, `contai-btn`, `contai-table`, `contai-notice`, `contai-badge`, `contai-modal`, and `contai-stat-grid` components.
+- **Unified component foundation always-on**: `contai-tokens.css` + `contai-components.css` + `contai-ui.js` now enqueue globally on every 1Platform Content AI admin screen (priority 999 so tokens win the `:root` cascade). No feature flag remains.
+
+### Added
+- **27 scoped components** in `contai-components.css`: buttons, panels, tables, notices, tabs, badges, modals, progress bars, stat grids, steppers, form grids, spinners, sidebar, page header, empty state, and more — all scoped under `.contai-app` to avoid leaking into other WP admin screens.
+- **UI helpers in `contai-ui.js`** (vanilla, no jQuery): Toast, Modal, and Table helpers used across migrated panels.
+- **Billing modal redesign**: Top-up modal rebuilt on `contai-modal-backdrop` + `contai-modal-head/body/foot` with focus-visible outlines and escape-key close.
+- **Site Wizard stepper**: 3-step `contai-stepper` (Identity / Legal / Content) replaces the previous form with per-step panels, `contai-form-grid`, and inline loading states via `.is-loading`.
+
+### Removed
+- **Legacy per-screen CSS** (~17K lines): `admin-settings.css`, `admin-content-generator.css`, `admin-ai-site-generator.css`, `admin-init-configuration.css`, `post-generator.css`, `keyword-extractor.css`, `keywords-list.css`, `legal-pages.css`, `post-maintenance.css`, `generate-comments.css`, `api-logs.css`, `logs-panel.css`, `license.css`, billing `base.css`/`overview.css`/`billing-history.css`, legacy Jobs CSS, and the v3 beta toggle CSS.
+- **Beta feature flag infrastructure**: `contai_ui_v3_enabled()`, `contai_ui_v3` user meta/site option, the Settings beta toggle panel, `ContaiJobMonitorPanel.v3.php` + `.legacy.php` split, `tai-job-monitor-refresh.js`, and the `includes/helpers/ui-flag.php` helper — all removed now that the redesign is the single rendering path.
+
+## [2.33.0] - 2026-04-20
+
+### Changed
+- **Jobs screen migrated to UI v3** (#105): Split `admin-job-monitor.php` into a router + legacy/v3 panel variants. The v3 path renders with page header, stat cards, underline tabs, `contai-table-wrap` + toolbar, empty state, status/priority badges, and a cron status panel. Legacy markup preserved verbatim behind the `contai_ui_v3` flag; POST handlers for recovery and clear-completed work on both paths with the same nonces.
+
+### Fixed
+- **Double render risk on v3 router**: Moved panel instantiation out of the `require_once`-able files so loading them is a pure class definition — router instantiates and calls `render()` explicitly.
+- **Asset base resolution**: Use real `admin-job-monitor.php` path for `plugin_dir_url()` instead of a fabricated `/admin.php`.
+- **Defensive capability check on v3 asset enqueue**: `contai_enqueue_job_monitor_v3_assets()` now verifies `current_user_can('manage_options')`.
+
+### Added
+- **`ContaiJobMonitorPanelTest` smoke test**: Asserts `.contai-app` wrapper is present when the v3 flag is on and absent when off, using WP_Mock user stubs.
+
+## [2.32.0] - 2026-04-20
+
+### Added
+- **Design token + component CSS foundation behind feature flag** (#104):
+  - `contai-tokens.css` — colors, type, spacing, radii, shadows (atomic variables on `:root`)
+  - `contai-components.css` — buttons, panels, tables, notices, tabs, badges, modals, form fields
+  - `contai-ui.js` — Toast, Modal, Table helpers (no jQuery)
+- **`contai_ui_v3_enabled()` flag resolver**: User meta > site option fallback, so individual admins can opt into the new UI while site-wide rollout stays gated.
+- **`contai_enqueue_ui_v3()` helper**: Centralized enqueue used by screens that opt in during migration.
+- **Settings beta toggle**: "Try the new UI (beta)" checkbox persisted to the user's `contai_ui_v3` meta.
+
+## [2.31.4] - 2026-04-16
 
 ### Fixed
 - **Content generation rejected with 422 Unprocessable Content**: The plugin sent `image_provider: "pixabay"` or `"pexels"` on every `POST /posts/content/`, but the API schema now only accepts the client-facing aliases `"default"` and `"alternative"` (changed on the API side on 2026-03-28). Every content generation request was failing at Pydantic validation before reaching the endpoint. `ContentGeneratorService::buildRequestData()` now maps internal identifiers to the API aliases (`pixabay → default`, `pexels → alternative`) at the boundary, leaving the plugin's internal vocabulary (settings option, `_image_provider` post meta, job payloads) unchanged.
