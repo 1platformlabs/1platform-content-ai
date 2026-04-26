@@ -160,7 +160,29 @@ The plugin sends your site URL, API key, and content generation parameters (keyw
 
 == Changelog ==
 
-= 2.31.3 =
+= 2.34.2 =
+* Fixed: Missing CSS on Tools panels (Internal Links, Publisuites, Search Console, AdSense Account) after the UI redesign — assets now enqueue per-screen on the Apps pages (#111)
+* Added: Regression tests for Admin Apps asset enqueue
+
+= 2.34.1 =
+* Fixed: Missing component styles on apps panel and stale readme assets after the UI redesign rollout (#108)
+
+= 2.34.0 =
+* Changed: Full admin UI redesign — 12 screens migrated to the new design system (Jobs, Settings, Post Generator, Site Wizard, Billing Overview, Billing History, Keyword Extractor, Keywords List, License, Logs, Post Maintenance, Legal Pages)
+* Added: Design token + component CSS foundation (27 scoped components, Toast/Modal/Table helpers) now active on all admin screens, no feature flag
+* Removed: Legacy per-screen CSS files (~17K lines) replaced by unified component library
+* Removed: Beta UI toggle, `contai_ui_v3` user meta/site option, and legacy Jobs panel split (#106)
+
+= 2.33.0 =
+* Changed: Jobs screen migrated to the new design system (page header, stat cards, underline tabs, status/priority badges) behind an opt-in beta toggle
+* Added: Smoke test asserting the v3 panel wrapper is present only when the beta flag is enabled (#105)
+
+= 2.32.0 =
+* Added: Design token CSS (colors, type, spacing, radii, shadows) and component CSS foundation (buttons, panels, tables, notices) behind an opt-in beta toggle in Settings
+* Added: Vanilla JS helpers for Toast, Modal, and Table interactions (no jQuery)
+* Added: `contai_ui_v3_enabled()` flag resolver (user meta > site option) and `contai_enqueue_ui_v3()` helper (#104)
+
+= 2.31.4 =
 * Fixed: Content generation rejected with 422 — plugin now sends the API-expected image_provider aliases (default/alternative) at the boundary instead of internal identifiers
 * Fixed: Site Wizard showed "Request failed" with no HTTP status when upstream returned a non-JSON error — fallback now includes the status code so timeouts and gateway errors are distinguishable (#100)
 
@@ -363,6 +385,9 @@ The plugin sends your site URL, API key, and content generation parameters (keyw
 * Initial release
 
 == Upgrade Notice ==
+
+= 2.34.0 =
+Full admin UI redesign. 12 screens migrated to a new unified design system. Review your admin experience after updating.
 
 = 2.12.0 =
 Google Analytics integration with GDPR Consent Mode v2. Connect your GA4 property directly from the plugin.
