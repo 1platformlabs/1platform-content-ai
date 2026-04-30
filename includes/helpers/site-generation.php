@@ -115,7 +115,7 @@ function contai_get_primary_nav_location(): ?string {
 function contai_apply_theme_defaults( string $theme ): void {
 	// Common defaults for all themes
 	update_option( 'show_on_front', 'posts' );
-	update_option( 'posts_per_page', 10 );
+	update_option( 'posts_per_page', 15 );
 
 	switch ( $theme ) {
 		case 'newsmatic':

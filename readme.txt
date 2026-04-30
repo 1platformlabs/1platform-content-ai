@@ -4,7 +4,7 @@ Tags: ai content, ai writer, seo, internal links, keyword research
 Requires at least: 5.9
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 2.35.0
+Stable tag: 2.35.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -159,6 +159,10 @@ The plugin sends your site URL, API key, and content generation parameters (keyw
 7. Tools — Google Analytics, Google Search Console, Publisuites, and Ads Manager integrations.
 
 == Changelog ==
+
+= 2.35.1 =
+* Changed: Site Wizard now sets `posts_per_page` to 15 (raised from 10) so generated sites surface more entries per blog/archive page out of the box. Existing sites are unaffected (#112)
+* Added: Regression test pinning the new default
 
 = 2.34.2 =
 * Fixed: Missing CSS on Tools panels (Internal Links, Publisuites, Search Console, AdSense Account) after the UI redesign — assets now enqueue per-screen on the Apps pages (#111)
