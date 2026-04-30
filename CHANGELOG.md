@@ -4,6 +4,14 @@ All notable changes to Content AI are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [2.35.1] - 2026-04-30
+
+### Changed
+- **Site Wizard `posts_per_page` raised from 10 to 15** (#112): `contai_apply_theme_defaults()` now sets `posts_per_page = 15` for every supported theme so generated sites surface more entries per blog/archive page out of the box. Existing sites are unaffected — only applies on new wizard runs.
+
+### Added
+- **`SiteGenerationDefaultsTest`**: Pins the `posts_per_page = 15` default so a future regression to the WordPress default of 10 is caught at test time.
+
 ## [2.34.2] - 2026-04-21
 
 ### Fixed
