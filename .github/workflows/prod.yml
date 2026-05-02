@@ -3,6 +3,7 @@ name: 1Platform Content AI — PROD
 on:
   push:
     branches: [main]
+  workflow_dispatch:
 
 permissions: {}
 
@@ -20,6 +21,10 @@ env:
 jobs:
   tests:
     name: Unit Tests
+    # Restrict workflow_dispatch to the main branch so a manual deploy
+    # cannot ship arbitrary commits to production. Downstream PROD jobs
+    # chain via `needs: tests` so the gate propagates.
+    if: github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     environment: PROD

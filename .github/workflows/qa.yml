@@ -4,6 +4,7 @@ on:
   pull_request:
     branches: [main]
     types: [opened, synchronize, reopened]
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -127,6 +128,8 @@ jobs:
 
   code-review:
     name: Code Review (Claude AI)
+    # PR-only — workflow_dispatch has no diff to analyse.
+    if: github.event_name == 'pull_request'
     needs: [tests]
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -1071,8 +1074,9 @@ jobs:
 
   approve:
     name: Approve & Label
+    # PR-only — labels and PR approvals don't apply to dispatch.
     needs: code-review
-    if: needs.code-review.outputs.verdict == 'approved'
+    if: github.event_name == 'pull_request' && needs.code-review.outputs.verdict == 'approved'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -1107,6 +1111,8 @@ jobs:
 
   ready-to-prod:
     name: Ready to PROD
+    # PR-only — merge-readiness signal is meaningless on dispatch.
+    if: github.event_name == 'pull_request'
     needs: approve
     runs-on: ubuntu-latest
     timeout-minutes: 5
