@@ -113,6 +113,10 @@ $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LI
 // phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.DirectQuery
 $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", '_transient_timeout_contai_%' ) );
 
-// Clear scheduled cron events.
+// Clear scheduled cron events from both runners (Action Scheduler + WP-Cron).
+if ( function_exists( 'as_unschedule_all_actions' ) ) {
+	as_unschedule_all_actions( 'contai_process_job_queue' );
+	as_unschedule_all_actions( 'contai_agent_actions_poll' );
+}
 wp_clear_scheduled_hook( 'contai_process_job_queue' );
 wp_clear_scheduled_hook( 'contai_agent_actions_poll' );

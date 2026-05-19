@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+- **Job-processor cron migrated to Action Scheduler (defense in depth)**: `contai_register_job_processor_cron()` now dual-registers the `contai_process_job_queue` action — Action Scheduler is the primary runner (does not depend on inbound HTTP traffic), WP-Cron stays as the fallback for sites without Action Scheduler or with sparse traffic patterns. The matching `contai_unregister_job_processor_cron()` and `uninstall.php` clean both runners so deactivation/uninstall leaves no orphaned schedules. Plugin installs that did not previously have Action Scheduler available continue to work via WP-Cron unchanged.
+
+### Added
+- **Bundled Action Scheduler 3.7+ via composer** (`woocommerce/action-scheduler`): vendored runtime dependency that ships in the WordPress.org dist build. The Tools > Scheduled Actions admin page now lists `contai_process_job_queue` as a recurring action so operators can inspect the queue's primary runner without leaving WP admin.
+- **`JobProcessorCronTest`**: Unit coverage for the dual registration path — asserts both Action Scheduler and WP-Cron are scheduled when AS is available, that only WP-Cron runs when AS is absent, and that uninstall clears both runners.
 ### Added
 - **Queue diagnostics + manual recovery (#39, Phase 1)**: Restores observability and operator control over the job queue on sites without HTTP traffic (where WP-Cron silently never fires).
   - New `ContaiQueueHealthService::getSnapshot()` exposes `wp_cron_disabled`, `cron_event_scheduled`, `next_run_at`, `next_run_overdue_seconds`, `pending`, `processing`, `longest_processing_age_seconds`, and `last_tick_at`.
