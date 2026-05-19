@@ -8,6 +8,15 @@ add_action('contai_process_job_queue', 'contai_process_job_queue_callback');
 
 function contai_register_job_processor_cron()
 {
+    // Primary runner: Action Scheduler (does not depend on HTTP traffic).
+    if (function_exists('as_schedule_recurring_action') && function_exists('as_next_scheduled_action')) {
+        if (!as_next_scheduled_action('contai_process_job_queue')) {
+            as_schedule_recurring_action(time(), 60, 'contai_process_job_queue', [], 'contai');
+        }
+    }
+
+    // Fallback runner: WP-Cron (kept for sites with sufficient HTTP traffic
+    // and as a safety net when Action Scheduler is unavailable).
     if (!wp_next_scheduled('contai_process_job_queue')) {
         wp_schedule_event(time(), 'contai_every_minute', 'contai_process_job_queue');
     }
@@ -45,6 +54,9 @@ function contai_trigger_immediate_job_processing()
 
 function contai_unregister_job_processor_cron()
 {
+    if (function_exists('as_unschedule_all_actions')) {
+        as_unschedule_all_actions('contai_process_job_queue');
+    }
     wp_clear_scheduled_hook('contai_process_job_queue');
 }
 

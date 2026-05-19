@@ -193,4 +193,72 @@ class JobProcessorTest extends TestCase
         // Status should remain unchanged (handler manages its own state)
         $this->assertSame(ContaiJobStatus::PENDING, $job->getStatus());
     }
+
+    public function test_processQueue_updatesLastTickOption(): void
+    {
+        global $wpdb;
+        // Simulate a busy lock so we exit quickly and verify the recordTick
+        // path still runs to update last_tick_at — proves the option is set
+        // on every tick, even when no work is done.
+        $wpdb->shouldReceive('prepare')->andReturnUsing(function ($sql) {
+            return $sql;
+        });
+        $wpdb->shouldReceive('get_var')->andReturn('0');
+
+        $updateOptionCalled = false;
+        WP_Mock::userFunction('update_option')
+            ->withArgs(function ($key, $value, $autoload) use (&$updateOptionCalled) {
+                if ($key === 'contai_last_tick_at') {
+                    $updateOptionCalled = true;
+                }
+                return true;
+            })
+            ->andReturn(true);
+
+        $this->processor->processQueue();
+
+        $this->assertTrue($updateOptionCalled, 'update_option(contai_last_tick_at, ...) must be called on every tick');
+    }
+
+    public function test_processQueue_logsHappyPath(): void
+    {
+        global $wpdb;
+        $wpdb->shouldReceive('prepare')->andReturnUsing(function ($sql) {
+            return $sql;
+        });
+        // GET_LOCK returns '1' (acquired), RELEASE_LOCK returns null
+        $wpdb->shouldReceive('get_var')->andReturn('1');
+        $wpdb->shouldReceive('query')->andReturn(0);
+
+        WP_Mock::userFunction('update_option')->andReturn(true);
+
+        $this->recoveryService->shouldReceive('recoverStuckJobs')->andReturn([]);
+
+        $this->jobRepository->shouldReceive('findByStatus')
+            ->with(ContaiJobStatus::PROCESSING)
+            ->andReturn([]);
+        $this->jobRepository->shouldReceive('countProcessingJobs')->andReturn(0);
+        $this->jobRepository->shouldReceive('claimPendingJobs')->andReturn([]);
+
+        // Capture error_log output so we can assert on the [queue] prefix.
+        $logs = [];
+        $previousErrorLog = ini_get('error_log');
+        $tmpLog = tempnam(sys_get_temp_dir(), 'contai_queue_test');
+        ini_set('error_log', $tmpLog);
+
+        if (!defined('WP_DEBUG')) {
+            define('WP_DEBUG', true);
+        }
+
+        $this->processor->processQueue();
+
+        $contents = file_get_contents($tmpLog) ?: '';
+        ini_set('error_log', $previousErrorLog);
+        @unlink($tmpLog);
+
+        $this->assertStringContainsString('[queue] tick start, lock=acquired', $contents);
+        $this->assertStringContainsString('[queue] slots=0/5 available=5', $contents);
+        $this->assertStringContainsString('[queue] claimed=0 ids=[]', $contents);
+        $this->assertStringContainsString('[queue] tick end, processed=0', $contents);
+    }
 }
