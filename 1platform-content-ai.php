@@ -4,7 +4,7 @@
  * Plugin Name: 1Platform Content AI
  * Plugin URI: https://1platform.pro/
  * Description: SaaS client for AI-powered content generation, SEO optimization, and site management. All AI processing happens on 1Platform external servers. Includes free local tools: Table of Contents and Internal Links.
- * Version: 2.35.3
+ * Version: 2.36.0
  * Author: 1Platform
  * License: GPLv2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -18,7 +18,7 @@
 
 if (!defined('ABSPATH')) exit;
 
-define('CONTAI_VERSION', '2.35.1');
+define('CONTAI_VERSION', '2.36.0');
 
 require_once plugin_dir_path(__FILE__) . 'includes/helpers/security.php';
 require_once plugin_dir_path(__FILE__) . 'includes/helpers/crypto.php';
@@ -79,6 +79,7 @@ require_once plugin_dir_path(__FILE__) . 'includes/database/migrations/CreateJob
 require_once plugin_dir_path(__FILE__) . 'includes/database/migrations/UpdateKeywordsTableStatus.php';
 require_once plugin_dir_path(__FILE__) . 'includes/database/migrations/CreateInternalLinksTable.php';
 require_once plugin_dir_path(__FILE__) . 'includes/database/migrations/BackfillAnalyticsMeta.php';
+require_once plugin_dir_path(__FILE__) . 'includes/database/migrations/AddHoldFieldsToJobsTable.php';
 
 /**
  * Build the migration runner with all registered migrations.
@@ -95,6 +96,7 @@ function contai_build_migration_runner(): ContaiMigrationRunner {
     $runner->register(4, new ContaiUpdateKeywordsTableStatus());
     $runner->register(5, new ContaiCreateInternalLinksTable());
     $runner->register(6, new ContaiBackfillAnalyticsMeta());
+    $runner->register(7, new ContaiAddHoldFieldsToJobsTable());
 
     return $runner;
 }

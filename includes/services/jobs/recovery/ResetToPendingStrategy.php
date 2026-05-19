@@ -32,6 +32,13 @@ class ContaiResetToPendingStrategy implements ContaiJobRecoveryStrategy
             return false;
         }
 
+        // Authorize+Capture: if the API already released the hold (refunded the
+        // user), re-queueing is safe — the next attempt will authorize a fresh
+        // hold against the restored balance, with no double-charge risk.
+        if (ContaiCreditGuard::isCreditsAlreadyReleased($job)) {
+            return true;
+        }
+
         $processedAt = $job->getProcessedAt();
 
         if (empty($processedAt)) {

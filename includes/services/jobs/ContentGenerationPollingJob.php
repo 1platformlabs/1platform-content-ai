@@ -110,7 +110,7 @@ class ContaiContentGenerationPollingJob implements ContaiJobInterface
             }
 
             if ($status === 'failed') {
-                return $this->handleFailed($keyword, $poll_result, $remote_job_id);
+                return $this->handleFailed($keyword, $poll_result, $remote_job_id, $job_id);
             }
 
             if ($i < self::POLLS_PER_CYCLE - 1) {
@@ -193,16 +193,31 @@ class ContaiContentGenerationPollingJob implements ContaiJobInterface
         }
     }
 
-    private function handleFailed(ContaiKeyword $keyword, array $poll_result, string $remote_job_id): array
+    private function handleFailed(ContaiKeyword $keyword, array $poll_result, string $remote_job_id, ?int $job_id): array
     {
-        $error = $poll_result['error'] ?? 'Remote job failed without error details';
+        $api_error = $poll_result['error'] ?? 'Remote job failed without error details';
+        $credits_released = !empty($poll_result['credits_released']);
+
+        // When the API confirms the hold was released, persist that on the local
+        // row so recovery + UI logic can treat it as a non-blocking terminal state.
+        if ($credits_released && $job_id) {
+            $this->job_repository->setCreditsReleased($job_id, true);
+        }
+
         $this->updateKeywordStatus($keyword, ContaiKeyword::STATUS_FAILED);
-        contai_log("Remote content job {$remote_job_id} failed: {$error}");
+        contai_log("Remote content job {$remote_job_id} failed: {$api_error}");
+
+        // Admin-facing message: when credits were refunded we say so explicitly
+        // so the operator understands no further refund action is needed.
+        $message = $credits_released
+            ? 'Generation failed; credits have been refunded.'
+            : $api_error;
 
         return [
             'success' => true,
             'keyword_id' => $keyword->getId(),
-            'error' => $error,
+            'error' => $message,
+            'credits_released' => $credits_released,
         ];
     }
 

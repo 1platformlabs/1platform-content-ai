@@ -4,6 +4,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 
 require_once __DIR__ . '/../../../services/jobs/QueueManager.php';
 require_once __DIR__ . '/../../../services/billing/CreditGuard.php';
+require_once __DIR__ . '/../handlers/PostGenerationQueueHandler.php';
 
 class ContaiPostGeneratorPanel {
 
@@ -256,15 +257,26 @@ class ContaiPostGeneratorPanel {
 						<th><?php esc_html_e( 'Title', '1platform-content-ai' ); ?></th>
 						<th><?php esc_html_e( 'Volume', '1platform-content-ai' ); ?></th>
 						<th><?php esc_html_e( 'Processing Time', '1platform-content-ai' ); ?></th>
+						<th><?php esc_html_e( 'Credit status', '1platform-content-ai' ); ?></th>
 					</tr>
 				</thead>
 				<tbody>
 					<?php foreach ( $jobs as $job ) : ?>
+						<?php $credit_badge = ContaiPostGenerationQueueHandler::resolveCreditStatusBadge( $job ); ?>
 						<tr>
 							<td><strong><?php echo esc_html( $job['keyword'] ); ?></strong></td>
 							<td><?php echo esc_html( $job['title'] ); ?></td>
 							<td class="contai-mono"><?php echo esc_html( number_format( $job['volume'] ) ); ?></td>
 							<td class="contai-mono"><?php echo esc_html( $this->calculateElapsedTime( $job['processed_at'] ) ); ?></td>
+							<td>
+								<?php if ( $credit_badge !== null ) : ?>
+									<span class="contai-badge contai-badge-<?php echo esc_attr( $credit_badge['tone'] ); ?>">
+										<?php echo esc_html( $credit_badge['label'] ); ?>
+									</span>
+								<?php else : ?>
+									<span class="contai-mono" style="color: var(--fg-3);" aria-hidden="true">—</span>
+								<?php endif; ?>
+							</td>
 						</tr>
 					<?php endforeach; ?>
 				</tbody>

@@ -166,6 +166,7 @@ require_once __DIR__ . '/../includes/database/migrations/CreateJobsTable.php';
 require_once __DIR__ . '/../includes/database/migrations/UpdateKeywordsTableStatus.php';
 require_once __DIR__ . '/../includes/database/migrations/CreateInternalLinksTable.php';
 require_once __DIR__ . '/../includes/database/migrations/BackfillAnalyticsMeta.php';
+require_once __DIR__ . '/../includes/database/migrations/AddHoldFieldsToJobsTable.php';
 
 /**
  * Build the migration runner — mirrors the function in the main plugin file.
@@ -179,6 +180,7 @@ if (!function_exists('contai_build_migration_runner')) {
         $runner->register(4, new ContaiUpdateKeywordsTableStatus());
         $runner->register(5, new ContaiCreateInternalLinksTable());
         $runner->register(6, new ContaiBackfillAnalyticsMeta());
+        $runner->register(7, new ContaiAddHoldFieldsToJobsTable());
         return $runner;
     }
 }

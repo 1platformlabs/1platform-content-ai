@@ -228,4 +228,49 @@ class ContaiPostGenerationQueueHandler {
         wp_safe_redirect($url);
         exit;
     }
+
+    /**
+     * Resolve the credit status badge for a queue-table row.
+     *
+     * Returns an array with `label` (translated text), `tone` ('info'/'success'/
+     * 'warning'/'neutral'), or `null` when no badge should be displayed.
+     *
+     * The mapping mirrors the Authorize+Capture lifecycle:
+     *   - hold_id present + status pending/processing  → Reserved (info)
+     *   - credits_released = 1                          → Refunded (warning)
+     *   - hold_id present + status done                 → Charged  (success)
+     *   - no hold_id      + status done                 → Charged  (success, legacy path)
+     *
+     * @param array $row Raw row from JobRepository::getProcessingJobsWithKeywords()
+     *                   or any other listing that exposes status, hold_id, credits_released.
+     * @return array{label: string, tone: string}|null
+     */
+    public static function resolveCreditStatusBadge(array $row): ?array {
+        $status = (string) ($row['status'] ?? '');
+        $hold_id = isset($row['hold_id']) ? (string) $row['hold_id'] : '';
+        $credits_released = !empty($row['credits_released']);
+
+        if ($credits_released) {
+            return [
+                'label' => __('Refunded', '1platform-content-ai'),
+                'tone'  => 'warning',
+            ];
+        }
+
+        if ($hold_id !== '' && in_array($status, ['pending', 'processing'], true)) {
+            return [
+                'label' => __('Reserved', '1platform-content-ai'),
+                'tone'  => 'info',
+            ];
+        }
+
+        if ($status === 'done') {
+            return [
+                'label' => __('Charged', '1platform-content-ai'),
+                'tone'  => 'success',
+            ];
+        }
+
+        return null;
+    }
 }

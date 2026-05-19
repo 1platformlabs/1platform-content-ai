@@ -35,7 +35,13 @@ class ContaiContentGeneratorService {
      * Returns an array with 'job_id' and 'status' on success, or
      * an array with 'success' => false and error details on failure.
      *
-     * @return array{success: bool, job_id?: string, status?: string, message?: string, status_code?: int}
+     * When the API runs the Authorize+Capture billing path (plugin >= 2.36.0)
+     * it returns an `X-Hold-Id` response header with the BalanceHold ObjectId.
+     * That value is forwarded transparently in the `hold_id` key so the caller
+     * can persist it on the local job row. The key is omitted when the API
+     * does not emit the header (legacy/test paths).
+     *
+     * @return array{success: bool, job_id?: string, status?: string, hold_id?: string, message?: string, status_code?: int}
      */
     public function createRemoteContentJob(
         string $keyword,
@@ -66,17 +72,29 @@ class ContaiContentGeneratorService {
             ];
         }
 
-        return [
+        $result = [
             'success' => true,
             'job_id' => sanitize_text_field($data['job_id']),
             'status' => sanitize_text_field($data['status'] ?? 'pending'),
         ];
+
+        $hold_id = $response->getHeader('X-Hold-Id');
+        if (is_string($hold_id) && $hold_id !== '') {
+            $result['hold_id'] = sanitize_text_field($hold_id);
+        }
+
+        return $result;
     }
 
     /**
      * Poll the remote content generation job by ID.
      *
-     * @return array{success: bool, status?: string, result?: array, error?: string, message?: string, status_code?: int}
+     * On failure the API (>= 2.36.0) reports whether the user's credit hold
+     * was released via the `credits_released` flag in the response body. The
+     * flag is propagated as a boolean so callers can both persist it on the
+     * local job row and surface an accurate message to the user.
+     *
+     * @return array{success: bool, status?: string, result?: array, error?: string, credits_released?: bool, message?: string, status_code?: int}
      */
     public function getRemoteJobStatus(string $remote_job_id): array {
         $endpoint = ContaiOnePlatformEndpoints::postsContentJobById($remote_job_id);
@@ -97,6 +115,7 @@ class ContaiContentGeneratorService {
             'status' => sanitize_text_field($data['status'] ?? 'unknown'),
             'result' => is_array($data['result'] ?? null) ? $data['result'] : null,
             'error' => isset($data['error']) ? sanitize_text_field($data['error']) : null,
+            'credits_released' => isset($data['credits_released']) ? (bool) $data['credits_released'] : false,
         ];
     }
 
