@@ -108,6 +108,14 @@ class ContaiPostGenerationJob implements ContaiJobInterface
             );
         }
 
+        // Persist the BalanceHold id returned by the API (Authorize+Capture path).
+        // Header is only emitted when the API recognizes X-Plugin-Version >= 2.36.0,
+        // so legacy/test paths simply skip this step.
+        $local_job_id = isset($payload['job_id']) ? (int) $payload['job_id'] : 0;
+        if ($local_job_id > 0 && !empty($result['hold_id'])) {
+            $this->job_repository->setHoldId($local_job_id, (string) $result['hold_id']);
+        }
+
         return $result['job_id'];
     }
 
