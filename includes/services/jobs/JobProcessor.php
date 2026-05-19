@@ -11,6 +11,7 @@ require_once __DIR__ . '/KeywordExtractionJob.php';
 require_once __DIR__ . '/SiteGenerationJob.php';
 require_once __DIR__ . '/ContentGenerationPollingJob.php';
 require_once __DIR__ . '/recovery/JobRecoveryService.php';
+require_once __DIR__ . '/metrics/QueueHealthService.php';
 require_once __DIR__ . '/../billing/CreditGuard.php';
 
 class ContaiJobProcessor
@@ -33,27 +34,34 @@ class ContaiJobProcessor
         set_time_limit(300);
         ini_set('max_execution_time', '300');
 
-        if (!$this->acquireLock()) {
+        $startMs = (int) (microtime(true) * 1000);
+        $acquired = $this->acquireLock();
+        contai_log('[queue] tick start, lock=' . ($acquired ? 'acquired' : 'busy'));
+
+        if (!$acquired) {
+            $this->recordTick($startMs, 0);
             return 0;
         }
+
+        $processedCount = 0;
 
         try {
             $this->cleanupStuckJobs();
 
             $processingCount = $this->jobRepository->countProcessingJobs();
             $availableSlots = self::MAX_CONCURRENT_JOBS - $processingCount;
+            contai_log('[queue] slots=' . $processingCount . '/' . self::MAX_CONCURRENT_JOBS . ' available=' . $availableSlots);
 
             if ($availableSlots <= 0) {
                 return 0;
             }
 
             $claimedJobs = $this->jobRepository->claimPendingJobs($availableSlots);
+            contai_log('[queue] claimed=' . count($claimedJobs) . ' ids=[' . implode(',', array_map(static fn($j) => $j->getId(), $claimedJobs)) . ']');
 
             if (empty($claimedJobs)) {
                 return 0;
             }
-
-            $processedCount = 0;
 
             foreach ($claimedJobs as $job) {
                 $this->processJob($job);
@@ -63,7 +71,22 @@ class ContaiJobProcessor
             return $processedCount;
         } finally {
             $this->releaseLock();
+            $this->recordTick($startMs, $processedCount);
         }
+    }
+
+    /**
+     * Persist the last-tick timestamp and emit the tick-end log line.
+     *
+     * Always updates the option — even when the lock was busy or no jobs were
+     * found — so the QueueHealthService snapshot can detect a silent cron
+     * (last_tick_at > 5 min) versus a healthy idle queue.
+     */
+    private function recordTick(int $startMs, int $processedCount): void
+    {
+        $elapsedMs = max(0, (int) (microtime(true) * 1000) - $startMs);
+        update_option(ContaiQueueHealthService::LAST_TICK_OPTION, current_time('mysql'), false);
+        contai_log('[queue] tick end, processed=' . $processedCount . ' elapsed=' . $elapsedMs . 'ms');
     }
 
     private function processJob(ContaiJob $job)
