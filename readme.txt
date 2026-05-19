@@ -4,7 +4,7 @@ Tags: ai content, ai writer, seo, internal links, keyword research
 Requires at least: 5.9
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 2.35.3
+Stable tag: 2.36.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -159,6 +159,14 @@ The plugin sends your site URL, API key, and content generation parameters (keyw
 7. Tools — Google Analytics, Google Search Console, Publisuites, and Ads Manager integrations.
 
 == Changelog ==
+
+= 2.36.0 =
+* Added: Hold/Capture billing integration — every outbound request now advertises `X-Plugin-Version: 2.36.0` so the 1Platform API can route post-generation through its Authorize+Capture path. Each job carries its credit hold (Reserved / Charged / Refunded) instead of charging up-front and losing the balance on failure (#117)
+* Added: New migration `AddHoldFieldsToJobsTable` (v7) — adds `hold_id` and `credits_released` columns to `wp_contai_jobs`
+* Added: "Credit status" column in the Post Generator queue table showing each job's credit lifecycle at a glance
+* Changed: When the API reports a generation as failed with credits refunded, the polling job now surfaces "Generation failed; credits have been refunded" instead of the generic error
+* Changed: Recovery now permits re-queueing jobs whose credits were already released by the API; the 402 insufficient-credits filter remains
+* Fixed: Plugin version drift — header and `CONTAI_VERSION` constant now both report 2.36.0
 
 = 2.35.1 =
 * Changed: Site Wizard now sets `posts_per_page` to 15 (raised from 10) so generated sites surface more entries per blog/archive page out of the box. Existing sites are unaffected (#112)
