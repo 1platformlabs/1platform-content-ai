@@ -3,6 +3,7 @@
 if (!defined('ABSPATH')) exit;
 
 require_once __DIR__ . '/BillingService.php';
+require_once __DIR__ . '/../../database/models/Job.php';
 
 class ContaiCreditGuard {
 
@@ -91,6 +92,21 @@ class ContaiCreditGuard {
      */
     public static function isInsufficientCreditsError(string $errorMessage): bool {
         return strpos($errorMessage, self::INSUFFICIENT_CREDITS_PREFIX) === 0;
+    }
+
+    /**
+     * Whether the API has already released this job's credit hold.
+     *
+     * The Authorize+Capture path (API >= billing#117 with plugin >= 2.36.0)
+     * auto-releases the hold on failure and signals it back via the polling
+     * response, which the plugin persists in `wp_contai_jobs.credits_released`.
+     *
+     * Recovery + UI flows use this to treat such jobs as safe to re-queue or
+     * re-display as refunded — there is no double-charge risk because the
+     * API will authorize a fresh hold on the next attempt.
+     */
+    public static function isCreditsAlreadyReleased(ContaiJob $job): bool {
+        return $job->getCreditsReleased() === true;
     }
 
     /**
