@@ -4,6 +4,22 @@ All notable changes to Content AI are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Added
+- **Queue diagnostics + manual recovery (#39, Phase 1)**: Restores observability and operator control over the job queue on sites without HTTP traffic (where WP-Cron silently never fires).
+  - New `ContaiQueueHealthService::getSnapshot()` exposes `wp_cron_disabled`, `cron_event_scheduled`, `next_run_at`, `next_run_overdue_seconds`, `pending`, `processing`, `longest_processing_age_seconds`, and `last_tick_at`.
+  - New REST endpoint `POST /wp-json/contai/v1/queue/run` (capability `manage_options`, transient rate-limited 1 req / 10 s per user) triggers an immediate job-processor tick and returns `{ before, after }` snapshots. Companion `GET /wp-json/contai/v1/queue/snapshot` for polling without side effects.
+  - Sticky health banner + "Ejecutar ahora" button on the Jobs admin page.
+  - Global admin notice on plugin pages when `next_run_overdue_seconds > 300` with a CTA back to the Jobs page.
+  - `ContaiJobProcessor::processQueue()` emits structured `[queue]` log lines (`tick start`, `slots`, `claimed`, `tick end`) and updates `contai_last_tick_at` on every tick — even when the lock is busy or no jobs are claimed.
+- **`X-Site-URL` header on every outbound API request** (prereq for Phase 2 — external heartbeat). `ContaiOnePlatformClient` now advertises `home_url()` alongside the existing `X-Plugin-Version` so the API can match heartbeats to a Website document.
+
+### Tests
+- `QueueHealthServiceTest` (3 cases) — locks in snapshot shape, overdue detection, and behavior when the cron event is missing.
+- `JobProcessorTest::test_processQueue_updatesLastTickOption()` + `test_processQueue_logsHappyPath()` — verify `contai_last_tick_at` is always written and the `[queue]` log lines are emitted under WP_DEBUG.
+- `OnePlatformClientHeadersTest::test_sendsXSiteUrlHeaderOnAllRequests()` — asserts the new header rides on GET, POST, PUT, PATCH, DELETE without regressing `X-Plugin-Version`.
+
 ## [2.36.0] - 2026-05-19
 
 ### Added

@@ -17,6 +17,7 @@ require_once __DIR__ . '/../../../services/jobs/recovery/JobRecoveryService.php'
 require_once __DIR__ . '/../../../database/repositories/JobRepository.php';
 require_once __DIR__ . '/../../../database/models/JobStatus.php';
 require_once __DIR__ . '/../../../services/jobs/metrics/JobMetricsService.php';
+require_once __DIR__ . '/../../../services/jobs/metrics/QueueHealthService.php';
 require_once __DIR__ . '/../../../helpers/JobDetailsFormatter.php';
 
 if ( ! class_exists( 'ContaiJobMonitorPanel' ) ) {
@@ -26,11 +27,13 @@ if ( ! class_exists( 'ContaiJobMonitorPanel' ) ) {
 		private ContaiJobRepository $jobRepository;
 		private ContaiJobRecoveryService $recoveryService;
 		private ContaiJobMetricsService $metricsService;
+		private ContaiQueueHealthService $healthService;
 
 		public function __construct() {
 			$this->jobRepository   = new ContaiJobRepository();
 			$this->recoveryService = new ContaiJobRecoveryService();
 			$this->metricsService  = new ContaiJobMetricsService( $this->jobRepository );
+			$this->healthService   = new ContaiQueueHealthService( $this->jobRepository );
 		}
 
 		public static function render(): void {
@@ -200,6 +203,8 @@ if ( ! class_exists( 'ContaiJobMonitorPanel' ) ) {
 					</div>
 				<?php endif; ?>
 
+				<?php $this->renderHealthBanner(); ?>
+
 				<?php $this->renderStatsGrid( $metrics ); ?>
 
 				<?php $this->renderTabsUnderline( $currentTab, $metrics ); ?>
@@ -211,6 +216,111 @@ if ( ! class_exists( 'ContaiJobMonitorPanel' ) ) {
 				<?php $this->renderCronPanel(); ?>
 
 			</div>
+			<?php
+		}
+
+		private function renderHealthBanner(): void {
+			$snapshot   = $this->healthService->getSnapshot();
+			$overdue    = (int) $snapshot['next_run_overdue_seconds'];
+			$isOverdue  = $overdue > 300;
+			$tone       = $isOverdue ? 'warning' : 'info';
+			$last_tick  = $snapshot['last_tick_at'] ?: __( 'never', '1platform-content-ai' );
+			$rest_url   = esc_url_raw( rest_url( 'contai/v1/queue/run' ) );
+			$nonce      = wp_create_nonce( 'wp_rest' );
+			?>
+			<div class="contai-notice contai-notice-<?php echo esc_attr( $tone ); ?> contai-queue-health" role="status"
+				data-overdue="<?php echo esc_attr( (string) $overdue ); ?>"
+				style="position: sticky; top: 32px; z-index: 5;">
+				<span class="dashicons dashicons-backup" aria-hidden="true"></span>
+				<p>
+					<strong><?php esc_html_e( 'Estado de la cola:', '1platform-content-ai' ); ?></strong>
+					<span class="contai-queue-health-pending" data-metric="pending">
+						<?php
+						printf(
+							/* translators: %d: pending jobs count */
+							esc_html__( '%d pendientes', '1platform-content-ai' ),
+							(int) $snapshot['pending']
+						);
+						?>
+					</span>
+					·
+					<span class="contai-queue-health-processing" data-metric="processing">
+						<?php
+						printf(
+							/* translators: %d: processing jobs count */
+							esc_html__( '%d procesando', '1platform-content-ai' ),
+							(int) $snapshot['processing']
+						);
+						?>
+					</span>
+					·
+					<span data-metric="last-tick">
+						<?php
+						printf(
+							/* translators: %s: last tick timestamp */
+							esc_html__( 'último tick: %s', '1platform-content-ai' ),
+							esc_html( (string) $last_tick )
+						);
+						?>
+					</span>
+					·
+					<span data-metric="overdue" style="<?php echo $isOverdue ? 'color: var(--contai-warning-text, #b26500); font-weight: 600;' : ''; ?>">
+						<?php
+						printf(
+							/* translators: %d: seconds the next cron run is overdue */
+							esc_html__( 'cron vencido por %ds', '1platform-content-ai' ),
+							max( 0, $overdue )
+						);
+						?>
+					</span>
+				</p>
+				<div class="contai-notice-actions">
+					<button type="button" class="contai-btn contai-btn-primary" id="contai-queue-force-run"
+						data-rest-url="<?php echo esc_attr( $rest_url ); ?>"
+						data-nonce="<?php echo esc_attr( $nonce ); ?>">
+						<span class="dashicons dashicons-update" aria-hidden="true"></span>
+						<?php esc_html_e( 'Ejecutar ahora', '1platform-content-ai' ); ?>
+					</button>
+					<span id="contai-queue-force-run-status" class="contai-mono" style="margin-left: 8px;" role="status" aria-live="polite"></span>
+				</div>
+			</div>
+			<script>
+			(function() {
+				var btn = document.getElementById('contai-queue-force-run');
+				if (!btn || btn.dataset.bound === '1') { return; }
+				btn.dataset.bound = '1';
+				var status = document.getElementById('contai-queue-force-run-status');
+				btn.addEventListener('click', function() {
+					if (btn.disabled) { return; }
+					btn.disabled = true;
+					if (status) { status.textContent = '<?php echo esc_js( __( 'Ejecutando…', '1platform-content-ai' ) ); ?>'; }
+					fetch(btn.dataset.restUrl, {
+						method: 'POST',
+						credentials: 'same-origin',
+						headers: {
+							'Content-Type': 'application/json',
+							'X-WP-Nonce': btn.dataset.nonce
+						}
+					}).then(function(response) {
+						return response.json().then(function(body) {
+							return { ok: response.ok, status: response.status, body: body };
+						});
+					}).then(function(result) {
+						if (!result.ok) {
+							var msg = (result.body && result.body.message) ? result.body.message : ('HTTP ' + result.status);
+							if (status) { status.textContent = msg; }
+							btn.disabled = false;
+							return;
+						}
+						if (status) { status.textContent = '<?php echo esc_js( __( 'Listo. Recargando…', '1platform-content-ai' ) ); ?>'; }
+						setTimeout(function() { window.location.reload(); }, 800);
+					}).catch(function(err) {
+						if (status) { status.textContent = String(err && err.message ? err.message : err); }
+						btn.disabled = false;
+					});
+				});
+			})();
+			</script>
 			<?php
 		}
 

@@ -254,6 +254,10 @@ add_action( 'rest_api_init', function() {
     require_once plugin_dir_path( __FILE__ ) . 'includes/services/onboarding/ContaiOnboardingRestController.php';
     $onboarding_controller = new ContaiOnboardingRestController();
     $onboarding_controller->register_routes();
+
+    require_once plugin_dir_path( __FILE__ ) . 'includes/services/jobs/ContaiQueueRestController.php';
+    $queue_controller = new ContaiQueueRestController();
+    $queue_controller->register_routes();
 } );
 
 /**
@@ -451,3 +455,40 @@ function contai_display_adsense_policy_notice() {
     );
 }
 add_action( 'admin_notices', 'contai_display_adsense_policy_notice' );
+
+/**
+ * Warn the administrator when WP-Cron has not fired the job-processor tick
+ * within the last 5 minutes.
+ *
+ * Only renders on plugin admin pages to avoid noise across the rest of WP
+ * admin. The CTA links to the Jobs page where the "Ejecutar ahora" button
+ * lives.
+ */
+function contai_display_queue_overdue_notice(): void {
+    if ( ! current_user_can( 'manage_options' ) ) {
+        return;
+    }
+
+    $screen = get_current_screen();
+    if ( ! $screen || strpos( $screen->id, 'contai' ) === false ) {
+        return;
+    }
+
+    require_once plugin_dir_path( __FILE__ ) . 'includes/services/jobs/metrics/QueueHealthService.php';
+
+    $snapshot = ( new ContaiQueueHealthService() )->getSnapshot();
+
+    if ( (int) ( $snapshot['next_run_overdue_seconds'] ?? 0 ) <= 300 ) {
+        return;
+    }
+
+    $jobs_url = admin_url( 'admin.php?page=contai-job-monitor' );
+    printf(
+        '<div class="notice notice-warning"><p><strong>%s</strong> %s <a href="%s">%s</a></p></div>',
+        esc_html__( 'Cola de jobs inactiva:', '1platform-content-ai' ),
+        esc_html__( 'WP-Cron parece estar inactivo. Use el botón "Ejecutar ahora" o asegúrese de que el sitio reciba tráfico.', '1platform-content-ai' ),
+        esc_url( $jobs_url ),
+        esc_html__( 'Abrir Jobs', '1platform-content-ai' )
+    );
+}
+add_action( 'admin_notices', 'contai_display_queue_overdue_notice' );

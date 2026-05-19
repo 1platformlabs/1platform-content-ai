@@ -115,6 +115,12 @@ class ContaiOnePlatformClient {
             $headers['X-Plugin-Version'] = CONTAI_VERSION;
         }
 
+        // Identify the originating site so the API can match heartbeats to the
+        // Website document and only ping sites with active PENDING jobs.
+        if (function_exists('home_url')) {
+            $headers['X-Site-URL'] = home_url();
+        }
+
         $start_time = microtime(true);
 
         $response = $this->executeHttpRequest($method, $url, $data, $headers);
