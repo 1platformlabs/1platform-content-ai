@@ -20,6 +20,11 @@ if (!defined('ABSPATH')) exit;
 
 define('CONTAI_VERSION', '2.36.0');
 
+// Action Scheduler must load before any code that uses `as_*` functions.
+if (file_exists(__DIR__ . '/vendor/woocommerce/action-scheduler/action-scheduler.php')) {
+    require_once __DIR__ . '/vendor/woocommerce/action-scheduler/action-scheduler.php';
+}
+
 require_once plugin_dir_path(__FILE__) . 'includes/helpers/security.php';
 require_once plugin_dir_path(__FILE__) . 'includes/helpers/crypto.php';
 require_once plugin_dir_path(__FILE__) . 'includes/helpers/asset-version.php';

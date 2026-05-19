@@ -19,9 +19,8 @@ PIPELINE_PLAN.md
 includes/services/USAGE_EXAMPLES.md
 includes/services/USAGE_EXAMPLES_V2.md
 
-# Dependencies
+# Dependencies — keep vendor/ so bundled runtime deps (Action Scheduler) ship in the dist build.
 node_modules
-vendor
 composer.json
 composer.lock
 package.json
