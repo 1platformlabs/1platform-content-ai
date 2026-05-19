@@ -339,7 +339,55 @@ class ContaiJobRepository
             $job->setProcessedAt($data['processed_at']);
         }
 
+        if (array_key_exists('hold_id', $data) && $data['hold_id'] !== null && $data['hold_id'] !== '') {
+            $job->setHoldId((string) $data['hold_id']);
+        }
+
+        if (array_key_exists('credits_released', $data)) {
+            $job->setCreditsReleased((bool) (int) $data['credits_released']);
+        }
+
         return $job;
+    }
+
+    /**
+     * Persist the BalanceHold id returned by the API for the given job row.
+     *
+     * Called by the content-generation pipeline when the API responds with an
+     * `X-Hold-Id` header (plugin >= 2.36.0, API path: Authorize+Capture).
+     */
+    public function setHoldId(int $jobId, string $holdId): bool
+    {
+        if ($jobId <= 0 || $holdId === '') {
+            return false;
+        }
+
+        $data = [
+            'hold_id' => $holdId,
+            'updated_at' => current_time('mysql'),
+        ];
+
+        return $this->db->update($this->table, $data, ['id' => $jobId]) > 0;
+    }
+
+    /**
+     * Flag a job row as having had its credit hold released by the API.
+     *
+     * Called from the polling job's failure branch when the API confirms via
+     * `credits_released: true` that the user's balance was reintegrated.
+     */
+    public function setCreditsReleased(int $jobId, bool $released = true): bool
+    {
+        if ($jobId <= 0) {
+            return false;
+        }
+
+        $data = [
+            'credits_released' => $released ? 1 : 0,
+            'updated_at' => current_time('mysql'),
+        ];
+
+        return $this->db->update($this->table, $data, ['id' => $jobId]) > 0;
     }
 
     public function findActiveSiteGenerationJob()

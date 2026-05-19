@@ -107,6 +107,14 @@ class ContaiOnePlatformClient {
         }
 
         $headers = array_merge($auth_headers, $this->custom_headers);
+
+        // Advertise the plugin version on every outbound request. The 1Platform API
+        // routes to the Authorize+Capture billing path when this header is >= 2.36.0
+        // (and falls back to the legacy charge-first path otherwise).
+        if (defined('CONTAI_VERSION')) {
+            $headers['X-Plugin-Version'] = CONTAI_VERSION;
+        }
+
         $start_time = microtime(true);
 
         $response = $this->executeHttpRequest($method, $url, $data, $headers);
@@ -251,25 +259,27 @@ class ContaiOnePlatformClient {
     private function createResponse(ContaiHTTPResponse $http_response): ContaiOnePlatformResponse {
         $json = $http_response->getJson();
         $trace_id = $http_response->getHeader('x-trace-id');
+        $headers = $http_response->getHeaders();
 
         if ($http_response->isSuccess()) {
-            return $this->createSuccessResponse($json, $http_response->getStatusCode(), $trace_id);
+            return $this->createSuccessResponse($json, $http_response->getStatusCode(), $trace_id, $headers);
         }
 
-        return $this->createErrorResponse($json, $http_response, $trace_id);
+        return $this->createErrorResponse($json, $http_response, $trace_id, $headers);
     }
 
-    private function createSuccessResponse(array $json, int $status_code, ?string $trace_id = null): ContaiOnePlatformResponse {
+    private function createSuccessResponse(array $json, int $status_code, ?string $trace_id = null, array $headers = []): ContaiOnePlatformResponse {
         return new ContaiOnePlatformResponse(
             $json['success'] ?? true,
             $json['data'] ?? $json,
             $json['msg'] ?? null,
             $status_code,
-            $trace_id
+            $trace_id,
+            $headers
         );
     }
 
-    private function createErrorResponse(?array $json, ContaiHTTPResponse $http_response, ?string $trace_id = null): ContaiOnePlatformResponse {
+    private function createErrorResponse(?array $json, ContaiHTTPResponse $http_response, ?string $trace_id = null, array $headers = []): ContaiOnePlatformResponse {
         $status_code = $http_response->getStatusCode();
 
         // When neither the API nor wp_remote_request provide a diagnostic message
@@ -287,7 +297,8 @@ class ContaiOnePlatformClient {
             null,
             $error_message,
             $status_code,
-            $trace_id
+            $trace_id,
+            $headers
         );
     }
 
@@ -353,13 +364,15 @@ class ContaiOnePlatformResponse {
     private ?string $message;
     private int $status_code;
     private ?string $trace_id;
+    private array $headers;
 
-    public function __construct(bool $success, $data, ?string $message = null, int $status_code = 200, ?string $trace_id = null) {
+    public function __construct(bool $success, $data, ?string $message = null, int $status_code = 200, ?string $trace_id = null, array $headers = []) {
         $this->success = $success;
         $this->data = $data;
         $this->message = $message;
         $this->status_code = $status_code;
         $this->trace_id = $trace_id;
+        $this->headers = $headers;
     }
 
     public function isSuccess(): bool {
@@ -382,6 +395,35 @@ class ContaiOnePlatformResponse {
         return $this->trace_id;
     }
 
+    public function getHeaders(): array {
+        return $this->headers;
+    }
+
+    /**
+     * Case-insensitive header lookup.
+     *
+     * HTTP headers are case-insensitive (RFC 7230 §3.2). wp_remote_request
+     * normalizes them to lowercase via the Requests library, but callers
+     * commonly pass the canonical mixed-case spelling (e.g. "X-Hold-Id"),
+     * so we search both spellings transparently.
+     */
+    public function getHeader(string $name): ?string {
+        if (isset($this->headers[$name])) {
+            return is_array($this->headers[$name])
+                ? (string) reset($this->headers[$name])
+                : (string) $this->headers[$name];
+        }
+
+        $lower = strtolower($name);
+        foreach ($this->headers as $key => $value) {
+            if (strtolower((string) $key) === $lower) {
+                return is_array($value) ? (string) reset($value) : (string) $value;
+            }
+        }
+
+        return null;
+    }
+
     public function isPaymentRequired(): bool {
         return $this->status_code === 402;
     }
@@ -393,6 +435,7 @@ class ContaiOnePlatformResponse {
             'message' => $this->message,
             'status_code' => $this->status_code,
             'trace_id' => $this->trace_id,
+            'headers' => $this->headers,
         ];
     }
 }

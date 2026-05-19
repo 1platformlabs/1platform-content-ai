@@ -17,6 +17,8 @@ class ContaiJob
     private $created_at;
     private $updated_at;
     private $processed_at;
+    private ?string $hold_id = null;
+    private bool $credits_released = false;
 
     public function __construct()
     {
@@ -179,6 +181,28 @@ class ContaiJob
         }
     }
 
+    public function getHoldId(): ?string
+    {
+        return $this->hold_id;
+    }
+
+    public function setHoldId(?string $hold_id): void
+    {
+        $this->hold_id = $hold_id !== null && $hold_id !== '' ? $hold_id : null;
+        $this->updated_at = current_time('mysql');
+    }
+
+    public function getCreditsReleased(): bool
+    {
+        return $this->credits_released;
+    }
+
+    public function setCreditsReleased(bool $released): void
+    {
+        $this->credits_released = $released;
+        $this->updated_at = current_time('mysql');
+    }
+
     public function toArray()
     {
         return [
@@ -192,7 +216,9 @@ class ContaiJob
             'error_message' => $this->error_message,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
-            'processed_at' => $this->processed_at
+            'processed_at' => $this->processed_at,
+            'hold_id' => $this->hold_id,
+            'credits_released' => $this->credits_released,
         ];
     }
 }
