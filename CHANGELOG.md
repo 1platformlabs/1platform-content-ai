@@ -7,6 +7,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Changed
+- **Recovery thresholds tightened (queue Phase 4)**: `ContaiJobRecoveryService` now defaults to `ContaiResetToPendingStrategy(5)` (was `30`) and `ContaiMarkAsFailedStrategy(30)` (was `240`). The zombie-job blocking window shrinks from 4 h to 30 min on sites with healthy ticks. Both thresholds remain operator-configurable through the new `contai_recovery_reset_threshold_minutes` and `contai_recovery_fail_threshold_minutes` filters. Justification: with 5 PROCESSING slots and polling cycles of ≤ 50 s, a legitimate job should never exceed 60 s in PROCESSING without re-queueing — 5 min is a 5× safety margin.
+
+### Added
+- **Integration test suite scaffold**: New `tests/integration/` directory + `phpunit.xml.dist` testsuite + `composer test:integration` script + opt-in `tests/integration/bootstrap.php` for a real WordPress + MySQL bootstrap via `wp-phpunit/wp-phpunit` (added to `require-dev`). Detailed env-var requirements documented in `tests/integration/README.md`.
+- **`JobLifecycleTest`** (12 cases): happy path, polling re-queue (continue/retry semantics), stuck-recovery at 6 min, idempotent no-op at 60 s, max-attempts kill, three-attempt reset → fail escalation, lock contention between two concurrent processors, no-handler failure, insufficient-credits exception tagging, cleanup persistence per recovered job, slot saturation early-return.
+- **`QueueWithoutTrafficTest`**: regression for the WP-Cron-without-traffic bug; verifies the cron callback can be invoked directly to drain pending jobs and is exposed as a global symbol so the future Phase 1 REST endpoint can surface it.
+- **`JobRecoveryServiceTest`** (4 cases): default thresholds, filter overrides, explicit strategy injection, no-op when no job is stuck.
+- **Recovery edge-case unit tests**: insufficient-credits skip, credits-already-released-permits-retry, empty/invalid/future `processed_at` handling for both strategies. Aggregate coverage of `includes/services/jobs/recovery/*` + `JobProcessor` now sits at 97% lines.
+
+### CI
+- QA + PROD workflows now run `phpunit --testsuite=integration` after the unit suite.
+- QA PHP matrix expanded from `["8.1", "8.3"]` to `["8.1", "8.2", "8.3"]`.
 - **Job-processor cron migrated to Action Scheduler (defense in depth)**: `contai_register_job_processor_cron()` now dual-registers the `contai_process_job_queue` action — Action Scheduler is the primary runner (does not depend on inbound HTTP traffic), WP-Cron stays as the fallback for sites without Action Scheduler or with sparse traffic patterns. The matching `contai_unregister_job_processor_cron()` and `uninstall.php` clean both runners so deactivation/uninstall leaves no orphaned schedules. Plugin installs that did not previously have Action Scheduler available continue to work via WP-Cron unchanged.
 
 ### Added

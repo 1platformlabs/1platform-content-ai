@@ -7,9 +7,10 @@
         "woocommerce/action-scheduler": "^3.7"
     },
     "require-dev": {
-        "phpunit/phpunit": "^9.6",
         "10up/wp_mock": "^1.0",
-        "mockery/mockery": "^1.6"
+        "mockery/mockery": "^1.6",
+        "phpunit/phpunit": "^9.6",
+        "wp-phpunit/wp-phpunit": "^6.4"
     },
     "autoload-dev": {
         "psr-4": {
@@ -18,6 +19,8 @@
     },
     "scripts": {
         "test": "phpunit --configuration phpunit.xml.dist",
+        "test:unit": "phpunit --configuration phpunit.xml.dist --testsuite=unit",
+        "test:integration": "phpunit --configuration phpunit.xml.dist --testsuite=integration",
         "test:coverage": "phpunit --configuration phpunit.xml.dist --coverage-text",
         "test:filter": "phpunit --configuration phpunit.xml.dist --filter"
     },

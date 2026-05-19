@@ -119,4 +119,65 @@ class ResetToPendingStrategyTest extends TestCase
 
         $this->assertFalse($this->strategy->shouldRecover($job));
     }
+
+    public function test_should_not_recover_when_error_is_insufficient_credits(): void
+    {
+        $job = $this->createStuckProcessingJob(45);
+        $job->setErrorMessage('INSUFFICIENT_CREDITS: Account balance: 0.00 USD');
+
+        $this->assertFalse($this->strategy->shouldRecover($job));
+    }
+
+    public function test_should_recover_when_credits_already_released_even_if_recent(): void
+    {
+        $this->mockTime();
+
+        $job = new ContaiJob();
+        $job->setId(42);
+        $job->setJobType('post_generation');
+        $job->setStatus(ContaiJobStatus::PROCESSING);
+        $job->setProcessedAt(gmdate('Y-m-d H:i:s', time() - 10)); // 10 s ago — not stuck
+        $job->setCreditsReleased(true);
+
+        $this->assertTrue($this->strategy->shouldRecover($job));
+    }
+
+    public function test_should_recover_when_processed_at_is_empty(): void
+    {
+        $this->mockTime();
+
+        $job = new ContaiJob();
+        $job->setId(43);
+        $job->setJobType('post_generation');
+        $job->setStatus(ContaiJobStatus::PROCESSING);
+        $job->setProcessedAt(null);
+
+        $this->assertTrue($this->strategy->shouldRecover($job));
+    }
+
+    public function test_should_recover_when_processed_at_is_invalid_timestamp(): void
+    {
+        $this->mockTime();
+
+        $job = new ContaiJob();
+        $job->setId(44);
+        $job->setJobType('post_generation');
+        $job->setStatus(ContaiJobStatus::PROCESSING);
+        $job->setProcessedAt('not-a-timestamp');
+
+        $this->assertTrue($this->strategy->shouldRecover($job));
+    }
+
+    public function test_should_recover_when_processed_at_is_in_future(): void
+    {
+        $this->mockTime();
+
+        $job = new ContaiJob();
+        $job->setId(45);
+        $job->setJobType('post_generation');
+        $job->setStatus(ContaiJobStatus::PROCESSING);
+        $job->setProcessedAt(gmdate('Y-m-d H:i:s', time() + 3600)); // 1 hour in future
+
+        $this->assertTrue($this->strategy->shouldRecover($job));
+    }
 }
