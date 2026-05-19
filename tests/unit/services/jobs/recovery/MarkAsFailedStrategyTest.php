@@ -150,4 +150,30 @@ class MarkAsFailedStrategyTest extends TestCase
         $this->strategy->recover($job);
         $this->assertSame(ContaiJobStatus::FAILED, $job->getStatus());
     }
+
+    public function test_should_not_recover_when_processed_at_is_empty(): void
+    {
+        $this->mockTime();
+
+        $job = new ContaiJob();
+        $job->setId(1);
+        $job->setJobType('post_generation');
+        $job->setStatus(ContaiJobStatus::PROCESSING);
+        $job->setProcessedAt(null);
+
+        $this->assertFalse($this->strategy->shouldRecover($job));
+    }
+
+    public function test_should_not_recover_when_processed_at_is_invalid_timestamp(): void
+    {
+        $this->mockTime();
+
+        $job = new ContaiJob();
+        $job->setId(1);
+        $job->setJobType('post_generation');
+        $job->setStatus(ContaiJobStatus::PROCESSING);
+        $job->setProcessedAt('garbage');
+
+        $this->assertFalse($this->strategy->shouldRecover($job));
+    }
 }

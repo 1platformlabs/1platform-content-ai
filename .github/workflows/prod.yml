@@ -98,12 +98,13 @@ jobs:
           set -euo pipefail
           composer install --prefer-dist --no-progress --no-interaction
 
-      - name: Run PHPUnit
+      - name: Run PHPUnit (unit + integration)
         if: steps.check_merge.outputs.is_merge == 'true'
         shell: bash
         run: |
           set -euo pipefail
           vendor/bin/phpunit --testsuite=unit -v 2>&1 | tee test_output.txt
+          vendor/bin/phpunit --testsuite=integration -v 2>&1 | tee -a test_output.txt
           tail -30 test_output.txt > test_summary.txt || true
 
       - name: Upload test artifacts

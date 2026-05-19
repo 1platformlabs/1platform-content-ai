@@ -46,9 +46,12 @@ class ContaiJobRecoveryService
 
     private function getDefaultStrategies(): array
     {
+        $resetMinutes = (int) apply_filters('contai_recovery_reset_threshold_minutes', 5);
+        $failMinutes = (int) apply_filters('contai_recovery_fail_threshold_minutes', 30);
+
         return [
-            new ContaiResetToPendingStrategy(30),
-            new ContaiMarkAsFailedStrategy(240),
+            new ContaiResetToPendingStrategy($resetMinutes),
+            new ContaiMarkAsFailedStrategy($failMinutes),
         ];
     }
 }
