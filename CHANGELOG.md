@@ -4,6 +4,21 @@ All notable changes to Content AI are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [2.36.0] - 2026-05-19
+
+### Added
+- **Hold/Capture billing integration (#117)**: Opted the plugin into the new Authorize+Capture billing path. `OnePlatformClient` now sends `X-Plugin-Version: 2.36.0` on every outbound request; when the API recognizes the version it returns an `X-Hold-Id` response header which is persisted on the local job row. This lets each post-generation job carry the lifecycle of its credit hold (Reserved -> Charged | Refunded) instead of charging up-front and losing the balance on failure.
+- **New migration `ContaiAddHoldFieldsToJobsTable` (v7)**: Idempotently adds `hold_id VARCHAR(64) NULL` (indexed) and `credits_released TINYINT(1) NOT NULL DEFAULT 0` to `wp_contai_jobs` so the new credit lifecycle can be tracked locally.
+- **`ContaiOnePlatformResponse::getHeaders()` / `getHeader()`**: Response wrapper now exposes the raw HTTP response headers (case-insensitive lookup) so callers can read provider-issued headers such as `X-Hold-Id` without re-issuing the request.
+- **`ContaiJobRepository::setHoldId()` / `setCreditsReleased()`**: Targeted updates for the new columns; called from the content-generation pipeline when the API confirms a hold was created and again when polling reports the hold was released.
+- **`ContaiCreditGuard::isCreditsAlreadyReleased()`**: New helper that recognizes the released-hold terminal state so recovery and queue display logic can treat it as a non-blocking, retry-safe condition.
+- **Post Generator queue "Credit status" column**: Displays Reserved / Charged / Refunded badges per row so operators can audit the credit lifecycle of every active job at a glance.
+
+### Changed
+- **`ContaiContentGenerationPollingJob::handleFailed()`**: When the API reports the job as failed it now reads the `credits_released` flag, persists it on the local job row, and surfaces the message "Generation failed; credits have been refunded" instead of the previous generic error when credits were reintegrated.
+- **`ContaiResetToPendingStrategy`**: Jobs whose credits were already released by the API are now permitted to be re-queued; the existing 402 / insufficient-credits filter remains unchanged.
+- **Plugin version drift reconciled**: The header `Version:` and the `CONTAI_VERSION` constant now both report `2.36.0` (previously `2.35.3` and `2.35.1` respectively).
+
 ## [2.35.1] - 2026-04-30
 
 ### Changed
