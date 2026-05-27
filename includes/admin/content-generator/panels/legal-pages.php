@@ -10,6 +10,14 @@ class ContaiLegalPagesPanel {
     private ?array $api_generation_result = null;
     private bool $legal_info_saved = false;
     private bool $cookie_settings_saved = false;
+    private array $missing_required_fields = [];
+
+    private const REQUIRED_FIELDS = [
+        'owner'    => 'Owner Name',
+        'email'    => 'Contact Email',
+        'address'  => 'Fiscal Address',
+        'activity' => 'Business Activity',
+    ];
 
     public function __construct() {
         $this->legal_info = ContaiLegalPagesHelper::get_legal_info();
@@ -32,7 +40,10 @@ class ContaiLegalPagesPanel {
             if (!current_user_can('manage_options')) {
                 wp_die(esc_html__('You do not have permission to perform this action.', '1platform-content-ai'));
             }
-            $this->api_generation_result = $this->generate_via_api();
+            $this->missing_required_fields = $this->compute_missing_required_fields();
+            if (empty($this->missing_required_fields)) {
+                $this->api_generation_result = $this->generate_via_api();
+            }
         } elseif (isset($_POST['contai_save_cookie_settings'])) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
             check_admin_referer('contai_cookie_nonce', 'contai_cookie_nonce');
             if (!current_user_can('manage_options')) {
@@ -68,8 +79,26 @@ class ContaiLegalPagesPanel {
         update_option('contai_legal_activity', $activity);
         update_option('contai_legal_email', $email);
 
-        $this->legal_info_saved = true;
         $this->legal_info = ContaiLegalPagesHelper::get_legal_info();
+        $this->missing_required_fields = $this->compute_missing_required_fields();
+
+        if (empty($this->missing_required_fields)) {
+            $this->legal_info_saved = true;
+        }
+    }
+
+    private function compute_missing_required_fields(): array {
+        $missing = [];
+        foreach (self::REQUIRED_FIELDS as $key => $label) {
+            if (trim((string) ($this->legal_info[$key] ?? '')) === '') {
+                $missing[] = $label;
+            }
+        }
+        return $missing;
+    }
+
+    private function is_ready_to_generate(): bool {
+        return empty($this->compute_missing_required_fields());
     }
 
     public function render(): void {
@@ -85,6 +114,20 @@ class ContaiLegalPagesPanel {
         if ($this->legal_info_saved): ?>
             <div class="notice notice-success is-dismissible">
                 <p><?php esc_html_e('Legal information saved successfully!', '1platform-content-ai'); ?></p>
+            </div>
+        <?php endif;
+
+        if (!empty($this->missing_required_fields)):
+            $field_list = implode(', ', array_map(
+                static fn ($label) => __($label, '1platform-content-ai'),
+                $this->missing_required_fields
+            ));
+            ?>
+            <div class="notice notice-error">
+                <p>
+                    <strong><?php esc_html_e('Missing required information:', '1platform-content-ai'); ?></strong>
+                    <?php echo esc_html($field_list); ?>
+                </p>
             </div>
         <?php endif;
 
@@ -112,12 +155,12 @@ class ContaiLegalPagesPanel {
             </div>
 
             <div class="contai-panel-body">
-                <div class="contai-notice contai-notice-warning">
+                <div class="contai-notice contai-notice-info">
                     <div class="contai-notice-icon">
-                        <span class="dashicons dashicons-warning"></span>
+                        <span class="dashicons dashicons-info"></span>
                     </div>
                     <div class="contai-notice-body">
-                        <p><?php esc_html_e('All fields are required to generate legal pages via the API. Please fill in all information before generating.', '1platform-content-ai'); ?></p>
+                        <p><?php esc_html_e('All four fields below are required for legal page generation.', '1platform-content-ai'); ?></p>
                     </div>
                 </div>
 
@@ -234,6 +277,7 @@ class ContaiLegalPagesPanel {
     }
 
     private function render_generate_pages_section(): void {
+        $is_ready = $this->is_ready_to_generate();
         ?>
         <div class="contai-panel contai-panel-generate-pages">
             <div class="contai-panel-head">
@@ -249,6 +293,26 @@ class ContaiLegalPagesPanel {
             </div>
 
             <div class="contai-panel-body">
+                <?php if ($is_ready): ?>
+                    <div class="contai-notice contai-notice-success contai-ready-indicator">
+                        <div class="contai-notice-icon">
+                            <span class="dashicons dashicons-yes-alt"></span>
+                        </div>
+                        <div class="contai-notice-body">
+                            <p><strong><?php esc_html_e('Ready to generate', '1platform-content-ai'); ?></strong> — <?php esc_html_e('All required legal information is filled in.', '1platform-content-ai'); ?></p>
+                        </div>
+                    </div>
+                <?php else: ?>
+                    <div class="contai-notice contai-notice-warning contai-ready-indicator">
+                        <div class="contai-notice-icon">
+                            <span class="dashicons dashicons-warning"></span>
+                        </div>
+                        <div class="contai-notice-body">
+                            <p><?php esc_html_e('Fill in the legal information above before generating pages.', '1platform-content-ai'); ?></p>
+                        </div>
+                    </div>
+                <?php endif; ?>
+
                 <div class="contai-notice contai-notice-info">
                     <div class="contai-notice-icon">
                         <span class="dashicons dashicons-info"></span>
@@ -266,7 +330,7 @@ class ContaiLegalPagesPanel {
                 <form method="post" class="contai-legal-form">
                     <?php wp_nonce_field('contai_legal_nonce', 'contai_legal_nonce'); ?>
                     <div class="contai-button-group">
-                        <button type="submit" name="contai_generate_legal_pages" class="button button-primary contai-button-action contai-button-generate">
+                        <button type="submit" name="contai_generate_legal_pages" class="button button-primary contai-button-action contai-button-generate" <?php disabled(!$is_ready); ?>>
                             <span class="dashicons dashicons-admin-page"></span>
                             <span class="contai-button-text"><?php esc_html_e('Generate Legal Pages', '1platform-content-ai'); ?></span>
                         </button>
