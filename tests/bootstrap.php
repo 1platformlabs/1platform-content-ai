@@ -6,6 +6,13 @@ define('ARRAY_A', 'ARRAY_A');
 define('DAY_IN_SECONDS', 86400);
 define('HOUR_IN_SECONDS', 3600);
 
+if (!function_exists('plugin_dir_path')) {
+    function plugin_dir_path(string $file): string
+    {
+        return rtrim(dirname($file), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+    }
+}
+
 // Create dummy WP admin files so ImageUploader::ensureMediaFunctionsLoaded() doesn't fatal
 $wp_admin_includes = ABSPATH . 'wp-admin/includes/';
 if (!is_dir($wp_admin_includes)) {
@@ -121,6 +128,8 @@ require_once __DIR__ . '/../includes/services/jobs/recovery/JobRecoveryService.p
 require_once __DIR__ . '/../includes/services/jobs/JobProcessor.php';
 require_once __DIR__ . '/../includes/admin/content-generator/handlers/PostGenerationQueueHandler.php';
 require_once __DIR__ . '/../includes/admin/content-generator/panels/post-maintenance.php';
+require_once __DIR__ . '/../includes/admin/content-generator/helpers/legal-pages-helper.php';
+require_once __DIR__ . '/../includes/admin/content-generator/panels/legal-pages.php';
 
 // ── User Profile & License ─────────────────────────────────────
 require_once __DIR__ . '/../includes/services/user-profile/UserProfileService.php';

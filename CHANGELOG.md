@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+- **Legal Pages: persistent warning resolved (#129)**: The "All fields are required..." copy on the Legal Pages panel no longer renders as a static warning notice. It is now an informational helper that does not look like a validation error. A real error banner only appears after the user submits with empty required fields (named in the message), and a green "Ready to generate" indicator appears in the Generate Pages section once all four legal information fields are saved. The Generate button is disabled until the required information is on file.
+
 ### Changed
 - **Recovery thresholds tightened (queue Phase 4)**: `ContaiJobRecoveryService` now defaults to `ContaiResetToPendingStrategy(5)` (was `30`) and `ContaiMarkAsFailedStrategy(30)` (was `240`). The zombie-job blocking window shrinks from 4 h to 30 min on sites with healthy ticks. Both thresholds remain operator-configurable through the new `contai_recovery_reset_threshold_minutes` and `contai_recovery_fail_threshold_minutes` filters. Justification: with 5 PROCESSING slots and polling cycles of ≤ 50 s, a legitimate job should never exceed 60 s in PROCESSING without re-queueing — 5 min is a 5× safety margin.
 
