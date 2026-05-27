@@ -348,6 +348,26 @@ class ContaiSiteGenerationJob implements ContaiJobInterface
         $status = $service->getBatchStatus($batchId);
 
         if ($status['is_complete']) {
+            // Fail loudly when the wizard asked for more posts than the queue
+            // could enqueue (shortfall). Previously the job marked itself
+            // "done" with a partial load (e.g. 12 of 100), matching #109/#110.
+            if (!empty($status['is_short'])) {
+                contai_log(sprintf(
+                    '[site-gen] batch %s short: requested=%d enqueued=%d done=%d failed=%d',
+                    $batchId,
+                    $status['requested'] ?? 0,
+                    $status['total'],
+                    $status['completed'],
+                    $status['failed']
+                ));
+                // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+                throw new Exception(sprintf(
+                    'Only %d of %d requested posts were generated. The keyword extraction step yielded fewer keywords than requested — broaden the source topic or lower the post count, then re-run the wizard.',
+                    $status['completed'],
+                    $status['requested'] ?? $status['total']
+                ));
+            }
+
             if ($status['failed'] > 0) {
                 contai_log("Site generation batch {$batchId} completed with {$status['failed']} failed posts out of {$status['total']} total.");
             }
@@ -367,9 +387,12 @@ class ContaiSiteGenerationJob implements ContaiJobInterface
         }
 
         $failedInfo = $status['failed'] > 0 ? " ({$status['failed']} failed)" : '';
+        // Report progress against the requested target so the UI shows
+        // "12/100" instead of "12/12" when the queue ran short.
+        $progressDenominator = max($status['total'], $status['requested'] ?? $status['total']);
         $payload['wait_start_time'] = $waitStartTime;
         $payload['_wait_and_retry'] = true;
-        $payload['_wait_message'] = "Waiting for posts: {$status['finished']}/{$status['total']} finished{$failedInfo}. Elapsed: " . round($elapsedTime / 60) . " min.";
+        $payload['_wait_message'] = "Waiting for posts: {$status['finished']}/{$progressDenominator} finished{$failedInfo}. Elapsed: " . round($elapsedTime / 60) . " min.";
 
         return $payload;
     }
