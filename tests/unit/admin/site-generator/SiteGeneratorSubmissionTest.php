@@ -10,15 +10,14 @@ use PHPUnit\Framework\TestCase;
  * Covers GitHub issue #54: "Launch Site Generation" refreshed the page
  * silently without executing any action or showing error/success feedback.
  *
- * The fix replaced redirect-on-error with inline error display via
- * $GLOBALS['contai_site_gen_inline_notice'], preserving form data on
- * validation failures. Only the success path redirects.
- *
- * Tests are organized by branch coverage:
- * - Handler branches (nonce fail, capability, error return, exception)
- * - Processing branches (category, credits, active job, job creation, success)
- * - Page renderer (inline notice priority, transient fallback)
- * - Form (POST data preservation, provider masking, escaping)
+ * Current contract:
+ * - All submission paths (nonce failure, validation error, success,
+ *   uncaught exception) use a Post-Redirect-Get redirect so that the
+ *   refresh button can no longer re-submit the form and any notice
+ *   survives the redirect via a per-user transient.
+ * - On error paths the submitted form values are stashed alongside the
+ *   notice so the wizard re-renders pre-filled.
+ * - The capability check is the only path that wp_die()s.
  */
 class SiteGeneratorSubmissionTest extends TestCase
 {
@@ -30,28 +29,26 @@ class SiteGeneratorSubmissionTest extends TestCase
     public function setUp(): void
     {
         parent::setUp();
-        $this->handlerFile = dirname(__DIR__, 4) . '/includes/admin/admin-ai-site-generator.php';
-        $this->formFile = dirname(__DIR__, 4) . '/includes/admin/ai-site-generator/site-generator-form.php';
+        $this->handlerFile    = dirname(__DIR__, 4) . '/includes/admin/admin-ai-site-generator.php';
+        $this->formFile       = dirname(__DIR__, 4) . '/includes/admin/ai-site-generator/site-generator-form.php';
         $this->handlerContent = file_get_contents($this->handlerFile);
-        $this->formContent = file_get_contents($this->formFile);
+        $this->formContent    = file_get_contents($this->formFile);
     }
 
     // ── Handler: Entry Guard ───────────────────────────────────────
 
     public function test_handler_returns_early_when_no_post_data(): void
     {
-        // Branch: line 37 — if ( ! isset( $_POST['contai_start_site_generation'] ) )
         $this->assertStringContainsString(
             "if ( ! isset( \$_POST['contai_start_site_generation'] ) )",
             $this->handlerContent,
             'Handler must check for POST submission marker before processing'
         );
 
-        // Must return immediately — no GLOBALS, no redirect
         $earlyReturn = $this->extractBlock($this->handlerContent, "isset( \$_POST['contai_start_site_generation']", 'return;');
         $this->assertNotNull($earlyReturn, 'Early return must follow POST check');
-        $this->assertStringNotContainsString('GLOBALS', $earlyReturn, 'Early return must not set any GLOBALS');
         $this->assertStringNotContainsString('wp_safe_redirect', $earlyReturn, 'Early return must not redirect');
+        $this->assertStringNotContainsString('set_transient', $earlyReturn, 'Early return must not stash a transient');
     }
 
     // ── Handler: Nonce Verification ────────────────────────────────
@@ -71,37 +68,40 @@ class SiteGeneratorSubmissionTest extends TestCase
         );
     }
 
-    public function test_nonce_failure_sets_inline_notice_not_redirect(): void
+    public function test_nonce_failure_redirects_via_helper_and_preserves_form(): void
     {
-        // Branch: line 46 — if ( ! wp_verify_nonce(...) )
-        $nonceBlock = $this->extractBlock($this->handlerContent, '! wp_verify_nonce(', "return;\n\t}");
+        $nonceBlock = $this->extractBlock($this->handlerContent, '! wp_verify_nonce(', '}');
         $this->assertNotNull($nonceBlock, 'Nonce failure block must exist');
 
         $this->assertStringContainsString(
+            'contai_redirect_with_notice(',
+            $nonceBlock,
+            'Nonce failure must redirect via contai_redirect_with_notice (#54)'
+        );
+
+        $this->assertStringContainsString(
+            'contai_capture_submitted_form_values()',
+            $nonceBlock,
+            'Nonce failure must preserve submitted form values across the redirect (#54)'
+        );
+
+        $this->assertStringContainsString(
+            "'type'    => 'error'",
+            $nonceBlock,
+            'Nonce failure notice must be of type error'
+        );
+
+        $this->assertStringContainsString(
+            'session expired',
+            $nonceBlock,
+            'Nonce failure must surface a human-readable "session expired" message'
+        );
+
+        $this->assertStringNotContainsString(
             "GLOBALS['contai_site_gen_inline_notice']",
             $nonceBlock,
-            'Nonce failure must set inline notice (#54)'
+            'Nonce failure must no longer rely on a global notice (#54)'
         );
-
-        $this->assertStringNotContainsString(
-            'wp_safe_redirect',
-            $nonceBlock,
-            'Nonce failure must NOT redirect — error shown inline (#54)'
-        );
-
-        $this->assertStringNotContainsString(
-            'set_transient',
-            $nonceBlock,
-            'Nonce failure must NOT use transient — inline notice only (#54)'
-        );
-    }
-
-    public function test_nonce_failure_notice_has_correct_type(): void
-    {
-        $nonceBlock = $this->extractBlock($this->handlerContent, '! wp_verify_nonce(', "return;\n\t}");
-        $this->assertNotNull($nonceBlock, 'Nonce failure block must exist');
-        $this->assertStringContainsString("'type'    => 'error'", $nonceBlock);
-        $this->assertStringContainsString('session has expired', $nonceBlock);
     }
 
     // ── Handler: Capability Check ──────────────────────────────────
@@ -132,26 +132,32 @@ class SiteGeneratorSubmissionTest extends TestCase
         );
     }
 
-    public function test_handler_stores_processing_error_in_inline_notice(): void
+    public function test_handler_redirects_with_validation_error(): void
     {
-        // Branch: line 60 — if ( $error ) { $GLOBALS[...] = $error; return; }
         $this->assertStringContainsString(
             '$error = contai_process_site_generation_submission()',
             $this->handlerContent,
             'Handler must capture return value from processing function'
         );
 
+        $errorBlock = $this->extractBlock($this->handlerContent, 'if ( $error )', '}');
+        $this->assertNotNull($errorBlock, 'Validation error block must exist');
+
         $this->assertStringContainsString(
-            "if ( \$error ) {\n\t\t\t\$GLOBALS['contai_site_gen_inline_notice'] = \$error;",
-            $this->handlerContent,
-            'Handler must set inline notice when processing returns error (#54)'
+            'contai_redirect_with_notice( $error',
+            $errorBlock,
+            'Handler must redirect with the validation error notice (#54)'
+        );
+        $this->assertStringContainsString(
+            'contai_capture_submitted_form_values()',
+            $errorBlock,
+            'Handler must preserve submitted form values on validation error (#54)'
         );
     }
 
-    public function test_exception_handler_logs_and_sets_inline_notice(): void
+    public function test_exception_handler_logs_and_redirects_with_form_values(): void
     {
-        // Branch: line 64-71 — catch block
-        $catchBlock = $this->extractBlock($this->handlerContent, 'catch ( \\Throwable $e )', 'return;');
+        $catchBlock = $this->extractBlock($this->handlerContent, 'catch ( \\Throwable $e )', 'contai_capture_submitted_form_values()');
         $this->assertNotNull($catchBlock, 'Catch block must exist');
 
         $this->assertStringContainsString(
@@ -161,32 +167,80 @@ class SiteGeneratorSubmissionTest extends TestCase
         );
 
         $this->assertStringContainsString(
-            "GLOBALS['contai_site_gen_inline_notice']",
+            'contai_redirect_with_notice(',
             $catchBlock,
-            'Exception handler must set inline notice (#54)'
-        );
-
-        $this->assertStringNotContainsString(
-            'wp_safe_redirect',
-            $catchBlock,
-            'Exception handler must NOT redirect (#54)'
+            'Exception handler must redirect with a notice (#54)'
         );
     }
 
-    // ── Handler: No Redirect on Errors ─────────────────────────────
+    // ── Helper: Per-user Transient Key ─────────────────────────────
 
-    public function test_handler_never_redirects_in_error_paths(): void
+    public function test_transient_key_is_scoped_per_user(): void
     {
-        // The handler function should NOT contain wp_safe_redirect at all
-        // Only the processing function redirects on success
-        $handlerFunc = $this->extractFunction($this->handlerContent, 'contai_handle_ai_site_generator_submission');
-        $this->assertNotNull($handlerFunc, 'Handler function must exist');
-
-        $this->assertStringNotContainsString(
-            'wp_safe_redirect',
-            $handlerFunc,
-            'Handler must never redirect — only processing function redirects on success (#54)'
+        $this->assertStringContainsString(
+            'function contai_site_gen_notice_transient_key( int $user_id )',
+            $this->handlerContent,
+            'Per-user transient key helper must exist (#54)'
         );
+        $this->assertStringContainsString(
+            "return 'contai_site_gen_notice_' . \$user_id",
+            $this->handlerContent,
+            'Transient key must be namespaced by user id to avoid cross-user notice leaks (#54)'
+        );
+    }
+
+    // ── Helper: Form Value Capture ─────────────────────────────────
+
+    public function test_form_value_capture_uses_whitelist(): void
+    {
+        $this->assertStringContainsString(
+            'function contai_site_gen_preserved_fields()',
+            $this->handlerContent,
+            'Preserved fields whitelist helper must exist'
+        );
+
+        foreach ([
+            'contai_site_topic',
+            'contai_site_category',
+            'contai_site_language',
+            'contai_legal_owner',
+            'contai_legal_email',
+            'contai_legal_address',
+            'contai_legal_activity',
+            'contai_num_posts',
+            'contai_comments_per_post',
+            'contai_image_provider',
+            'contai_adsense_publisher',
+        ] as $field) {
+            $this->assertStringContainsString(
+                "'{$field}'",
+                $this->handlerContent,
+                "Preserved-field whitelist must include {$field}"
+            );
+        }
+    }
+
+    public function test_form_value_capture_sanitizes_values(): void
+    {
+        $this->assertStringContainsString(
+            'sanitize_text_field( wp_unslash( $_POST[ $field ] ) )',
+            $this->handlerContent,
+            'Captured POST values must be sanitized before being stashed in the transient (#54)'
+        );
+    }
+
+    // ── Helper: Redirect-with-notice ───────────────────────────────
+
+    public function test_redirect_with_notice_writes_to_per_user_transient(): void
+    {
+        $func = $this->extractFunction($this->handlerContent, 'contai_redirect_with_notice');
+        $this->assertNotNull($func, 'contai_redirect_with_notice must exist (#54)');
+
+        $this->assertStringContainsString('get_current_user_id()', $func);
+        $this->assertStringContainsString('contai_site_gen_notice_transient_key( $user_id )', $func);
+        $this->assertStringContainsString('set_transient(', $func);
+        $this->assertStringContainsString('wp_safe_redirect(', $func);
+        $this->assertStringContainsString('exit;', $func);
     }
 
     // ── Processing: Validation Returns ─────────────────────────────
@@ -196,13 +250,12 @@ class SiteGeneratorSubmissionTest extends TestCase
         $this->assertStringContainsString(
             'function contai_process_site_generation_submission()',
             $this->handlerContent,
-            'Processing function must accept no redirect_url param — errors are returned inline (#54)'
+            'Processing function must accept no redirect_url param — errors are returned to the handler (#54)'
         );
     }
 
     public function test_processing_returns_error_on_empty_category(): void
     {
-        // Branch: line 86 — if ( empty( $site_category ) )
         $this->assertReturnErrorPattern(
             'empty( $site_category )',
             'Please select a category',
@@ -212,7 +265,6 @@ class SiteGeneratorSubmissionTest extends TestCase
 
     public function test_processing_returns_error_on_no_credits(): void
     {
-        // Branch: line 98 — if ( ! $creditCheck['has_credits'] )
         $this->assertReturnErrorPattern(
             "! \$creditCheck['has_credits']",
             "\$creditCheck['message']",
@@ -222,7 +274,6 @@ class SiteGeneratorSubmissionTest extends TestCase
 
     public function test_processing_returns_error_on_active_job(): void
     {
-        // Branch: line 108 — if ( $activeJob )
         $this->assertReturnErrorPattern(
             '$activeJob',
             'already an active site generation',
@@ -232,7 +283,6 @@ class SiteGeneratorSubmissionTest extends TestCase
 
     public function test_processing_returns_error_on_job_creation_failure(): void
     {
-        // Branch: line 163 — if ( ! $created )
         $this->assertReturnErrorPattern(
             '! $created',
             'Failed to start site generation',
@@ -240,41 +290,28 @@ class SiteGeneratorSubmissionTest extends TestCase
         );
     }
 
-    public function test_processing_error_returns_use_return_not_redirect(): void
+    public function test_processing_uses_only_helper_for_redirects(): void
     {
         $processingFunc = $this->extractFunction($this->handlerContent, 'contai_process_site_generation_submission');
         $this->assertNotNull($processingFunc, 'Processing function must exist');
 
-        // Count error paths: should use 'return array(' not 'wp_safe_redirect'
+        // Errors return arrays.
         $returnArrayCount = substr_count($processingFunc, 'return array(');
         $this->assertGreaterThanOrEqual(4, $returnArrayCount,
             'Processing function must have at least 4 error return paths (category, credits, active job, job creation)'
         );
 
-        // Only ONE redirect (success path)
-        $redirectCount = substr_count($processingFunc, 'wp_safe_redirect');
-        $this->assertEquals(1, $redirectCount,
-            'Processing function must have exactly 1 redirect (success path only)'
-        );
-    }
-
-    // ── Processing: Success Path ───────────────────────────────────
-
-    public function test_processing_success_uses_transient_and_redirect(): void
-    {
+        // Success path delegates redirecting to the helper.
         $this->assertStringContainsString(
-            "set_transient( 'contai_site_gen_notice'",
-            $this->handlerContent,
-            'Success path must use transient for notice delivery (#54)'
+            'contai_redirect_with_notice(',
+            $processingFunc,
+            'Success path must redirect via the contai_redirect_with_notice helper (#54)'
         );
-
-        // Verify success transient contains success type
-        $successBlock = $this->extractBlock($this->handlerContent, "// Success — redirect", 'exit;');
-        $this->assertNotNull($successBlock, 'Success block must exist');
-
-        $this->assertStringContainsString("'type'    => 'success'", $successBlock);
-        $this->assertStringContainsString('wp_safe_redirect', $successBlock);
-        $this->assertStringContainsString('exit;', $successBlock);
+        $this->assertStringNotContainsString(
+            'wp_safe_redirect',
+            $processingFunc,
+            'Processing function must not call wp_safe_redirect directly — use the helper (#54)'
+        );
     }
 
     public function test_processing_saves_adsense_publisher_on_success(): void
@@ -292,33 +329,32 @@ class SiteGeneratorSubmissionTest extends TestCase
         );
     }
 
-    // ── Page Renderer: Notice Priority ─────────────────────────────
+    // ── Page Renderer ──────────────────────────────────────────────
 
-    public function test_page_renderer_checks_inline_notice_first(): void
+    public function test_page_renderer_consumes_per_user_transient(): void
     {
         $rendererFunc = $this->extractFunction($this->handlerContent, 'contai_ai_site_generator_page');
         $this->assertNotNull($rendererFunc, 'Page renderer function must exist');
 
-        $inlinePos = strpos($rendererFunc, "GLOBALS['contai_site_gen_inline_notice']");
-        $transientPos = strpos($rendererFunc, "get_transient( 'contai_site_gen_notice' )");
-
-        $this->assertNotFalse($inlinePos, 'Page renderer must check inline notice');
-        $this->assertNotFalse($transientPos, 'Page renderer must check transient as fallback');
-        $this->assertLessThan(
-            $transientPos,
-            $inlinePos,
-            'Inline notice must be checked before transient fallback in page renderer (#54)'
+        $this->assertStringContainsString(
+            'contai_site_gen_notice_transient_key( $user_id )',
+            $rendererFunc,
+            'Page renderer must read from the per-user transient key (#54)'
+        );
+        $this->assertStringContainsString(
+            'delete_transient( $transient_key )',
+            $rendererFunc,
+            'Page renderer must delete the transient after reading to prevent stale notices (#54)'
         );
     }
 
-    public function test_page_renderer_deletes_transient_after_reading(): void
+    public function test_page_renderer_exposes_preserved_form_data_to_form(): void
     {
         $rendererFunc = $this->extractFunction($this->handlerContent, 'contai_ai_site_generator_page');
-
         $this->assertStringContainsString(
-            "delete_transient( 'contai_site_gen_notice' )",
+            "GLOBALS['contai_site_gen_preserved_form_data']",
             $rendererFunc,
-            'Page render must delete transient after display to prevent stale notices (#54)'
+            'Page renderer must expose preserved form values to the form template (#54)'
         );
     }
 
@@ -343,37 +379,22 @@ class SiteGeneratorSubmissionTest extends TestCase
 
     // ── Form: POST Data Preservation ───────────────────────────────
 
-    public function test_form_detects_post_data_via_inline_notice(): void
+    public function test_form_reads_preserved_values_from_transient_bridge(): void
     {
         $this->assertStringContainsString(
-            "! empty( \$GLOBALS['contai_site_gen_inline_notice'] ) && isset( \$_POST['contai_start_site_generation'] )",
+            "GLOBALS['contai_site_gen_preserved_form_data']",
             $this->formContent,
-            'Form must detect POST data availability by checking inline notice AND POST marker (#54)'
+            'Form must read preserved values from the transient bridge global (#54)'
         );
     }
 
-    public function test_form_post_closure_sanitizes_values(): void
+    public function test_form_post_closure_does_not_touch_post(): void
     {
-        $this->assertStringContainsString(
+        // The new approach pulls from the sanitized transient stash, never from $_POST.
+        $this->assertStringNotContainsString(
             'sanitize_text_field( wp_unslash( $_POST[ $key ] ) )',
             $this->formContent,
-            'POST data closure must sanitize all values with sanitize_text_field + wp_unslash'
-        );
-    }
-
-    public function test_form_post_closure_returns_default_when_no_post(): void
-    {
-        // When $has_post_data is false, closure must return default
-        $this->assertStringContainsString(
-            "if ( ! \$has_post_data || ! isset( \$_POST[ \$key ] ) )",
-            $this->formContent,
-            'POST closure must check both data availability and key existence'
-        );
-
-        $this->assertStringContainsString(
-            'return $default;',
-            $this->formContent,
-            'POST closure must return default value when no POST data'
+            'Form must no longer re-sanitize from $_POST — values come pre-sanitized from the transient (#54)'
         );
     }
 
@@ -403,24 +424,23 @@ class SiteGeneratorSubmissionTest extends TestCase
     public function test_form_preserves_select_values_on_error(): void
     {
         $selects = [
-            'contai_site_category'   => 'selected_category',
-            'contai_site_language'   => 'post_language',
-            'contai_target_country'  => 'post_country',
-            'contai_image_provider'  => 'post_image',
+            'contai_site_category',
+            'contai_site_language',
+            'contai_target_country',
+            'contai_image_provider',
         ];
 
-        foreach ($selects as $field => $_var) {
+        foreach ($selects as $field) {
             $this->assertStringContainsString(
                 "\$post( '{$field}'",
                 $this->formContent,
-                "Select field {$field} must use \$post() for POST data retrieval (#54)"
+                "Select field {$field} must use \$post() for value retrieval (#54)"
             );
         }
     }
 
     public function test_form_text_inputs_escape_with_esc_attr(): void
     {
-        // Every $post() call in a value attribute must be wrapped with esc_attr()
         preg_match_all('/value="<\?php echo esc_attr\( \$post\(/', $this->formContent, $matches);
 
         $this->assertGreaterThanOrEqual(7, count($matches[0]),
@@ -585,9 +605,6 @@ class SiteGeneratorSubmissionTest extends TestCase
 
     // ── Helper Methods ─────────────────────────────────────────────
 
-    /**
-     * Find the first line containing a substring.
-     */
     private function findLineContaining(string $content, string $needle): ?string
     {
         foreach (preg_split('/\R/', $content) as $line) {
@@ -598,9 +615,6 @@ class SiteGeneratorSubmissionTest extends TestCase
         return null;
     }
 
-    /**
-     * Extract a code block between two markers.
-     */
     private function extractBlock(string $content, string $startMarker, string $endMarker): ?string
     {
         $startPos = strpos($content, $startMarker);
@@ -614,27 +628,27 @@ class SiteGeneratorSubmissionTest extends TestCase
         return substr($content, $startPos, $endPos - $startPos + strlen($endMarker));
     }
 
-    /**
-     * Extract a function body from source code.
-     */
     private function extractFunction(string $content, string $funcName): ?string
     {
-        $pattern = '/function\s+' . preg_quote($funcName, '/') . '\s*\([^)]*\)\s*\{/';
-        if (!preg_match($pattern, $content, $matches, PREG_OFFSET_CAPTURE)) {
+        $needle = 'function ' . $funcName;
+        $startPos = strpos($content, $needle);
+        if ($startPos === false) {
             return null;
         }
-        $startPos = $matches[0][1];
+        // Walk forward to the first '{' that opens the function body.
+        $bodyStart = strpos($content, '{', $startPos);
+        if ($bodyStart === false) {
+            return null;
+        }
         $braceCount = 0;
-        $len = strlen($content);
-        $started = false;
+        $len        = strlen($content);
 
-        for ($i = $startPos; $i < $len; $i++) {
+        for ($i = $bodyStart; $i < $len; $i++) {
             if ($content[$i] === '{') {
                 $braceCount++;
-                $started = true;
             } elseif ($content[$i] === '}') {
                 $braceCount--;
-                if ($started && $braceCount === 0) {
+                if ($braceCount === 0) {
                     return substr($content, $startPos, $i - $startPos + 1);
                 }
             }
@@ -642,9 +656,6 @@ class SiteGeneratorSubmissionTest extends TestCase
         return null;
     }
 
-    /**
-     * Assert that a condition triggers a return array('type' => 'error') pattern.
-     */
     private function assertReturnErrorPattern(string $condition, string $_messageHint, string $description): void
     {
         $condPos = strpos($this->handlerContent, $condition);
