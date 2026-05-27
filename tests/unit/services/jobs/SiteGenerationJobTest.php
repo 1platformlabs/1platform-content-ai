@@ -49,6 +49,42 @@ class SiteGenerationJobTest extends TestCase
         parent::tearDown();
     }
 
+    // ── waitForPosts partial-completion guard (#109 / #110) ────────
+
+    public function test_waitForPosts_fails_loudly_on_short_batch(): void
+    {
+        $source = file_get_contents(dirname(__DIR__, 4) . '/includes/services/jobs/SiteGenerationJob.php');
+
+        $this->assertStringContainsString(
+            "!empty(\$status['is_short'])",
+            $source,
+            'waitForPosts must inspect the is_short flag returned by getBatchStatus (#109/#110)'
+        );
+
+        $this->assertStringContainsString(
+            'Only %d of %d requested posts were generated',
+            $source,
+            'waitForPosts must surface a clear message naming the short count (#109/#110)'
+        );
+
+        $this->assertMatchesRegularExpression(
+            "/!empty\\(\\\$status\\['is_short'\\]\\).*?throw new Exception/s",
+            $source,
+            'Shortfall branch in waitForPosts must throw, not return success (#109/#110)'
+        );
+    }
+
+    public function test_waitForPosts_progress_message_uses_requested_denominator(): void
+    {
+        $source = file_get_contents(dirname(__DIR__, 4) . '/includes/services/jobs/SiteGenerationJob.php');
+
+        $this->assertStringContainsString(
+            "\$progressDenominator = max(\$status['total'], \$status['requested'] ?? \$status['total'])",
+            $source,
+            'Progress reporting must show "X / requested" instead of "X / enqueued" so a short batch is visible to the operator (#109/#110)'
+        );
+    }
+
     // ── isReExecution direct tests ────────────────────────────────
 
     public function test_isReExecution_returns_true_when_option_is_set(): void
