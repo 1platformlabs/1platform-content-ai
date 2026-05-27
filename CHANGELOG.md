@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Fixed
+- **Site Wizard: PRG redirect + per-user notice transient (#54)**: Submitting "Launch Site Generation" now uses a Post-Redirect-Get pattern on every code path (nonce failure, validation error, uncaught exception, success). The notice + previously-submitted form values are stashed in a per-user transient (`contai_site_gen_notice_<user_id>`) and consumed on the next request, so a browser refresh no longer re-submits the form and the user no longer sees an empty form after a silent server-side rejection. On expired-nonce paths the wizard re-renders with all previously-typed values preserved alongside an explicit "session expired" banner.
 - **Legal Pages: persistent warning resolved (#129)**: The "All fields are required..." copy on the Legal Pages panel no longer renders as a static warning notice. It is now an informational helper that does not look like a validation error. A real error banner only appears after the user submits with empty required fields (named in the message), and a green "Ready to generate" indicator appears in the Generate Pages section once all four legal information fields are saved. The Generate button is disabled until the required information is on file.
 
 ### Changed

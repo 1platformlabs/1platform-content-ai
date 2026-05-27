@@ -22,15 +22,18 @@ function contai_render_full_site_generator_form() {
 	$site_domain      = wp_parse_url( home_url(), PHP_URL_HOST );
 	$default_email    = 'info@' . preg_replace( '/^www\./', '', $site_domain );
 
-	// Preserve form data on validation error (inline notice = POST was rejected).
-	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Values are only used for re-display, not processing.
-	$has_post_data = ! empty( $GLOBALS['contai_site_gen_inline_notice'] ) && isset( $_POST['contai_start_site_generation'] );
-	$post          = static function ( $key, $default = '' ) use ( $has_post_data ) {
-		if ( ! $has_post_data || ! isset( $_POST[ $key ] ) ) {
-			return $default;
+	// After a PRG redirect on validation error, the previously submitted values
+	// arrive via the per-user transient (see contai_redirect_with_notice in
+	// admin-ai-site-generator.php). The stash is already sanitized; re-display
+	// directly without touching $_POST so the page works even after a refresh.
+	$preserved_form_data = isset( $GLOBALS['contai_site_gen_preserved_form_data'] ) && is_array( $GLOBALS['contai_site_gen_preserved_form_data'] )
+		? $GLOBALS['contai_site_gen_preserved_form_data']
+		: array();
+	$post = static function ( $key, $default = '' ) use ( $preserved_form_data ) {
+		if ( isset( $preserved_form_data[ $key ] ) && $preserved_form_data[ $key ] !== '' ) {
+			return $preserved_form_data[ $key ];
 		}
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-		return sanitize_text_field( wp_unslash( $_POST[ $key ] ) );
+		return $default;
 	};
 
 	$creditGuard = new ContaiCreditGuard();

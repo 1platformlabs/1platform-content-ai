@@ -18,6 +18,76 @@ require_once __DIR__ . '/../database/repositories/JobRepository.php';
 require_once __DIR__ . '/../database/models/Job.php';
 require_once __DIR__ . '/../services/category-api/CategoryAPIService.php';
 
+/**
+ * Per-user transient key for the wizard notice + preserved POST values.
+ *
+ * Keying by user ID prevents leakage between operators that share a session
+ * cookie pool (e.g. a tab opened just before logout).
+ */
+function contai_site_gen_notice_transient_key( int $user_id ): string {
+	return 'contai_site_gen_notice_' . $user_id;
+}
+
+/**
+ * Whitelist of form fields preserved across the PRG redirect on error.
+ *
+ * Mirrors the inputs in includes/admin/ai-site-generator/site-generator-form.php.
+ */
+function contai_site_gen_preserved_fields(): array {
+	return array(
+		'contai_site_topic',
+		'contai_site_category',
+		'contai_site_language',
+		'contai_wordpress_theme',
+		'contai_legal_owner',
+		'contai_legal_email',
+		'contai_legal_address',
+		'contai_legal_activity',
+		'contai_source_topic',
+		'contai_target_country',
+		'contai_num_posts',
+		'contai_comments_per_post',
+		'contai_image_provider',
+		'contai_adsense_publisher',
+	);
+}
+
+/**
+ * Capture and sanitize the submitted form values for re-display after a PRG redirect.
+ */
+function contai_capture_submitted_form_values(): array {
+	$values = array();
+	foreach ( contai_site_gen_preserved_fields() as $field ) {
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Values are only echoed back; not used for processing.
+		if ( isset( $_POST[ $field ] ) ) {
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+			$values[ $field ] = sanitize_text_field( wp_unslash( $_POST[ $field ] ) );
+		}
+	}
+	return $values;
+}
+
+/**
+ * Stash the notice (and optionally preserved form values) for the next request,
+ * then redirect back to the wizard so refreshing does not re-submit.
+ */
+function contai_redirect_with_notice( array $notice, array $form_values = array() ): void {
+	$user_id = get_current_user_id();
+	if ( $user_id > 0 ) {
+		set_transient(
+			contai_site_gen_notice_transient_key( $user_id ),
+			array(
+				'notice'      => $notice,
+				'form_values' => $form_values,
+			),
+			MINUTE_IN_SECONDS
+		);
+	}
+
+	wp_safe_redirect( admin_url( 'admin.php?page=contai-ai-site-generator' ) );
+	exit;
+}
+
 function contai_handle_ai_site_generator_submission() {
 	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce is verified below via wp_verify_nonce().
 	if ( ! isset( $_POST['contai_start_site_generation'] ) ) {
@@ -29,11 +99,13 @@ function contai_handle_ai_site_generator_submission() {
 		: '';
 
 	if ( ! wp_verify_nonce( $nonce_value, 'contai_site_generator_nonce' ) ) {
-		$GLOBALS['contai_site_gen_inline_notice'] = array(
-			'type'    => 'error',
-			'message' => __( 'Your session has expired. Please reload the page and try again.', '1platform-content-ai' ),
+		contai_redirect_with_notice(
+			array(
+				'type'    => 'error',
+				'message' => __( 'Your session expired before the form could be submitted. Your data is preserved below — click Launch Site Generation again to retry.', '1platform-content-ai' ),
+			),
+			contai_capture_submitted_form_values()
 		);
-		return;
 	}
 
 	if ( ! current_user_can( 'manage_options' ) ) {
@@ -43,16 +115,17 @@ function contai_handle_ai_site_generator_submission() {
 	try {
 		$error = contai_process_site_generation_submission();
 		if ( $error ) {
-			$GLOBALS['contai_site_gen_inline_notice'] = $error;
-			return;
+			contai_redirect_with_notice( $error, contai_capture_submitted_form_values() );
 		}
 	} catch ( \Throwable $e ) {
 		contai_log( 'Site generation submission failed: ' . $e->getMessage() ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
-		$GLOBALS['contai_site_gen_inline_notice'] = array(
-			'type'    => 'error',
-			'message' => __( 'An unexpected error occurred while starting site generation. Please try again.', '1platform-content-ai' ),
+		contai_redirect_with_notice(
+			array(
+				'type'    => 'error',
+				'message' => __( 'An unexpected error occurred while starting site generation. Please try again.', '1platform-content-ai' ),
+			),
+			contai_capture_submitted_form_values()
 		);
-		return;
 	}
 }
 
@@ -154,14 +227,12 @@ function contai_process_site_generation_submission() {
 		}
 	}
 
-	// Success — redirect to show the progress panel
-	$redirect_url = admin_url( 'admin.php?page=contai-ai-site-generator' );
-	set_transient( 'contai_site_gen_notice', array(
-		'type'    => 'success',
-		'message' => __( 'Site generation process has been started successfully!', '1platform-content-ai' ),
-	), 30 );
-	wp_safe_redirect( $redirect_url );
-	exit;
+	contai_redirect_with_notice(
+		array(
+			'type'    => 'success',
+			'message' => __( 'Site generation process has been started successfully!', '1platform-content-ai' ),
+		)
+	);
 }
 add_action( 'admin_init', 'contai_handle_ai_site_generator_submission' );
 
@@ -174,16 +245,25 @@ function contai_ai_site_generator_page() {
 	$activeJob = $jobRepository->findActiveSiteGenerationJob();
 	$hasActiveJob = ! empty( $activeJob );
 
-	$notice = $GLOBALS['contai_site_gen_inline_notice'] ?? null;
+	$notice              = null;
+	$preserved_form_data = array();
 
-	if ( ! $notice ) {
-		$notice = get_transient( 'contai_site_gen_notice' );
-		if ( ! empty( $notice ) && is_array( $notice ) ) {
-			delete_transient( 'contai_site_gen_notice' );
-		} else {
-			$notice = null;
+	$user_id = get_current_user_id();
+	if ( $user_id > 0 ) {
+		$transient_key = contai_site_gen_notice_transient_key( $user_id );
+		$payload       = get_transient( $transient_key );
+		if ( ! empty( $payload ) && is_array( $payload ) ) {
+			delete_transient( $transient_key );
+			if ( ! empty( $payload['notice'] ) && is_array( $payload['notice'] ) ) {
+				$notice = $payload['notice'];
+			}
+			if ( ! empty( $payload['form_values'] ) && is_array( $payload['form_values'] ) ) {
+				$preserved_form_data = $payload['form_values'];
+			}
 		}
 	}
+
+	$GLOBALS['contai_site_gen_preserved_form_data'] = $preserved_form_data;
 
 	if ( $notice ) {
 		$type = in_array( $notice['type'], array( 'success', 'error', 'warning', 'info' ), true ) ? $notice['type'] : 'info';
