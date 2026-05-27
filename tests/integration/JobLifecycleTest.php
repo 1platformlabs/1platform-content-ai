@@ -426,6 +426,7 @@ class JobLifecycleTest extends TestCase
         });
         WP_Mock::userFunction('get_site_url')->andReturn('https://example.test');
         WP_Mock::userFunction('get_option')->andReturn(false);
+        WP_Mock::userFunction('update_option')->andReturn(true);
         WP_Mock::userFunction('wp_upload_dir')->andReturn([
             'basedir' => '/tmp',
             'baseurl' => '/uploads',
