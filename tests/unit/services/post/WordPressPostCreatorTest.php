@@ -70,4 +70,27 @@ class WordPressPostCreatorTest extends TestCase
         $this->assertLessThanOrEqual(160, mb_strlen($captured_data['post_excerpt']));
         $this->assertStringEndsWith('...', $captured_data['post_excerpt']);
     }
+
+    public function test_create_enables_comments_on_generated_posts(): void
+    {
+        // #48: generated posts must have comments explicitly enabled instead of
+        // relying on the fragile global default_comment_status option.
+        WP_Mock::userFunction('sanitize_text_field')->andReturnArg(0);
+        WP_Mock::userFunction('wp_strip_all_tags')->andReturnUsing(function ($str) {
+            return strip_tags($str);
+        });
+
+        $captured_data = null;
+        WP_Mock::userFunction('wp_insert_post')
+            ->once()
+            ->andReturnUsing(function ($data) use (&$captured_data) {
+                $captured_data = $data;
+                return 1;
+            });
+
+        $creator = new ContaiWordPressPostCreator();
+        $creator->create('Test Title', '<p>Body content for the article.</p>');
+
+        $this->assertSame('open', $captured_data['comment_status']);
+    }
 }
