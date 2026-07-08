@@ -143,4 +143,64 @@ class MainMenuManagerTest extends TestCase
 
         $this->invokePrivate('removeOrphanedCategoryItems', [13]);
     }
+
+    // ── updateMainMenuWithCategories: empty-categories path (#48) ──
+
+    /**
+     * Regression guard for #48: when no custom categories exist yet, the
+     * wizard must STILL create a "Main Navigation" menu and assign it to the
+     * theme's primary nav location (with a Home item). If it doesn't, the
+     * primary location stays empty and themes fall back to wp_page_menu(),
+     * which lists published pages — the generated legal pages — producing the
+     * reported "main menu shows only legal pages, no categories" symptom.
+     */
+    public function test_updateMainMenuWithCategories_creates_and_assigns_primary_menu_with_no_categories(): void
+    {
+        $menu_id = 42;
+
+        WP_Mock::userFunction('wp_get_nav_menu_object')
+            ->with('Main Navigation')
+            ->andReturn(false);
+
+        WP_Mock::userFunction('wp_create_nav_menu')
+            ->once()
+            ->with('Main Navigation')
+            ->andReturn($menu_id);
+
+        WP_Mock::userFunction('is_wp_error')->andReturn(false);
+
+        // Plumbing for primary-location resolution (covers both the static-map
+        // and runtime-detection branches — get_option returns the default).
+        WP_Mock::userFunction('get_option')->andReturnUsing(
+            function ($key, $default = false) {
+                return $default;
+            }
+        );
+        WP_Mock::userFunction('get_nav_menu_locations')->andReturn([]);
+        WP_Mock::userFunction('get_registered_nav_menus')
+            ->andReturn(['primary' => 'Primary Menu']);
+
+        // A menu MUST be assigned to some nav location, carrying our menu id.
+        WP_Mock::userFunction('set_theme_mod')
+            ->once()
+            ->with('nav_menu_locations', Mockery::on(function ($locations) use ($menu_id) {
+                return is_array($locations) && in_array($menu_id, $locations, true);
+            }));
+
+        // Fresh menu → no existing items on every read.
+        WP_Mock::userFunction('wp_get_nav_menu_items')->andReturn(false);
+        WP_Mock::userFunction('home_url')->with('/')->andReturn('https://example.com/');
+
+        // A Home item MUST be added even with zero categories.
+        WP_Mock::userFunction('wp_update_nav_menu_item')
+            ->once()
+            ->with($menu_id, 0, Mockery::on(function ($item) {
+                return is_array($item)
+                    && ($item['menu-item-classes'] ?? null) === 'home-page-link'
+                    && !empty($item['menu-item-title']);
+            }))
+            ->andReturn(500);
+
+        $this->manager->updateMainMenuWithCategories([]);
+    }
 }

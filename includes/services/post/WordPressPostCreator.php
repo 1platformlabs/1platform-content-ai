@@ -16,6 +16,12 @@ class ContaiWordPressPostCreator {
             'post_status' => 'publish',
             'post_type' => 'post',
             'post_excerpt' => sanitize_text_field($excerpt),
+            // Explicitly enable comments on generated posts (#48). Relying on
+            // the global default_comment_status option alone is fragile: some
+            // themes/import paths leave comments closed, which produced the
+            // "comments enabled on only 2 of 7 sites" symptom. Setting it per
+            // post makes engagement-ready comments deterministic.
+            'comment_status' => 'open',
         ];
 
         if ($slug !== null) {

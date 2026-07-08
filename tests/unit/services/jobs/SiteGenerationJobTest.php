@@ -277,4 +277,36 @@ class SiteGenerationJobTest extends TestCase
         $method->setAccessible(true);
         $method->invoke($this->job);
     }
+
+    // ── setupNavigation always builds the primary menu (#48) ──────
+
+    public function test_setupNavigation_builds_primary_menu_even_without_categories(): void
+    {
+        $source = file_get_contents(dirname(__DIR__, 4) . '/includes/services/jobs/SiteGenerationJob.php');
+
+        $this->assertMatchesRegularExpression(
+            '/private function setupNavigation\(\): void\s*\{.*?\n    \}/s',
+            $source,
+            'setupNavigation() must exist'
+        );
+
+        preg_match('/private function setupNavigation\(\): void\s*\{.*?\n    \}/s', $source, $matches);
+        $body = $matches[0];
+
+        // The empty-categories early-return left the theme's primary nav
+        // location unassigned, so themes fell back to wp_page_menu() and
+        // listed the generated legal pages instead of a real menu (#48).
+        $this->assertStringNotContainsString(
+            'if (empty($categories)) {',
+            $body,
+            'setupNavigation() must NOT early-return on empty categories (#48): an unassigned primary nav location makes themes list legal pages instead of a menu'
+        );
+
+        // It must always delegate to the menu manager regardless of category count.
+        $this->assertStringContainsString(
+            '$menuManager->updateMainMenuWithCategories($category_names);',
+            $body,
+            'setupNavigation() must always build the Main Navigation menu (#48)'
+        );
+    }
 }

@@ -438,10 +438,14 @@ class ContaiSiteGenerationJob implements ContaiJobInterface
             'exclude'    => [get_option('default_category')],
         ]);
 
-        if (empty($categories)) {
-            return;
-        }
-
+        // Always build and assign the primary "Main Navigation" menu, even
+        // when no custom categories exist yet (#48). Without a menu assigned
+        // to the theme's primary nav location, WordPress themes fall back to
+        // wp_page_menu(), which lists published PAGES — i.e. the generated
+        // legal pages — producing the reported "main menu shows only legal
+        // pages, no categories" symptom. A Home-only menu still claims the
+        // primary location and suppresses that fallback; category items are
+        // appended whenever categories are present.
         $category_names = array_map(function ($cat) {
             return sanitize_text_field($cat->name);
         }, $categories);
