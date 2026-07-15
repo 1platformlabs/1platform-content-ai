@@ -23,6 +23,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Recovery edge-case unit tests**: insufficient-credits skip, credits-already-released-permits-retry, empty/invalid/future `processed_at` handling for both strategies. Aggregate coverage of `includes/services/jobs/recovery/*` + `JobProcessor` now sits at 97% lines.
 
 ### CI
+- **SonarCloud integration**: Added SonarCloud static analysis to QA and PROD pipelines with `pcov` coverage on PHP 8.3, a separate `sonarcloud` job in QA, and `continue-on-error: true` to keep scans informational. Config in `sonar-project.properties` (PHP 8.3, `includes/` sources, `tests/` exclusions).
 - QA + PROD workflows now run `phpunit --testsuite=integration` after the unit suite.
 - QA PHP matrix expanded from `["8.1", "8.3"]` to `["8.1", "8.2", "8.3"]`.
 - **Job-processor cron migrated to Action Scheduler (defense in depth)**: `contai_register_job_processor_cron()` now dual-registers the `contai_process_job_queue` action — Action Scheduler is the primary runner (does not depend on inbound HTTP traffic), WP-Cron stays as the fallback for sites without Action Scheduler or with sparse traffic patterns. The matching `contai_unregister_job_processor_cron()` and `uninstall.php` clean both runners so deactivation/uninstall leaves no orphaned schedules. Plugin installs that did not previously have Action Scheduler available continue to work via WP-Cron unchanged.
