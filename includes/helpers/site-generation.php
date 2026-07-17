@@ -150,6 +150,12 @@ function contai_apply_theme_defaults( string $theme ): void {
 			break;
 
 		case 'neve':
+			// Neve's "Advanced Options" (on by default) route the blog/category archive
+			// layout through its own mod, independent of neve_default_sidebar_layout — and
+			// it defaults to full-width. Without this, the archive/home listing (where the
+			// sidebar widgets from contai_add_sidebar_widgets() are supposed to render)
+			// silently drops the sidebar even though single posts show it correctly (#46).
+			set_theme_mod( 'neve_blog_archive_sidebar_layout', 'right' );
 			set_theme_mod( 'neve_default_sidebar_layout', 'right' );
 			set_theme_mod( 'neve_single_post_sidebar_layout', 'right' );
 			set_theme_mod( 'neve_breadcrumbs', true );
