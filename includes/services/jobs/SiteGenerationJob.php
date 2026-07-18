@@ -15,6 +15,7 @@ require_once __DIR__ . '/../setup/CommentsGenerationService.php';
 require_once __DIR__ . '/../setup/SearchConsoleSetupService.php';
 require_once __DIR__ . '/../setup/AdsenseSetupService.php';
 require_once __DIR__ . '/../menu/MainMenuManager.php';
+require_once __DIR__ . '/../../helpers/category-menu.php';
 
 class ContaiSiteGenerationJob implements ContaiJobInterface
 {
@@ -433,10 +434,19 @@ class ContaiSiteGenerationJob implements ContaiJobInterface
 
     private function setupNavigation(): void
     {
+        // Do NOT exclude default_category here. The wizard repurposes that very
+        // term: replaceUncategorizedWithFirstCategory() renames it in place into
+        // the first API category and nothing repoints the option, so excluding
+        // it by id silently dropped a real, post-bearing category from the menu
+        // of every generated site (#48). contai_category_is_unused_default()
+        // keeps the original intent - hide a still-empty placeholder - without
+        // that false assumption.
         $categories = get_categories([
             'hide_empty' => false,
-            'exclude'    => [get_option('default_category')],
         ]);
+
+        $default_category_id = (int) get_option('default_category');
+        $repurposed_category_id = (int) get_option(ContaiCategoryService::OPTION_REPURPOSED_DEFAULT, 0);
 
         // Always build and assign the primary "Main Navigation" menu, even
         // when no custom categories exist yet (#48). Without a menu assigned
@@ -446,9 +456,21 @@ class ContaiSiteGenerationJob implements ContaiJobInterface
         // pages, no categories" symptom. A Home-only menu still claims the
         // primary location and suppresses that fallback; category items are
         // appended whenever categories are present.
-        $category_names = array_map(function ($cat) {
-            return sanitize_text_field($cat->name);
-        }, $categories);
+        $category_names = [];
+        foreach ($categories as $cat) {
+            $is_unused_default = contai_category_is_unused_default(
+                (int) $cat->term_id,
+                (int) $cat->count,
+                $default_category_id,
+                $repurposed_category_id
+            );
+
+            if ($is_unused_default) {
+                continue;
+            }
+
+            $category_names[] = sanitize_text_field($cat->name);
+        }
 
         $menuManager = new ContaiMainMenuManager();
         $menuManager->updateMainMenuWithCategories($category_names);

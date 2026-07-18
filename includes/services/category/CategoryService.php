@@ -7,6 +7,15 @@ class ContaiCategoryService {
     private const TAXONOMY_CATEGORY = 'category';
     private const UNCATEGORIZED_CATEGORY_NAME = 'Uncategorized';
 
+    /**
+     * Records the term id of the default category once the wizard has renamed
+     * it into a real category, so later steps can tell it apart from an
+     * untouched "Uncategorized" placeholder. Without this marker the nav menu
+     * step excluded the repurposed term by default_category id and dropped a
+     * real category from the menu (#48).
+     */
+    public const OPTION_REPURPOSED_DEFAULT = 'contai_repurposed_default_category';
+
     private array $existing_categories_cache = [];
     private bool $cache_loaded = false;
 
@@ -100,11 +109,19 @@ class ContaiCategoryService {
 
         $replacement_category = array_shift($categories);
 
-        return $this->updateCategoryTerm(
+        $replaced = $this->updateCategoryTerm(
             $uncategorized_term->term_id,
             $replacement_category,
             $uncategorized_term
         );
+
+        if ($replaced) {
+            // This term is no longer a placeholder: it now holds a real
+            // category, while default_category still points at it (#48).
+            update_option(self::OPTION_REPURPOSED_DEFAULT, (int) $uncategorized_term->term_id);
+        }
+
+        return $replaced;
     }
 
     private function findUncategorizedTerm() {

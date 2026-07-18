@@ -164,6 +164,7 @@ require_once __DIR__ . '/../includes/cron/agent-actions-cron.php';
 
 // ── Admin Apps (asset enqueue dispatcher) ──────────────────────
 require_once __DIR__ . '/../includes/helpers/asset-version.php';
+require_once __DIR__ . '/../includes/helpers/category-menu.php';
 require_once __DIR__ . '/../includes/admin/admin-apps.php';
 
 // ── Plugin version & upgrade routines ──────────────────────────
