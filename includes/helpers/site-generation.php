@@ -27,33 +27,59 @@ require_once __DIR__ . '/../providers/WebsiteProvider.php';
  *
  * Used in cron/async context where $wp_registered_sidebars may be empty
  * because the theme's widgets_init hook has not fired.
+ *
+ * Every ID below was verified against the theme's own register_sidebar() call
+ * (#48). Registering a widget against an ID the theme does not declare is a
+ * silent no-op — no error, no log, no sidebar — which is the same failure mode
+ * as the theme-mod keys corrected in v2.38.9.
  */
 define( 'CONTAI_THEME_SIDEBAR_MAP', array(
 	'astra'          => 'sidebar-1',
 	'generatepress'  => 'sidebar-1',
-	'neve'           => 'sidebar-1',
+	// Neve declares no 'sidebar-1' anywhere; its blog sidebar is 'blog-sidebar'
+	// (neve 4.2.8: sidebar.php:8,14 is_active_sidebar('blog-sidebar')).
+	'neve'           => 'blog-sidebar',
 	'blocksy'        => 'sidebar-1',
-	'kadence'        => 'sidebar-1',
+	// Kadence registers 'sidebar-primary'/'sidebar-secondary', never 'sidebar-1'
+	// (kadence 1.5.1: inc/components/layout/component.php:78-79).
+	'kadence'        => 'sidebar-primary',
 	'sydney'         => 'sidebar-1',
 	'oceanwp'        => 'sidebar',
 	'newsmatic'      => 'sidebar-1',
-	'colormag'       => 'sidebar-right',
+	// ColorMag prefixes every widget area; 'sidebar-right' does not appear in
+	// the theme at all (colormag 4.2.1:
+	// inc/widgets/class-colormag-widgets.php:27).
+	'colormag'       => 'colormag_right_sidebar',
 ) );
 
 /**
  * Static mapping of primary nav menu locations per theme.
  *
  * Used in cron/async context where get_registered_nav_menus() may return empty.
+ *
+ * Every location below was verified against the theme's own register_nav_menus()
+ * call (#48). WordPress silently drops nav_menu_locations entries for locations
+ * the active theme never registered, and a theme with no menu in its primary
+ * location falls back to wp_page_menu() — which lists the published PAGES, i.e.
+ * the generated legal pages. That is the original symptom this issue reported.
  */
 define( 'CONTAI_THEME_NAV_LOCATION_MAP', array(
 	'astra'          => 'primary',
 	'generatepress'  => 'primary',
 	'neve'           => 'primary',
-	'blocksy'        => 'header-menu-1',
+	// Blocksy registers footer/menu_1/menu_2/menu_mobile; 'header-menu-1' is
+	// not among them (blocksy 2.1.49: inc/init.php:409-412), so the wizard was
+	// never assigning a menu at all and every Blocksy site fell through to the
+	// wp_page_menu() page listing.
+	'blocksy'        => 'menu_1',
 	'kadence'        => 'primary',
 	'sydney'         => 'primary',
 	'oceanwp'        => 'main_menu',
-	'newsmatic'      => 'menu-1',
+	// 'menu-1' is registered, but it is Newsmatic's thin TOP bar
+	// (newsmatic 1.5.0: inc/hooks/header-hooks.php:347). The main header nav
+	// reads 'menu-2' (header-hooks.php:186), which is also what every one of
+	// the theme's own demo imports assigns (inc/admin/assets/demos.php).
+	'newsmatic'      => 'menu-2',
 	'colormag'       => 'primary',
 ) );
 
@@ -601,17 +627,30 @@ function contai_create_footer_menu_with_legal_pages(): void {
 	// Assign to footer menu location
 	$theme = get_option( 'contai_wordpress_theme', 'astra' );
 
-	// Theme-specific footer location overrides
+	// Theme-specific footer location overrides.
+	//
+	// Verified against each theme's register_nav_menus() call (#48). Three
+	// themes are ABSENT on purpose: generatepress 3.6.1 registers only
+	// 'primary' (functions.php:56-60), sydney 2.69 only 'primary'/'mobile'
+	// (functions.php:56-65) and colormag 4.2.1 only 'primary'/'menu-secondary'
+	// (inc/core/class-colormag-after-setup-theme.php:315-320). None of them has
+	// a footer menu location in the free build, so inventing a plausible slug
+	// here would recreate exactly the silent no-op this issue is about. With no
+	// map entry the pattern fallback runs and, failing that, logs the
+	// diagnostic naming the locations the theme really has.
 	$theme_footer_map = array(
 		'astra'         => 'footer_menu',
-		'generatepress' => 'secondary',
 		'neve'          => 'footer',
 		'oceanwp'       => 'footer_menu',
 		'blocksy'       => 'footer',
-		'kadence'       => 'footer_navigation',
-		'sydney'        => 'footer',
-		'newsmatic'     => 'footer-menu',
-		'colormag'      => 'footer-menu',
+		// Kadence's constant is FOOTER_NAV_MENU_SLUG = 'footer'
+		// (kadence 1.5.1: inc/components/nav_menus/component.php:35,86);
+		// 'footer_navigation' appears nowhere in the theme.
+		'kadence'       => 'footer',
+		// Newsmatic's footer nav is 'menu-3', guarded by has_nav_menu('menu-3')
+		// (newsmatic 1.5.0: inc/hooks/footer-hooks.php:68-71), so the dead
+		// 'footer-menu' entry rendered no footer navigation whatsoever.
+		'newsmatic'     => 'menu-3',
 	);
 
 	$locations  = get_nav_menu_locations();
@@ -629,38 +668,17 @@ function contai_create_footer_menu_with_legal_pages(): void {
 		return;
 	}
 
-	// Fallback: pattern-match footer location from registered nav menus
-	$footer_patterns  = array( 'footer', 'bottom', 'secondary' );
-	$exclude_patterns = array( 'primary', 'main', 'header', 'top', 'mobile', 'social' );
+	// Fallback: pattern-match footer location from registered nav menus.
+	$matched = contai_match_footer_nav_location( $registered );
 
-	foreach ( $registered as $location => $description ) {
-		$loc_lower  = strtolower( $location );
-		$desc_lower = strtolower( $description );
-
-		// Skip primary navigation locations
-		$is_excluded = false;
-		foreach ( $exclude_patterns as $exclude ) {
-			if ( strpos( $loc_lower, $exclude ) !== false || strpos( $desc_lower, $exclude ) !== false ) {
-				$is_excluded = true;
-				break;
-			}
-		}
-		if ( $is_excluded ) {
-			continue;
-		}
-
-		// Match footer patterns
-		foreach ( $footer_patterns as $pattern ) {
-			if ( strpos( $loc_lower, $pattern ) !== false || strpos( $desc_lower, $pattern ) !== false ) {
-				$locations[ $location ] = $menu_id;
-				set_theme_mod( 'nav_menu_locations', $locations );
-				error_log( "[ContAI] Footer menu assigned to '{$location}' via pattern match for theme '{$theme}'" );
-				return;
-			}
-		}
+	if ( null !== $matched ) {
+		$locations[ $matched ] = $menu_id;
+		set_theme_mod( 'nav_menu_locations', $locations );
+		error_log( "[ContAI] Footer menu assigned to '{$matched}' via pattern match for theme '{$theme}'" );
+		return;
 	}
 
-	error_log( "[ContAI] WARNING: No footer location found for theme '{$theme}'. Registered menus: " . implode( ', ', array_keys( $registered ) ) );
+	error_log( "[ContAI] WARNING: No footer location found for theme '{$theme}'. Registered menus: " . implode( ', ', array_keys( is_array( $registered ) ? $registered : array() ) ) );
 }
 
 /**

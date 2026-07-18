@@ -104,4 +104,132 @@ class NavLocationTest extends TestCase
             'Nav menu location slugs are case-sensitive in WordPress'
         );
     }
+
+    // ── contai_match_footer_nav_location() ─────────────────────────
+
+    /**
+     * The ranking bug (#48). Kadence registers its locations in the order
+     * primary, secondary, mobile, footer (kadence 1.5.1:
+     * inc/components/nav_menus/component.php:83-86). 'secondary' is a weak
+     * footer pattern, so walking the registry once and taking the first
+     * location that matched ANY pattern put the legal-pages menu into the
+     * theme's SECONDARY HEADER nav while a genuine 'footer' location sat two
+     * entries later.
+     *
+     * Three themes now rely on this fallback as their only path, so its
+     * ordering has to be strength-major, not registration-major.
+     */
+    public function test_prefers_a_real_footer_location_over_an_earlier_secondary(): void
+    {
+        $kadence = [
+            'primary'   => 'Primary',
+            'secondary' => 'Secondary',
+            'mobile'    => 'Mobile',
+            'footer'    => 'Footer',
+        ];
+
+        $this->assertSame(
+            'footer',
+            contai_match_footer_nav_location($kadence),
+            'A genuine footer location must beat an earlier "secondary" header menu (#48)'
+        );
+    }
+
+    public function test_prefers_footer_over_bottom_when_both_exist(): void
+    {
+        $this->assertSame(
+            'site-footer',
+            contai_match_footer_nav_location([
+                'bottom-bar'  => 'Bottom Bar',
+                'site-footer' => 'Site Footer',
+            ]),
+            'Patterns are ranked strongest first'
+        );
+    }
+
+    /**
+     * 'secondary' still has to work — it is the last resort for themes whose
+     * only non-header location is named that way.
+     */
+    public function test_falls_back_to_secondary_when_nothing_stronger_exists(): void
+    {
+        $this->assertSame(
+            'menu-secondary',
+            contai_match_footer_nav_location([
+                'primary'        => 'Primary Menu',
+                'menu-secondary' => 'Secondary Menu',
+            ])
+        );
+    }
+
+    /**
+     * GeneratePress 3.6.1 registers exactly one location (functions.php:56-60).
+     * There is nothing to assign, and saying so lets the caller log the
+     * diagnostic instead of silently writing a dead entry.
+     */
+    public function test_returns_null_when_the_theme_has_only_a_primary_location(): void
+    {
+        $this->assertNull(
+            contai_match_footer_nav_location(['primary' => 'Primary Menu']),
+            'GeneratePress free has no footer nav location (#48)'
+        );
+    }
+
+    public function test_excludes_header_locations_even_when_they_match_a_pattern(): void
+    {
+        $this->assertNull(
+            contai_match_footer_nav_location([
+                'header-bottom' => 'Header Bottom Row',
+                'top-footer'    => 'Top Footer Bar',
+            ]),
+            'An excluded term anywhere in the slug or label disqualifies the location'
+        );
+    }
+
+    public function test_matches_on_the_human_label_when_the_slug_is_opaque(): void
+    {
+        $this->assertSame(
+            'menu-3',
+            contai_match_footer_nav_location([
+                'menu-2' => 'Main Header',
+                'menu-3' => 'Bottom Footer',
+            ]),
+            'Newsmatic-style numeric slugs are only distinguishable by their label'
+        );
+    }
+
+    public function test_returns_null_for_an_empty_or_unavailable_registry(): void
+    {
+        $this->assertNull(contai_match_footer_nav_location([]));
+        $this->assertNull(contai_match_footer_nav_location(false));
+    }
+
+    /**
+     * get_registered_nav_menus() values are strings in practice, but a theme
+     * filtering the registry can leave a null through, and strtolower(null) is
+     * deprecated in PHP 8.1+ — which on a site running WP_DEBUG floods the log
+     * from inside the site wizard.
+     *
+     * A plain assertion on the return value does NOT discriminate here: a
+     * deprecation is not a failure, so the test passes with or without the
+     * cast. Promote it to an exception for the duration of the call, otherwise
+     * this is a test that looks like a guard and guards nothing.
+     */
+    public function test_tolerates_a_null_description(): void
+    {
+        set_error_handler(
+            static function (int $errno, string $message): bool {
+                throw new \ErrorException($message, 0, $errno);
+            },
+            E_DEPRECATED | E_WARNING
+        );
+
+        try {
+            $result = contai_match_footer_nav_location(['primary' => null, 'footer' => null]);
+        } finally {
+            restore_error_handler();
+        }
+
+        $this->assertSame('footer', $result);
+    }
 }
