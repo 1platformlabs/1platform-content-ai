@@ -16,6 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 require_once __DIR__ . '/crypto.php';
 require_once __DIR__ . '/nav-location.php';
+require_once __DIR__ . '/astra-settings.php';
 require_once __DIR__ . '/../services/api/OnePlatformClient.php';
 require_once __DIR__ . '/../services/api/OnePlatformEndpoints.php';
 require_once __DIR__ . '/../providers/WebsiteProvider.php';
@@ -141,13 +142,27 @@ function contai_apply_theme_defaults( string $theme ): void {
 			break;
 
 		case 'astra':
-			// Force right sidebar layout site-wide
-			set_theme_mod( 'site-sidebar-layout', 'right-sidebar' );
-			set_theme_mod( 'single-post-sidebar-layout', 'right-sidebar' );
-			set_theme_mod( 'archive-post-sidebar-layout', 'right-sidebar' );
-			// Enable breadcrumbs on single posts and archives
-			set_theme_mod( 'ast-breadcrumbs-position', 'astra_entry_top' );
-			set_theme_mod( 'ast-breadcrumbs-separator', '»' );
+			// Astra reads every one of its settings from the astra-settings
+			// option via astra_get_option(), never from theme mods, so these
+			// MUST NOT go through set_theme_mod() (#48).
+			//
+			// 'breadcrumb-position' doubles as the breadcrumbs on/off switch:
+			// it defaults to 'none' (= hidden) and 'astra_entry_top' renders
+			// them before the title. The separator is intentionally left alone
+			// — Astra already defaults it to '\00bb' (a CSS escape for »,
+			// injected into a content: rule), which is the character the
+			// previous code was trying to set. Writing a raw » there would put
+			// a literal glyph where a CSS escape sequence is expected.
+			contai_astra_apply_settings(
+				array(
+					// Force right sidebar layout site-wide.
+					'site-sidebar-layout'         => 'right-sidebar',
+					'single-post-sidebar-layout'  => 'right-sidebar',
+					'archive-post-sidebar-layout' => 'right-sidebar',
+					// Show breadcrumbs before the entry title.
+					'breadcrumb-position'         => 'astra_entry_top',
+				)
+			);
 			break;
 
 		case 'neve':
