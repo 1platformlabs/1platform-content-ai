@@ -203,4 +203,90 @@ class MainMenuManagerTest extends TestCase
 
         $this->manager->updateMainMenuWithCategories([]);
     }
+
+    /**
+     * Regression guard for #48 (re-execution path).
+     *
+     * The wizard calls switch_theme() during generateWebsite(), and theme mods
+     * — which hold nav_menu_locations — are stored per stylesheet. So on a
+     * re-execution the "Main Navigation" menu survives while its location
+     * binding does not. getOrCreateMenu() used to early-return whenever the
+     * menu already existed, so assignMenuToPrimaryLocation() ran on first
+     * creation only and the binding was never restored. An unbound primary
+     * location makes themes fall back to wp_page_menu(), which lists published
+     * pages — the generated legal pages — reproducing the reported "main menu
+     * shows only legal pages, no categories" symptom that reopened this issue.
+     *
+     * Assigning is idempotent, so re-asserting it every run is safe.
+     */
+    public function test_updateMainMenuWithCategories_rebinds_location_when_menu_already_exists(): void
+    {
+        $menu_id = 77;
+
+        // Menu survived a previous run …
+        WP_Mock::userFunction('wp_get_nav_menu_object')
+            ->with('Main Navigation')
+            ->andReturn((object) ['term_id' => $menu_id]);
+
+        // … so it must NOT be created again.
+        WP_Mock::userFunction('wp_create_nav_menu')->never();
+
+        WP_Mock::userFunction('is_wp_error')->andReturn(false);
+        WP_Mock::userFunction('get_option')->andReturnUsing(
+            function ($key, $default = false) {
+                return $default;
+            }
+        );
+
+        // … but its binding did not survive the theme switch.
+        WP_Mock::userFunction('get_nav_menu_locations')->andReturn([]);
+        WP_Mock::userFunction('get_registered_nav_menus')
+            ->andReturn(['primary' => 'Primary Menu']);
+
+        // The binding MUST be re-asserted, carrying the existing menu id.
+        WP_Mock::userFunction('set_theme_mod')
+            ->once()
+            ->with('nav_menu_locations', Mockery::on(function ($locations) use ($menu_id) {
+                return is_array($locations) && in_array($menu_id, $locations, true);
+            }));
+
+        WP_Mock::userFunction('wp_get_nav_menu_items')->andReturn(false);
+        WP_Mock::userFunction('home_url')->with('/')->andReturn('https://example.com/');
+        WP_Mock::userFunction('wp_update_nav_menu_item')->andReturn(600);
+
+        $this->manager->updateMainMenuWithCategories([]);
+    }
+
+    /**
+     * Source guard for #48.
+     *
+     * assignMenuToPrimaryLocation() trusts CONTAI_THEME_NAV_LOCATION_MAP via
+     * contai_get_primary_nav_location(). That function lives in
+     * site-generation.php, which the test bootstrap does not load, so the
+     * static-map branch cannot be exercised behaviourally from here — the
+     * runtime-detection branch is what the tests above cover. The decision
+     * logic itself is covered by NavLocationTest; this pins the wiring so the
+     * branch cannot regress to assigning an unregistered location and
+     * returning, which is what made runtime detection unreachable.
+     */
+    public function test_primary_location_validates_static_map_before_assigning(): void
+    {
+        $source = file_get_contents(
+            dirname(__DIR__, 4) . '/includes/services/menu/MainMenuManager.php'
+        );
+
+        $this->assertStringContainsString(
+            'contai_nav_location_is_usable($static_location, $registered_menus)',
+            $source,
+            'The static nav location must be validated against the registered menus ' .
+            'before short-circuiting, or an unregistered location is assigned silently (#48)'
+        );
+
+        $this->assertStringNotContainsString(
+            'if ($static_location) {',
+            $source,
+            'The unvalidated early return must not come back — it makes runtime ' .
+            'detection unreachable and leaves the primary location unbound (#48)'
+        );
+    }
 }

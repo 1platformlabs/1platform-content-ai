@@ -15,6 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 require_once __DIR__ . '/crypto.php';
+require_once __DIR__ . '/nav-location.php';
 require_once __DIR__ . '/../services/api/OnePlatformClient.php';
 require_once __DIR__ . '/../services/api/OnePlatformEndpoints.php';
 require_once __DIR__ . '/../providers/WebsiteProvider.php';
@@ -407,8 +408,7 @@ function contai_create_footer_menu_with_legal_pages(): void {
 	}
 
 	// Assign to footer menu location
-	$footer_locations = array( 'footer', 'footer-menu', 'footer_menu', 'footer-nav', 'footer_navigation' );
-	$theme            = get_option( 'contai_wordpress_theme', 'astra' );
+	$theme = get_option( 'contai_wordpress_theme', 'astra' );
 
 	// Theme-specific footer location overrides
 	$theme_footer_map = array(
@@ -423,17 +423,22 @@ function contai_create_footer_menu_with_legal_pages(): void {
 		'colormag'      => 'footer-menu',
 	);
 
-	$locations     = get_nav_menu_locations();
-	$target        = $theme_footer_map[ $theme ] ?? null;
+	$locations  = get_nav_menu_locations();
+	$target     = $theme_footer_map[ $theme ] ?? null;
+	$registered = get_registered_nav_menus();
 
-	if ( $target ) {
+	// Only short-circuit on the static map when the active theme actually
+	// registers that location. Assigning an unregistered location is silently
+	// dropped by WordPress, and returning here used to make the pattern-match
+	// fallback and the diagnostic warning below unreachable for every mapped
+	// theme — the silent failure behind "footer has no legal links" (#48).
+	if ( contai_nav_location_is_usable( $target, $registered ) ) {
 		$locations[ $target ] = $menu_id;
 		set_theme_mod( 'nav_menu_locations', $locations );
 		return;
 	}
 
 	// Fallback: pattern-match footer location from registered nav menus
-	$registered       = get_registered_nav_menus();
 	$footer_patterns  = array( 'footer', 'bottom', 'secondary' );
 	$exclude_patterns = array( 'primary', 'main', 'header', 'top', 'mobile', 'social' );
 
