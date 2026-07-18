@@ -47,3 +47,60 @@ function contai_nav_location_is_usable( ?string $location, $registered ): bool {
 
 	return array_key_exists( $location, $registered );
 }
+
+/**
+ * Pick the best footer nav menu location out of a registered-menus registry.
+ *
+ * Used when the static footer map has no entry for the active theme, or has one
+ * the theme does not register. Three of the nine supported themes register no
+ * footer location at all in their free build, so this fallback is their only
+ * path — its ranking has to be right.
+ *
+ * Patterns are tried in DESCENDING strength across the whole registry, rather
+ * than walking the registry once and accepting the first location that matches
+ * any pattern. That ordering matters: Kadence registers
+ * primary, secondary, mobile, footer in that order, and 'secondary' is a weak
+ * footer pattern, so a registry-major walk assigned the footer legal menu to
+ * the theme's SECONDARY HEADER nav while a genuine 'footer' location sat two
+ * entries later (#48).
+ *
+ * Pure function: no WordPress calls, so it is directly unit-testable.
+ *
+ * @param mixed $registered Result of get_registered_nav_menus().
+ * @return string|null The chosen location, or null when nothing matches.
+ */
+function contai_match_footer_nav_location( $registered ): ?string {
+	if ( ! is_array( $registered ) || empty( $registered ) ) {
+		return null;
+	}
+
+	// Strongest signal first. 'secondary' stays last because several themes use
+	// it for a second HEADER menu, not a footer one.
+	$footer_patterns  = array( 'footer', 'bottom', 'secondary' );
+	$exclude_patterns = array( 'primary', 'main', 'header', 'top', 'mobile', 'social' );
+
+	foreach ( $footer_patterns as $pattern ) {
+		foreach ( $registered as $location => $description ) {
+			$loc_lower  = strtolower( (string) $location );
+			$desc_lower = strtolower( (string) $description );
+
+			// Skip primary navigation locations.
+			$is_excluded = false;
+			foreach ( $exclude_patterns as $exclude ) {
+				if ( strpos( $loc_lower, $exclude ) !== false || strpos( $desc_lower, $exclude ) !== false ) {
+					$is_excluded = true;
+					break;
+				}
+			}
+			if ( $is_excluded ) {
+				continue;
+			}
+
+			if ( strpos( $loc_lower, $pattern ) !== false || strpos( $desc_lower, $pattern ) !== false ) {
+				return (string) $location;
+			}
+		}
+	}
+
+	return null;
+}
