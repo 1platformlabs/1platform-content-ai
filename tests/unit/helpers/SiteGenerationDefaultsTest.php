@@ -73,4 +73,54 @@ class SiteGenerationDefaultsTest extends TestCase
             'Regression guard: the existing single-post sidebar mod must remain set'
         );
     }
+
+    /**
+     * Validates GitHub issue #48 (footer legal links missing on 7/7 sites).
+     *
+     * contai_create_footer_menu_with_legal_pages() resolves the footer nav
+     * location from a static theme map and used to write it to
+     * nav_menu_locations and `return` unconditionally. WordPress silently
+     * ignores entries for locations the active theme does not register, so a
+     * wrong/stale map entry produced a silent no-op — and the early return
+     * also made the pattern-matching fallback below it, and its diagnostic
+     * "no footer location found" log, unreachable for all nine mapped themes.
+     *
+     * The decision itself is behaviourally covered by NavLocationTest; this
+     * guard pins the call site to the predicate so the early return cannot
+     * regress to being unconditional.
+     */
+    public function test_footer_menu_validates_static_location_before_assigning(): void
+    {
+        $content = file_get_contents($this->helperFile);
+
+        preg_match(
+            '/function contai_create_footer_menu_with_legal_pages\(\).*?\n}/s',
+            $content,
+            $matches
+        );
+        $body = $matches[0] ?? '';
+
+        $this->assertNotSame('', $body, 'contai_create_footer_menu_with_legal_pages() must exist');
+
+        $this->assertStringContainsString(
+            'contai_nav_location_is_usable( $target, $registered )',
+            $body,
+            'The footer location must be validated against the registered nav menus ' .
+            'before short-circuiting, or an unregistered mapped location fails silently (#48)'
+        );
+
+        $this->assertStringNotContainsString(
+            "if ( \$target ) {\n\t\t\$locations[ \$target ] = \$menu_id;",
+            $body,
+            'The unvalidated early return must not come back — it makes the pattern-match ' .
+            'fallback and the diagnostic warning dead code (#48)'
+        );
+
+        $this->assertStringContainsString(
+            'WARNING: No footer location found for theme',
+            $body,
+            'The diagnostic log must remain reachable so the remaining per-theme scope ' .
+            'of #48 can be diagnosed from a live install'
+        );
+    }
 }

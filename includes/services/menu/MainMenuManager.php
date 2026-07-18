@@ -3,6 +3,7 @@
 if (!defined('ABSPATH')) exit;
 
 require_once __DIR__ . '/../config/Config.php';
+require_once __DIR__ . '/../../helpers/nav-location.php';
 
 class ContaiMainMenuManager {
 
@@ -29,6 +30,17 @@ class ContaiMainMenuManager {
         $menu = wp_get_nav_menu_object(self::MENU_NAME);
 
         if ($menu) {
+            // Re-assert the location binding on every run, not only on
+            // creation. The wizard calls switch_theme() before this step, and
+            // theme mods (which hold nav_menu_locations) are stored per
+            // stylesheet — so on a re-execution the menu survives while its
+            // binding does not. Leaving it unbound makes the theme fall back
+            // to wp_page_menu(), which lists pages: the generated legal pages.
+            // That is the reported "main menu shows only legal pages" symptom
+            // (#48). Assigning is idempotent when the binding is already
+            // correct.
+            $this->assignMenuToPrimaryLocation($menu->term_id);
+
             return $menu->term_id;
         }
 
@@ -45,11 +57,16 @@ class ContaiMainMenuManager {
 
     private function assignMenuToPrimaryLocation(int $menu_id): void {
         $locations = get_nav_menu_locations();
+        $registered_menus = get_registered_nav_menus();
 
-        // Try static mapping first (reliable in cron/async context)
+        // Try static mapping first (reliable in cron/async context), but only
+        // when the active theme actually registers that location. WordPress
+        // silently drops nav_menu_locations entries for unregistered
+        // locations, so returning here unconditionally made the runtime
+        // detection below unreachable and the menu silently unbound (#48).
         if (function_exists('contai_get_primary_nav_location')) {
             $static_location = contai_get_primary_nav_location();
-            if ($static_location) {
+            if (contai_nav_location_is_usable($static_location, $registered_menus)) {
                 $locations[$static_location] = $menu_id;
                 set_theme_mod('nav_menu_locations', $locations);
                 return;
@@ -57,8 +74,6 @@ class ContaiMainMenuManager {
         }
 
         // Fallback to runtime detection
-        $registered_menus = get_registered_nav_menus();
-
         if (empty($registered_menus)) {
             return;
         }
