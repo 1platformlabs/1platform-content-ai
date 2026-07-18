@@ -17,6 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 require_once __DIR__ . '/crypto.php';
 require_once __DIR__ . '/nav-location.php';
 require_once __DIR__ . '/astra-settings.php';
+require_once __DIR__ . '/theme-settings.php';
 require_once __DIR__ . '/../services/api/OnePlatformClient.php';
 require_once __DIR__ . '/../services/api/OnePlatformEndpoints.php';
 require_once __DIR__ . '/../providers/WebsiteProvider.php';
@@ -124,21 +125,79 @@ function contai_apply_theme_defaults( string $theme ): void {
 			if ( function_exists( 'contai_set_newsmatic_reading_defaults' ) ) {
 				contai_set_newsmatic_reading_defaults();
 			}
-			set_theme_mod( 'newsmatic_breadcrumb_option', true );
+			// 'newsmatic_breadcrumb_option' does not exist in the theme (#48):
+			// the only matches for that string are the customizer SECTION id
+			// 'newsmatic_breadcrumb_options_section'. The setting Newsmatic
+			// actually reads is 'site_breadcrumb_option'
+			// (inc/extras/helpers.php:102 via newsmatic_get_customizer_option(),
+			// which is get_theme_mod() with a default from
+			// inc/theme-starter.php:118). It is a boolean and already defaults
+			// to true, so this write matters for keeping breadcrumbs on when a
+			// previous value turned them off.
+			set_theme_mod( 'site_breadcrumb_option', true );
 			break;
 
 		case 'oceanwp':
-			set_theme_mod( 'ocean_blog_layout', 'right-sidebar' );
+			// 'ocean_blog_layout' does not exist in the theme (#48). The blog
+			// and archive layout is 'ocean_blog_archives_layout'
+			// (inc/helpers.php:505, inside oceanwp_post_layout()). The value
+			// vocabulary is unchanged: 'right-sidebar' is valid here.
+			set_theme_mod( 'ocean_blog_archives_layout', 'right-sidebar' );
+			// Correct as-is: read at inc/helpers.php:2375 in
+			// oceanwp_has_breadcrumbs(). Defaults to true already.
 			set_theme_mod( 'ocean_breadcrumbs', true );
 			break;
 
 		case 'generatepress':
-			set_theme_mod( 'content_layout_setting', 'content-sidebar' );
+			// Two independent defects here (#48). GeneratePress never reads
+			// theme mods for its settings — everything goes through
+			// generate_get_option(), backed by the 'generate_settings' option
+			// (inc/theme-functions.php:20-33) — so set_theme_mod() was a silent
+			// no-op. And 'content_layout_setting' is not a sidebar setting at
+			// all: it selects container styling, and only accepts
+			// 'separate-containers' / 'one-container' (inc/customizer.php:
+			// 1055-1058), so 'content-sidebar' was never a valid value either.
+			//
+			// The sidebar layout keys are these. They already default to
+			// 'right-sidebar' (inc/defaults.php:46-48), so this write exists to
+			// assert the wizard's intent on a site that was previously
+			// configured otherwise, not to change a fresh install.
+			contai_generatepress_apply_settings(
+				array(
+					'layout_setting'        => 'right-sidebar',
+					'blog_layout_setting'   => 'right-sidebar',
+					'single_layout_setting' => 'right-sidebar',
+				)
+			);
+			// No breadcrumbs setting is written: GeneratePress 3.6.1 has no
+			// breadcrumbs feature at all (the single 'breadcrumb' match in the
+			// theme is a bbPress CSS selector in inc/plugin-compat.php:197).
 			break;
 
 		case 'colormag':
-			set_theme_mod( 'colormag_site_layout', 'right-sidebar' );
-			set_theme_mod( 'colormag_breadcrumb_display', true );
+			// 'colormag_site_layout' is a pre-3.0 key that meant boxed-vs-wide
+			// CONTAINER WIDTH, and today only survives inside a migration
+			// teardown (inc/migration/class-colormag-migration.php:719-729).
+			// Writing 'right-sidebar' there was worse than inert: it makes the
+			// migration's guard truthy while matching neither branch, leaving
+			// $new_container_layout undefined and corrupting
+			// 'colormag_container_layout' if that migration ever runs.
+			//
+			// The live keys are these, and ColorMag's value vocabulary uses
+			// UNDERSCORES ('right_sidebar'), not hyphens
+			// (inc/customizer/options/content/blog.php:31,
+			// inc/customizer/options/global/layout.php). Both are needed: the
+			// blog reader's runtime default is 'no_sidebar', not 'default', so
+			// it never falls through to the global value on its own
+			// (inc/template-functions.php:204-206).
+			set_theme_mod( 'colormag_blog_sidebar_layout', 'right_sidebar' );
+			set_theme_mod( 'colormag_global_sidebar_layout', 'right_sidebar' );
+			// 'colormag_breadcrumb_display' does not exist in the theme. The
+			// real gate is 'colormag_breadcrumb_enable', compared loosely
+			// against 1 and defaulting to 0 = OFF
+			// (template-parts/hooks/header/header.php:526), so unlike the other
+			// themes here this write is what actually turns breadcrumbs on.
+			set_theme_mod( 'colormag_breadcrumb_enable', 1 );
 			break;
 
 		case 'astra':
@@ -171,27 +230,144 @@ function contai_apply_theme_defaults( string $theme ): void {
 			// it defaults to full-width. Without this, the archive/home listing (where the
 			// sidebar widgets from contai_add_sidebar_widgets() are supposed to render)
 			// silently drops the sidebar even though single posts show it correctly (#46).
+			// 'right' is the correct value here — Neve's vocabulary is
+			// left/right/full-width (inc/customizer/defaults/utils.php:23-46),
+			// not the 'right-sidebar' other themes use.
 			set_theme_mod( 'neve_blog_archive_sidebar_layout', 'right' );
-			set_theme_mod( 'neve_default_sidebar_layout', 'right' );
 			set_theme_mod( 'neve_single_post_sidebar_layout', 'right' );
-			set_theme_mod( 'neve_breadcrumbs', true );
+			// Static pages have their own key and also default to full-width
+			// (inc/customizer/defaults/layout.php:26-34), so without this they
+			// silently stayed sidebar-less (#48).
+			set_theme_mod( 'neve_other_pages_sidebar_layout', 'right' );
+			// Deliberately NOT set (#48):
+			//
+			// - 'neve_default_sidebar_layout' is only consulted when advanced
+			//   layout options are OFF (inc/views/layouts/layout_sidebar.php:
+			//   110-128), and they default to ON, so it was inert. Worse, it is
+			//   a sentinel in Neve's new-user detection
+			//   (inc/core/migration_flags.php:99-100): writing it makes Neve
+			//   classify a brand-new site as a pre-v4 upgrade and silently swap
+			//   in legacy defaults for blog cards, typography and element order.
+			//
+			// - 'neve_breadcrumbs' is not a setting at all; the only occurrences
+			//   of that string are filter names. Neve free has no stored
+			//   breadcrumbs toggle: is_breadcrumb_enabled()
+			//   (inc/views/breadcrumbs.php:64-90) returns false unless Yoast,
+			//   SEOPress, Rank Math or Breadcrumb NavXT is active. There is
+			//   nothing a plugin can set here.
 			break;
 
 		case 'blocksy':
-			set_theme_mod( 'blog_has_sidebar', 'right' );
-			set_theme_mod( 'single_has_sidebar', 'right' );
-			set_theme_mod( 'breadcrumb_visibility', 'yes' );
+			// The key shape was right but the VALUE was not: Blocksy's
+			// '{prefix}_has_sidebar' is a 'yes'/'no' switch, and position is a
+			// separate mod (inc/sidebar.php:259-266). Writing 'right' happened
+			// to enable the sidebar by passing the !== 'no' test, but it is not
+			// a value the theme or its customizer recognises.
+			set_theme_mod( 'blog_has_sidebar', 'yes' );
+			set_theme_mod( 'blog_sidebar_position', 'right' );
+			// 'single_has_sidebar' does not exist, and singular views never
+			// reach the _has_sidebar branch at all — the single-post prefix is
+			// 'single_blog_post' (inc/classes/screen-manager.php:342) and its
+			// sidebar comes from a structure picker, where 'type-1' means right
+			// sidebar (inc/sidebar.php:284-294,
+			// inc/options/single-elements/structure.php:29-47). It defaults to
+			// 'type-3' = no sidebar.
+			set_theme_mod( 'single_blog_post_structure', 'type-1' );
+			// 'breadcrumb_visibility' does not exist either. Breadcrumbs are an
+			// entry in the per-prefix hero elements list and ship disabled for
+			// everything but WooCommerce products, so the whole list has to be
+			// written back with that entry flipped. The hero itself also has to
+			// be on, and it defaults to 'no' specifically for the blog prefix
+			// (inc/components/hero-section.php:66-76).
+			set_theme_mod(
+				'single_blog_post_hero_elements',
+				contai_hero_elements_enable(
+					get_theme_mod( 'single_blog_post_hero_elements' ),
+					'breadcrumbs',
+					array(
+						array(
+							'id'      => 'custom_title',
+							'enabled' => true,
+						),
+						array(
+							'id'      => 'custom_description',
+							'enabled' => true,
+						),
+						array(
+							'id'      => 'custom_meta',
+							'enabled' => true,
+						),
+					)
+				)
+			);
+			set_theme_mod( 'blog_hero_enabled', 'yes' );
+			set_theme_mod(
+				'blog_hero_elements',
+				contai_hero_elements_enable(
+					get_theme_mod( 'blog_hero_elements' ),
+					'breadcrumbs',
+					array(
+						array(
+							'id'      => 'custom_title',
+							'enabled' => true,
+						),
+						array(
+							'id'      => 'custom_description',
+							'enabled' => true,
+						),
+					)
+				)
+			);
 			break;
 
 		case 'kadence':
+			// Correct as-is: read as kadence()->option( $post_type . '_layout' )
+			// (inc/components/layout/component.php:622), and 'right' is a valid
+			// choice (inc/customizer/options/post-layout-options.php:671-691).
 			set_theme_mod( 'post_layout', 'right' );
-			set_theme_mod( 'archive_layout', 'right' );
-			set_theme_mod( 'breadcrumb_enable', true );
+			// The bare key 'archive_layout' is never read — every occurrence is
+			// part of a longer key. The blog archive reads 'post_archive_layout'
+			// (inc/components/layout/component.php:838-840, $archive_type is
+			// 'post_archive'), which defaults to 'normal' (#48).
+			set_theme_mod( 'post_archive_layout', 'right' );
+			// 'breadcrumb_enable' does not exist. Kadence breadcrumbs are a
+			// title-area element toggled by an ARRAY sub-option read with
+			// sub_option( $type . '_title_element_breadcrumb', 'enabled' )
+			// (inc/components/entry_title/component.php:60-63 and
+			// inc/components/archive_title/component.php:114-117), and both
+			// default to 'enabled' => false
+			// (inc/components/options/component.php:2833, :2892).
+			set_theme_mod(
+				'post_title_element_breadcrumb',
+				array(
+					'enabled'    => true,
+					'show_title' => true,
+				)
+			);
+			set_theme_mod(
+				'post_archive_title_element_breadcrumb',
+				array(
+					'enabled'    => true,
+					'show_title' => true,
+				)
+			);
 			break;
 
 		case 'sydney':
-			set_theme_mod( 'sidebar_position', 'sidebar-right' );
-			set_theme_mod( 'enable_breadcrumbs', 1 );
+			// The bare key 'sidebar_position' is never read: Sydney builds its
+			// mod names at runtime as 'sidebar_single_{post_type}_position'
+			// (inc/extras.php:437) and uses a separate key for archives
+			// (inc/extras.php:427). The literal is only a function name,
+			// sydney_sidebar_position(). The value vocabulary is unchanged.
+			set_theme_mod( 'sidebar_archives_position', 'sidebar-right' );
+			set_theme_mod( 'sidebar_single_post_position', 'sidebar-right' );
+			set_theme_mod( 'sidebar_single_page_position', 'sidebar-right' );
+			// No breadcrumbs write (#48): 'enable_breadcrumbs' appears nowhere
+			// in the theme, and Sydney free 2.69 has no general breadcrumbs
+			// feature to enable — it is a PRO module
+			// (inc/dashboard/class-dashboard-settings.php:430-439). The only
+			// free breadcrumb output is an unconditional Yoast passthrough
+			// (inc/extras.php:90-93) with no toggle.
 			break;
 	}
 }
