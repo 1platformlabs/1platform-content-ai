@@ -93,7 +93,7 @@ class WidgetInstanceTest extends TestCase
 
         $this->assertSame(
             4,
-            contai_pick_widget_instance_id($existing, ['search-4', 'block-2'], 'search'),
+            contai_pick_widget_instance_id($existing, ['search-4', 'block-2'], 'search', 'Ours'),
             'A second wizard run must update its own widget, not append another'
         );
     }
@@ -106,19 +106,99 @@ class WidgetInstanceTest extends TestCase
     {
         $this->assertSame(
             1,
-            contai_pick_widget_instance_id([], ['recent-comments-7'], 'recent-posts'),
+            contai_pick_widget_instance_id([7 => ['title' => 'Ours']], ['recent-comments-7'], 'recent-posts', 'Ours'),
             "'recent-posts' must not match a recent-comments id"
         );
         $this->assertSame(
             1,
-            contai_pick_widget_instance_id([], ['my-search-7'], 'search'),
+            contai_pick_widget_instance_id([7 => ['title' => 'Ours']], ['my-search-7'], 'search', 'Ours'),
             "'search' must not match a foreign widget whose base ends in it"
         );
         $this->assertSame(
             7,
-            contai_pick_widget_instance_id([], ['recent-comments-7'], 'recent-comments'),
+            contai_pick_widget_instance_id([7 => ['title' => 'Ours']], ['recent-comments-7'], 'recent-comments', 'Ours'),
             'The exact base must still match'
         );
+    }
+
+    /**
+     * The stock-install case, which needs no re-run to bite.
+     *
+     * wp-admin/includes/upgrade.php:422-448 seeds every new WordPress site with
+     *   widget_block[2]     = '<!-- wp:search /-->'
+     *   sidebars_widgets['sidebar-1'] = ['block-2','block-3','block-4']
+     * and 'block' is not a wizard-private base — since WP 5.8 it is the
+     * container for every widget made in the block widget editor. Matching the
+     * base against the sidebar list therefore returned 2 on a FRESH site and the
+     * About Me card was written straight over core's Search block (#48).
+     *
+     * The premise that made the old re-use safe ("the list only ever names
+     * widgets we wrote") was removed by v2.38.14 itself, which added
+     * contai_merge_sidebar_widget_ids() precisely to keep the owner's ids there.
+     */
+    public function test_does_not_adopt_a_block_widget_this_plugin_did_not_write(): void
+    {
+        $coreStock = [
+            2 => ['content' => '<!-- wp:search /-->'],
+            3 => ['content' => '<!-- wp:group -->Recent Posts<!-- /wp:group -->'],
+            4 => ['content' => '<!-- wp:group -->Recent Comments<!-- /wp:group -->'],
+            '_multiwidget' => 1,
+        ];
+
+        $picked = contai_pick_widget_instance_id(
+            $coreStock,
+            ['block-2', 'block-3', 'block-4'],
+            'block',
+            CONTAI_ABOUT_ME_WIDGET_CLASS
+        );
+
+        $this->assertNotSame(2, $picked, "Core's stock Search block must not be overwritten (#48)");
+        $this->assertSame(1, $picked, 'The lowest free id is 1 here, and 1 is free');
+    }
+
+    /** A second run must still collapse onto the instance we wrote, not pile up. */
+    public function test_still_reuses_its_own_about_me_instance(): void
+    {
+        $existing = [
+            2 => ['content' => '<!-- wp:search /-->'],
+            5 => ['content' => '<div class="' . CONTAI_ABOUT_ME_WIDGET_CLASS . '">bio</div>'],
+            '_multiwidget' => 1,
+        ];
+
+        $this->assertSame(
+            5,
+            contai_pick_widget_instance_id($existing, ['block-2', 'block-5'], 'block', CONTAI_ABOUT_ME_WIDGET_CLASS),
+            'Re-execution must update our own About Me widget'
+        );
+    }
+
+    /** A dangling id with no stored settings is not ours, and claiming it would revive it. */
+    public function test_an_id_with_no_stored_instance_is_not_adopted(): void
+    {
+        $this->assertSame(
+            1,
+            contai_pick_widget_instance_id(['_multiwidget' => 1], ['block-2'], 'block', CONTAI_ABOUT_ME_WIDGET_CLASS)
+        );
+    }
+
+    /** Without a fingerprint there is no evidence of ownership, so nothing is adopted. */
+    public function test_no_fingerprint_means_no_adoption(): void
+    {
+        $this->assertSame(
+            1,
+            contai_pick_widget_instance_id([2 => ['title' => 'Theirs'], '_multiwidget' => 1], ['search-2'], 'search')
+        );
+    }
+
+    public function test_instance_ownership_check(): void
+    {
+        $option = [3 => ['title' => 'Busqueda'], 4 => ['content' => 'nope']];
+
+        $this->assertTrue(contai_widget_instance_is_ours($option, 3, 'Busqueda'));
+        $this->assertFalse(contai_widget_instance_is_ours($option, 4, 'Busqueda'));
+        $this->assertFalse(contai_widget_instance_is_ours($option, 9, 'Busqueda'), 'A missing instance is not ours');
+        $this->assertFalse(contai_widget_instance_is_ours($option, 3, ''), 'An empty fingerprint proves nothing');
+        $this->assertFalse(contai_widget_instance_is_ours(false, 3, 'Busqueda'));
     }
 
     public function test_ignores_non_string_entries_in_the_sidebar_list(): void
@@ -213,7 +293,7 @@ class WidgetInstanceTest extends TestCase
 
         // And the captured list must actually reach the allocator.
         $this->assertStringContainsString(
-            "contai_pick_widget_instance_id( \$widget_search, \$previous_sidebar, 'search' )",
+            "contai_pick_widget_instance_id( \$widget_search, \$previous_sidebar, 'search', \$text['search'] )",
             $body,
             'The allocator must receive the previous run\'s ids, not an empty list'
         );

@@ -177,6 +177,7 @@ class MainMenuManagerTest extends TestCase
             }
         );
         WP_Mock::userFunction('get_nav_menu_locations')->andReturn([]);
+        WP_Mock::userFunction('get_stylesheet')->andReturn('astra');
         WP_Mock::userFunction('get_registered_nav_menus')
             ->andReturn(['primary' => 'Primary Menu']);
 
@@ -240,6 +241,7 @@ class MainMenuManagerTest extends TestCase
 
         // … but its binding did not survive the theme switch.
         WP_Mock::userFunction('get_nav_menu_locations')->andReturn([]);
+        WP_Mock::userFunction('get_stylesheet')->andReturn('astra');
         WP_Mock::userFunction('get_registered_nav_menus')
             ->andReturn(['primary' => 'Primary Menu']);
 

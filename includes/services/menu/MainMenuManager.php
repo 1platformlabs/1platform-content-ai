@@ -4,6 +4,7 @@ if (!defined('ABSPATH')) exit;
 
 require_once __DIR__ . '/../config/Config.php';
 require_once __DIR__ . '/../../helpers/nav-location.php';
+require_once __DIR__ . '/../../helpers/nav-menu-claim.php';
 require_once __DIR__ . '/../../helpers/site-warnings.php';
 
 class ContaiMainMenuManager {
@@ -57,7 +58,6 @@ class ContaiMainMenuManager {
     }
 
     private function assignMenuToPrimaryLocation(int $menu_id): void {
-        $locations = get_nav_menu_locations();
         $registered_menus = get_registered_nav_menus();
 
         // The wizard calls switch_theme() earlier in this same request, and
@@ -76,8 +76,9 @@ class ContaiMainMenuManager {
         if (function_exists('contai_get_primary_nav_location')) {
             $static_location = contai_get_primary_nav_location();
             if (contai_nav_location_is_usable($static_location, $registered_menus, $registry_is_stale)) {
-                $locations[$static_location] = $menu_id;
-                set_theme_mod('nav_menu_locations', $locations);
+                // Claims the assignment too, so core's post-switch remapping
+                // cannot hand the location back to the previous theme (#48).
+                contai_assign_nav_menu_location($static_location, $menu_id);
                 return;
             }
         }
@@ -104,8 +105,7 @@ class ContaiMainMenuManager {
         $target_location = $this->findPrimaryLocation($registered_menus);
 
         if ($target_location) {
-            $locations[$target_location] = $menu_id;
-            set_theme_mod('nav_menu_locations', $locations);
+            contai_assign_nav_menu_location($target_location, $menu_id);
         }
     }
 

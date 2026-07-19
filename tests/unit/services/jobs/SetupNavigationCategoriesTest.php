@@ -172,6 +172,8 @@ class SetupNavigationCategoriesTest extends TestCase
         // Menu resolution + primary location binding.
         WP_Mock::userFunction('wp_get_nav_menu_object')->andReturn((object) ['term_id' => 7]);
         WP_Mock::userFunction('get_nav_menu_locations')->andReturn([]);
+        WP_Mock::userFunction('get_stylesheet')->andReturn('astra');
+        WP_Mock::userFunction('get_option')->with('contai_nav_menu_location_claim', [])->andReturn([]);
         WP_Mock::userFunction('get_registered_nav_menus')->andReturn(['primary' => 'Primary Menu']);
         WP_Mock::userFunction('set_theme_mod')->andReturn(true);
 
