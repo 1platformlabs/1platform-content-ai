@@ -42,11 +42,23 @@ jobs:
 
       - name: Detect merge-like push
         id: check_merge
-        env:
-          COMMIT_MSG: ${{ github.event.head_commit.message }}
         shell: bash
         run: |
           set -euo pipefail
+          # Read the message from the checked-out commit rather than from
+          # github.event.head_commit, which only exists on `push`. On
+          # workflow_dispatch that expression resolves to an empty string, so
+          # is_merge came out false, every downstream job was skipped and the
+          # run still reported success — a manual deploy that published
+          # nothing and looked green. That made workflow_dispatch useless as a
+          # recovery path exactly when it was needed: on 2026-07-19 the push
+          # event for merge commit 99e18f4 never produced a run at all, so the
+          # release sat on main, undeployed, with no way to trigger it.
+          # HEAD is the pushed commit on `push` and the tip of main on
+          # dispatch (the job-level `if` already restricts dispatch to main),
+          # so one source works for both.
+          COMMIT_MSG="$(git log -1 --pretty=%B)"
+          export COMMIT_MSG
           python3 << 'PYEOF'
           import os
           import re
