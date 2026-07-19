@@ -21,6 +21,16 @@ class ContaiSiteGenerationJob implements ContaiJobInterface
 {
     const TYPE = 'site_generation';
 
+    /**
+     * Option holding a bounded FIFO of optional-step failures (#48).
+     *
+     * Read it with: wp option get contai_site_generation_warnings
+     */
+    const OPTION_STEP_WARNINGS = 'contai_site_generation_warnings';
+
+    /** Keep the warning buffer bounded, like ContaiClientLogReporter does. */
+    const MAX_STEP_WARNINGS = 20;
+
     private ContaiJobRepository $jobRepository;
     private array $steps = [
         'validateCredits',
@@ -141,39 +151,103 @@ class ContaiSiteGenerationJob implements ContaiJobInterface
                 break;
 
             case 'generateComments':
-                try {
+                $this->runOptionalStep('generateComments', function () use ($config) {
                     $this->generateComments($config['comments'] ?? []);
-                } catch (Exception $e) {
-                    contai_log("Optional step 'generateComments' failed: " . $e->getMessage()); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
-                }
+                });
                 break;
 
             case 'setupSearchConsole':
-                try {
+                $this->runOptionalStep('setupSearchConsole', function () {
                     $this->setupSearchConsole();
-                } catch (Exception $e) {
-                    contai_log("Optional step 'setupSearchConsole' failed: " . $e->getMessage()); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
-                }
+                });
                 break;
 
             case 'setupAdsManager':
-                try {
+                $this->runOptionalStep('setupAdsManager', function () use ($config) {
                     $this->setupAdsManager($config['adsense']['publisher_id'] ?? '');
-                } catch (Exception $e) {
-                    contai_log("Optional step 'setupAdsManager' failed: " . $e->getMessage()); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
-                }
+                });
                 break;
 
             case 'setupNavigation':
-                try {
+                $this->runOptionalStep('setupNavigation', function () {
                     $this->setupNavigation();
-                } catch (Exception $e) {
-                    contai_log("Optional step 'setupNavigation' failed: " . $e->getMessage()); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
-                }
+                });
                 update_option('contai_site_generation_completed', true);
                 break;
         }
         return $payload;
+    }
+
+    /**
+     * Run an optional wizard step without aborting site generation.
+     *
+     * Optional used to mean catch(Exception) + contai_log(), and contai_log()
+     * only writes when WP_DEBUG is true (includes/helpers/crypto.php:72-76).
+     * Production installs run with WP_DEBUG off, so a failure of
+     * generateComments, setupSearchConsole, setupAdsManager or setupNavigation
+     * left no trace of any kind: handle() still appended the step to
+     * completed_steps, still returned "Site generation completed successfully"
+     * and still set contai_site_generation_completed to true. A site could
+     * therefore finish the wizard reporting success while having no primary
+     * menu, no categories in the menu and no comments - which is why #48 kept
+     * being reopened with no diagnostic to work from.
+     *
+     * Two things change here. The failure is caught as Throwable: a PHP Error
+     * (a TypeError from a theme/API returning an unexpected shape, say) is not
+     * an Exception, so it escaped the old catch and was rethrown by handle(),
+     * killing the whole run - the exact opposite of "optional". And the
+     * failure is recorded durably instead of only in a debug-gated log.
+     *
+     * @param string   $stepName Step whose failure is being contained.
+     * @param callable $step     The step body.
+     */
+    private function runOptionalStep(string $stepName, callable $step): void
+    {
+        try {
+            $step();
+        } catch (\Throwable $e) {
+            $this->recordStepWarning($stepName, $e->getMessage());
+        }
+    }
+
+    /**
+     * Record an optional-step failure where it can actually be found.
+     *
+     * error_log() is called unconditionally on purpose - the same choice
+     * already made for the footer-location diagnostic in
+     * includes/helpers/site-generation.php - because contai_log() is a no-op
+     * without WP_DEBUG. The option gives a durable record that survives the
+     * request and can be read back off a generated site without shell access
+     * to the PHP error log.
+     *
+     * @param string $stepName Step that failed.
+     * @param string $message  Failure message.
+     */
+    private function recordStepWarning(string $stepName, string $message): void
+    {
+        $message = substr($message, 0, 500);
+
+        // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+        error_log("[ContAI] WARNING: optional site-generation step '{$stepName}' failed: {$message}");
+
+        $warnings = get_option(self::OPTION_STEP_WARNINGS, []);
+        if (!is_array($warnings)) {
+            $warnings = [];
+        }
+
+        $warnings[] = [
+            'step'      => $stepName,
+            'message'   => $message,
+            'timestamp' => gmdate('c'),
+        ];
+
+        // FIFO: drop the oldest rather than letting the option grow without
+        // bound across re-executions.
+        while (count($warnings) > self::MAX_STEP_WARNINGS) {
+            array_shift($warnings);
+        }
+
+        update_option(self::OPTION_STEP_WARNINGS, $warnings);
     }
 
     private function validateCreditsStep(): void

@@ -232,4 +232,65 @@ class NavLocationTest extends TestCase
 
         $this->assertSame('footer', $result);
     }
+
+    // ── plugin-owned locations are never footer candidates (#48) ────────
+
+    /**
+     * The plugin registers 'contai-footer-bottom' itself, on init
+     * (includes/admin/content-generator/helpers/cookie-notice-helper.php).
+     * That slug is the ONLY occurrence in the repo: nothing ever assigns a
+     * menu to it and no template renders it.
+     *
+     * It nonetheless contains 'footer' — the strongest pattern this matcher
+     * has — and matches none of the exclusions, so it was selectable. It wins
+     * whenever the active theme registers no location containing 'footer',
+     * which is exactly the three themes (generatepress, sydney, colormag)
+     * deliberately dropped from the static footer map so that they depend on
+     * this fallback. The legal menu would then be written to a location
+     * nothing renders: a silent no-op, the failure mode of #48.
+     */
+    public function test_never_selects_a_location_the_plugin_registers_itself(): void
+    {
+        // GeneratePress' real registry (only 'primary'), plus the plugin's own
+        // location as init would have appended it.
+        $registered = [
+            'primary'              => 'Primary Menu',
+            'contai-footer-bottom' => 'Content AI Footer Bottom',
+        ];
+
+        $this->assertNull(
+            contai_match_footer_nav_location($registered),
+            'A plugin-registered location is not rendered by the theme, so it must never be chosen'
+        );
+    }
+
+    /**
+     * The exclusion must not swallow a genuine theme footer location that
+     * merely coexists with the plugin's one — otherwise the fix would trade
+     * one silent no-op for another.
+     */
+    public function test_still_selects_the_real_theme_footer_alongside_the_plugin_location(): void
+    {
+        $registered = [
+            'contai-footer-bottom' => 'Content AI Footer Bottom',
+            'primary'              => 'Primary Menu',
+            'footer'               => 'Footer Menu',
+        ];
+
+        $this->assertSame('footer', contai_match_footer_nav_location($registered));
+    }
+
+    /**
+     * The guard is prefix-anchored, not a substring test: a theme location
+     * that merely contains the string elsewhere stays eligible.
+     */
+    public function test_exclusion_is_anchored_to_the_prefix(): void
+    {
+        $registered = [
+            'primary'             => 'Primary Menu',
+            'theme-contai-footer' => 'Footer Menu',
+        ];
+
+        $this->assertSame('theme-contai-footer', contai_match_footer_nav_location($registered));
+    }
 }

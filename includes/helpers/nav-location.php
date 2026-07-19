@@ -79,10 +79,31 @@ function contai_match_footer_nav_location( $registered ): ?string {
 	$footer_patterns  = array( 'footer', 'bottom', 'secondary' );
 	$exclude_patterns = array( 'primary', 'main', 'header', 'top', 'mobile', 'social' );
 
+	// Locations this plugin registers itself are never candidates. The contract
+	// of this matcher is "find a location the ACTIVE THEME renders", and a
+	// location registered by the plugin is by definition not rendered by the
+	// theme, so assigning the legal menu to one is a silent no-op.
+	//
+	// This is load-bearing, not defensive. The plugin registers
+	// 'contai-footer-bottom' on init (cookie-notice-helper.php), which is the
+	// only occurrence of that slug in the repo: nothing assigns a menu to it
+	// and no template renders it. It contains 'footer' — the STRONGEST pattern
+	// — and matches none of the exclusions above, so it was selectable here.
+	// It wins whenever the active theme registers no location containing
+	// 'footer', which is exactly the three themes (generatepress, sydney,
+	// colormag) that were deliberately dropped from the static footer map so
+	// they would rely on this fallback (#48).
+	$plugin_owned_prefix = 'contai-';
+
 	foreach ( $footer_patterns as $pattern ) {
 		foreach ( $registered as $location => $description ) {
 			$loc_lower  = strtolower( (string) $location );
 			$desc_lower = strtolower( (string) $description );
+
+			// Skip locations this plugin registers (see above).
+			if ( strpos( $loc_lower, $plugin_owned_prefix ) === 0 ) {
+				continue;
+			}
 
 			// Skip primary navigation locations.
 			$is_excluded = false;
