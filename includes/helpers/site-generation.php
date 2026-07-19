@@ -514,10 +514,58 @@ function contai_setup_site_config() {
 	update_option( 'permalink_structure', '/%postname%/' );
 	update_option( 'contai_flush_rewrite', true );
 
+	// Actually flush. Writing the permalink_structure option does NOT
+	// regenerate anything on its own, and the 'contai_flush_rewrite' flag above
+	// was written for a consumer that does not exist: its only other occurrence
+	// in the repo is uninstall.php's delete list, so nothing has ever read it
+	// (#48). flush_rewrite_rules() likewise appeared nowhere in the plugin.
+	//
+	// What that costs, read from WordPress core rather than assumed:
+	// WP_Rewrite::wp_rewrite_rules() (class-wp-rewrite.php:1493-1500) does
+	// self-heal the 'rewrite_rules' OPTION, but only when it is empty — a
+	// populated ruleset left over from the previous structure survives intact.
+	// And in neither case is .htaccess touched: save_mod_rewrite_rules() is
+	// reached only through a HARD flush_rules() (class-wp-rewrite.php:1899-1903).
+	// On Apache, without the WordPress block in .htaccess every pretty permalink
+	// 404s — the generated posts and the category archives the main menu links
+	// to — which is the reported "generated site's navigation does not work",
+	// arrived at silently.
+	contai_flush_rewrite_rules_hard();
+
 	// Enable comments on new posts by default
 	update_option( 'default_comment_status', 'open' );
 
 	contai_delete_sample_content();
+}
+
+/**
+ * Flush rewrite rules hard, including .htaccess, from any request context.
+ *
+ * save_mod_rewrite_rules() lives in wp-admin/includes/misc.php, and
+ * WP_Rewrite::flush_rules() guards its call with function_exists(). The wizard
+ * runs its steps through the job queue (wp-cron), where wp-admin is not loaded,
+ * so a plain flush_rewrite_rules( true ) there would silently degrade to a soft
+ * flush and leave .htaccess untouched — the same class of silent no-op this
+ * fixes. Loading the file first is what makes the "hard" part real.
+ *
+ * @return void
+ */
+function contai_flush_rewrite_rules_hard(): void {
+	if ( ! function_exists( 'save_mod_rewrite_rules' ) && defined( 'ABSPATH' ) ) {
+		$misc = ABSPATH . 'wp-admin/includes/misc.php';
+		if ( file_exists( $misc ) ) {
+			require_once $misc;
+		}
+	}
+
+	if ( ! function_exists( 'flush_rewrite_rules' ) ) {
+		return;
+	}
+
+	flush_rewrite_rules( true );
+
+	// The flag now describes reality instead of a permanent "todo".
+	update_option( 'contai_flush_rewrite', false );
 }
 
 /**
