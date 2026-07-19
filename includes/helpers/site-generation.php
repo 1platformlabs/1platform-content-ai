@@ -16,6 +16,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 require_once __DIR__ . '/crypto.php';
 require_once __DIR__ . '/nav-location.php';
+require_once __DIR__ . '/site-warnings.php';
+require_once __DIR__ . '/widget-instance.php';
 require_once __DIR__ . '/astra-settings.php';
 require_once __DIR__ . '/theme-settings.php';
 require_once __DIR__ . '/../services/api/OnePlatformClient.php';
@@ -148,9 +150,16 @@ function contai_apply_theme_defaults( string $theme ): void {
 
 	switch ( $theme ) {
 		case 'newsmatic':
-			if ( function_exists( 'contai_set_newsmatic_reading_defaults' ) ) {
-				contai_set_newsmatic_reading_defaults();
-			}
+			// A guarded call to contai_set_newsmatic_reading_defaults() stood
+			// here from the initial commit. That function has never been
+			// defined anywhere in this plugin's history
+			// (`git log --all -S "function contai_set_newsmatic_reading_defaults"`
+			// returns nothing), so function_exists() was always false and the
+			// branch never ran — a dead call that read as deliberate coverage
+			// of Newsmatic's reading settings (#48). The reading defaults that
+			// actually apply are the show_on_front / posts_per_page writes
+			// shared by every theme above.
+			//
 			// 'newsmatic_breadcrumb_option' does not exist in the theme (#48):
 			// the only matches for that string are the customizer SECTION id
 			// 'newsmatic_breadcrumb_options_section'. The setting Newsmatic
@@ -394,6 +403,30 @@ function contai_apply_theme_defaults( string $theme ): void {
 			// (inc/dashboard/class-dashboard-settings.php:430-439). The only
 			// free breadcrumb output is an unconditional Yoast passthrough
 			// (inc/extras.php:90-93) with no toggle.
+			break;
+
+		default:
+			// $theme is API-supplied (SiteConfigService::…update_option
+			// 'contai_wordpress_theme') and only ever passed through
+			// sanitize_text_field(), which validates its characters, not its
+			// membership in the theme maps. An unmapped slug reaching here gets
+			// no theme configuration from the switch above AND no primary nav
+			// location from contai_get_primary_nav_location(), which returns
+			// null for a slug it does not know — leaving the theme to fall back
+			// to wp_page_menu(), i.e. a menu of the generated legal pages,
+			// which is the originally reported symptom (#48).
+			//
+			// Both outcomes were silent. Neither is repaired here: guessing a
+			// location for an unknown theme is what the hand-verified maps
+			// exist to avoid. It is only made visible.
+			contai_record_site_warning(
+				'theme defaults',
+				sprintf(
+					"theme '%s' is not in the theme maps: no theme-specific configuration and no primary nav location will be applied. Mapped themes: %s",
+					$theme,
+					implode( ', ', array_keys( CONTAI_THEME_NAV_LOCATION_MAP ) )
+				)
+			);
 			break;
 	}
 }
@@ -705,19 +738,25 @@ function contai_create_footer_menu_with_legal_pages(): void {
 	$target     = $theme_footer_map[ $theme ] ?? null;
 	$registered = get_registered_nav_menus();
 
+	// The wizard reaches this function in the same request as switch_theme(),
+	// so the registry above can still describe the theme we just left. Judging
+	// the incoming theme's location against it is wrong in both directions —
+	// see contai_nav_registry_is_stale() (#48).
+	$stale = contai_nav_registry_is_stale();
+
 	// Only short-circuit on the static map when the active theme actually
 	// registers that location. Assigning an unregistered location is silently
 	// dropped by WordPress, and returning here used to make the pattern-match
 	// fallback and the diagnostic warning below unreachable for every mapped
 	// theme — the silent failure behind "footer has no legal links" (#48).
-	if ( contai_nav_location_is_usable( $target, $registered ) ) {
+	if ( contai_nav_location_is_usable( $target, $registered, $stale ) ) {
 		$locations[ $target ] = $menu_id;
 		set_theme_mod( 'nav_menu_locations', $locations );
 		return;
 	}
 
 	// Fallback: pattern-match footer location from registered nav menus.
-	$matched = contai_match_footer_nav_location( $registered );
+	$matched = contai_match_footer_nav_location( $registered, $stale );
 
 	if ( null !== $matched ) {
 		$locations[ $matched ] = $menu_id;
@@ -726,7 +765,17 @@ function contai_create_footer_menu_with_legal_pages(): void {
 		return;
 	}
 
-	error_log( "[ContAI] WARNING: No footer location found for theme '{$theme}'. Registered menus: " . implode( ', ', array_keys( is_array( $registered ) ? $registered : array() ) ) );
+	// Durable, not debug-gated: an unbound footer menu is invisible on the site
+	// and left no trace anywhere before this (#48).
+	contai_record_site_warning(
+		'footer nav location',
+		sprintf(
+			"no footer location found for theme '%s'%s. Registered menus: %s",
+			$theme,
+			$stale ? ' (registry still described the previous theme)' : '',
+			implode( ', ', array_keys( is_array( $registered ) ? $registered : array() ) )
+		)
+	);
 }
 
 /**
@@ -911,17 +960,34 @@ function contai_add_sidebar_widgets() {
 
 	$sidebars_widgets = get_option( 'sidebars_widgets', array() );
 	$sidebar_id       = contai_get_primary_sidebar_id();
+
+	// Read the ids this plugin assigned on a previous run BEFORE clearing the
+	// list, so the allocation below can re-use them (#48).
+	$previous_sidebar = isset( $sidebars_widgets[ $sidebar_id ] ) && is_array( $sidebars_widgets[ $sidebar_id ] )
+		? $sidebars_widgets[ $sidebar_id ]
+		: array();
+
 	$sidebars_widgets[ $sidebar_id ] = array();
 
-	$widget_search          = array( '_multiwidget' => 1 );
-	$widget_recent_comments = array( '_multiwidget' => 1 );
-	$widget_recent_posts    = array( '_multiwidget' => 1 );
-	$widget_block           = array( '_multiwidget' => 1 );
+	// Read-merge, never rebuild. Each of these options holds EVERY instance of
+	// that widget type across EVERY sidebar, so overwriting it with a freshly
+	// built one-instance array silently destroyed the settings of widgets other
+	// sidebars still reference (#48).
+	$widget_search          = get_option( 'widget_search', array() );
+	$widget_recent_comments = get_option( 'widget_recent-comments', array() );
+	$widget_recent_posts    = get_option( 'widget_recent-posts', array() );
+	$widget_block           = get_option( 'widget_block', array() );
 
-	$search_id   = 1;
-	$comments_id = 1;
-	$posts_id    = 1;
-	$block_id    = 1;
+	$widget_search          = is_array( $widget_search ) ? $widget_search : array();
+	$widget_recent_comments = is_array( $widget_recent_comments ) ? $widget_recent_comments : array();
+	$widget_recent_posts    = is_array( $widget_recent_posts ) ? $widget_recent_posts : array();
+	$widget_block           = is_array( $widget_block ) ? $widget_block : array();
+
+	// Hardcoding 1 collided with whatever already occupied instance 1.
+	$search_id   = contai_pick_widget_instance_id( $widget_search, $previous_sidebar, 'search' );
+	$comments_id = contai_pick_widget_instance_id( $widget_recent_comments, $previous_sidebar, 'recent-comments' );
+	$posts_id    = contai_pick_widget_instance_id( $widget_recent_posts, $previous_sidebar, 'recent-posts' );
+	$block_id    = contai_pick_widget_instance_id( $widget_block, $previous_sidebar, 'block' );
 
 	$legal_info = contai_get_legal_info();
 	$owner      = $legal_info['owner'] ?? '';

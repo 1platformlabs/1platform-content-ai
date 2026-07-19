@@ -128,8 +128,24 @@ class SiteGeneratorReExecutionTest extends TestCase
         $funcStart = strpos($content, 'function contai_add_sidebar_widgets()');
         $this->assertNotFalse($funcStart);
 
+        // Take the whole function, not a fixed-size window. A 2000-char slice
+        // silently stopped covering the fetch call once the function grew, and
+        // a truncated read fails IDENTICALLY to the ordering regression this
+        // test exists to catch (#48).
+        $nextFunc = strpos($content, "\nfunction ", $funcStart + 1);
+        $funcBody = $nextFunc === false
+            ? substr($content, $funcStart)
+            : substr($content, $funcStart, $nextFunc - $funcStart);
+
+        // Truncation guard: if the extraction ever comes up short again, say so
+        // in those words instead of reporting a missing call.
+        $this->assertStringContainsString(
+            'update_option(',
+            $funcBody,
+            'Extraction looks truncated: the function body must reach its update_option() writes'
+        );
+
         // Check that delete_transient is called BEFORE contai_fetch_generated_profile_from_api
-        $funcBody = substr($content, $funcStart, 2000);
         $deletePos = strpos($funcBody, 'delete_transient');
         $fetchPos = strpos($funcBody, 'contai_fetch_generated_profile_from_api');
 

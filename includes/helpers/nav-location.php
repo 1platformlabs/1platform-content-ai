@@ -10,6 +10,44 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
+ * Is the in-memory nav menu registry describing a theme we already left?
+ *
+ * The wizard switches theme and configures menus in the SAME request:
+ * ContaiWebsiteGenerationService::generateCompleteWebsite() calls
+ * contai_install_theme() (which ends in switch_theme()) and then
+ * contai_create_footer_menu_with_legal_pages() further down the same method.
+ *
+ * get_registered_nav_menus() just returns the $_wp_registered_nav_menus global
+ * (wp-includes/nav-menu.php:149-152), which is only ever populated by a theme
+ * calling register_nav_menus() from after_setup_theme. switch_theme()
+ * (wp-includes/theme.php:757+) updates options and resets the template globals,
+ * but it cannot load the incoming theme's functions.php in the same request, so
+ * it never repopulates that global. The registry therefore still describes the
+ * OUTGOING theme.
+ *
+ * That is worse than an empty registry, because a populated one looks
+ * authoritative: contai_nav_location_is_usable() would reject the incoming
+ * theme's correct mapped location for not appearing in the outgoing theme's
+ * registry, and contai_match_footer_nav_location() would then pick a location
+ * out of the outgoing theme — an entry the active theme does not register,
+ * which WordPress silently drops. The guard added to stop silent no-ops would
+ * cause one (#48).
+ *
+ * Core marks this for us. switch_theme() sets the 'theme_switched' option to
+ * the outgoing stylesheet (theme.php:840), and nothing clears it until the NEXT
+ * request, where check_theme_switched() runs on init priority 99
+ * (default-filters.php:367) and sets it back to false (theme.php:3510). So a
+ * truthy 'theme_switched' means "switch_theme() ran in this request and the
+ * registry is stale"; on any later request it is false and the registry is
+ * genuinely the active theme's.
+ *
+ * @return bool True when the registry cannot be trusted to describe the active theme.
+ */
+function contai_nav_registry_is_stale(): bool {
+	return (bool) get_option( 'theme_switched' );
+}
+
+/**
  * Decide whether a statically-mapped nav menu location can be trusted.
  *
  * The plugin resolves nav menu locations from hand-maintained theme maps
@@ -30,18 +68,24 @@ if ( ! defined( 'ABSPATH' ) ) {
  * "cannot tell", which is exactly the cron case the static maps exist for —
  * there we keep trusting the map, preserving the original behaviour.
  *
- * @param string|null $location   The statically-mapped location, if any.
- * @param mixed       $registered Result of get_registered_nav_menus().
+ * @param string|null $location    The statically-mapped location, if any.
+ * @param mixed       $registered  Result of get_registered_nav_menus().
+ * @param bool        $stale       True when the registry describes the theme we
+ *                                 just switched away from (see
+ *                                 contai_nav_registry_is_stale()). Then it can
+ *                                 neither confirm nor disprove the map.
  * @return bool True if $location should be used as-is.
  */
-function contai_nav_location_is_usable( ?string $location, $registered ): bool {
+function contai_nav_location_is_usable( ?string $location, $registered, bool $stale = false ): bool {
 	if ( null === $location || '' === $location ) {
 		return false;
 	}
 
-	// Registry unavailable (cron/async, theme hooks not fired) → cannot
-	// disprove the map, so keep trusting it.
-	if ( ! is_array( $registered ) || empty( $registered ) ) {
+	// Registry unavailable (cron/async, theme hooks not fired) or describing
+	// the outgoing theme → cannot disprove the map, so keep trusting it. The
+	// maps are hand-verified against each theme's register_nav_menus() call,
+	// which is exactly the evidence a stale registry cannot supply.
+	if ( $stale || ! is_array( $registered ) || empty( $registered ) ) {
 		return true;
 	}
 
@@ -67,10 +111,17 @@ function contai_nav_location_is_usable( ?string $location, $registered ): bool {
  * Pure function: no WordPress calls, so it is directly unit-testable.
  *
  * @param mixed $registered Result of get_registered_nav_menus().
+ * @param bool  $stale      True when the registry describes the outgoing theme
+ *                          (see contai_nav_registry_is_stale()). Matching
+ *                          against it would bind the legal menu to a location
+ *                          the ACTIVE theme does not register, which WordPress
+ *                          drops silently — strictly worse than not binding,
+ *                          because it leaves no trace. Return null instead and
+ *                          let the caller record a warning.
  * @return string|null The chosen location, or null when nothing matches.
  */
-function contai_match_footer_nav_location( $registered ): ?string {
-	if ( ! is_array( $registered ) || empty( $registered ) ) {
+function contai_match_footer_nav_location( $registered, bool $stale = false ): ?string {
+	if ( $stale || ! is_array( $registered ) || empty( $registered ) ) {
 		return null;
 	}
 

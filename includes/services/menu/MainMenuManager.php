@@ -4,6 +4,7 @@ if (!defined('ABSPATH')) exit;
 
 require_once __DIR__ . '/../config/Config.php';
 require_once __DIR__ . '/../../helpers/nav-location.php';
+require_once __DIR__ . '/../../helpers/site-warnings.php';
 
 class ContaiMainMenuManager {
 
@@ -59,6 +60,14 @@ class ContaiMainMenuManager {
         $locations = get_nav_menu_locations();
         $registered_menus = get_registered_nav_menus();
 
+        // The wizard calls switch_theme() earlier in this same request, and
+        // switch_theme() cannot repopulate the nav menu registry (it would have
+        // to load the incoming theme's functions.php). So $registered_menus can
+        // still describe the theme we just left: populated, therefore trusted,
+        // and about the wrong theme (#48).
+        $registry_is_stale = function_exists('contai_nav_registry_is_stale')
+            && contai_nav_registry_is_stale();
+
         // Try static mapping first (reliable in cron/async context), but only
         // when the active theme actually registers that location. WordPress
         // silently drops nav_menu_locations entries for unregistered
@@ -66,15 +75,29 @@ class ContaiMainMenuManager {
         // detection below unreachable and the menu silently unbound (#48).
         if (function_exists('contai_get_primary_nav_location')) {
             $static_location = contai_get_primary_nav_location();
-            if (contai_nav_location_is_usable($static_location, $registered_menus)) {
+            if (contai_nav_location_is_usable($static_location, $registered_menus, $registry_is_stale)) {
                 $locations[$static_location] = $menu_id;
                 set_theme_mod('nav_menu_locations', $locations);
                 return;
             }
         }
 
-        // Fallback to runtime detection
-        if (empty($registered_menus)) {
+        // Fallback to runtime detection. Only meaningful against the ACTIVE
+        // theme's registry: matching a stale one binds the menu to a location
+        // this theme does not register, which WordPress drops silently (#48).
+        if ($registry_is_stale || empty($registered_menus)) {
+            if (function_exists('contai_record_site_warning')) {
+                contai_record_site_warning(
+                    'primary nav location',
+                    sprintf(
+                        "main menu left unbound for theme '%s' %s",
+                        get_option('contai_wordpress_theme', 'astra'),
+                        $registry_is_stale
+                            ? '(registry still described the previous theme)'
+                            : '(no static map entry and no registered menus)'
+                    )
+                );
+            }
             return;
         }
 

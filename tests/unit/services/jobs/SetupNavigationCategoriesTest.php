@@ -153,6 +153,12 @@ class SetupNavigationCategoriesTest extends TestCase
             ->with('contai_wordpress_theme', 'astra')
             ->andReturn('astra');
 
+        // Not mid-theme-switch: this exercise runs against a settled site, so
+        // the nav menu registry genuinely describes the active theme (#48).
+        WP_Mock::userFunction('get_option')
+            ->with('theme_switched')
+            ->andReturn(false);
+
         WP_Mock::userFunction('sanitize_text_field')
             ->andReturnUsing(function ($value) {
                 return $value;

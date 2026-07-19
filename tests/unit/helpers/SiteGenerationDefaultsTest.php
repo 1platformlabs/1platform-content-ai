@@ -103,7 +103,7 @@ class SiteGenerationDefaultsTest extends TestCase
         $this->assertNotSame('', $body, 'contai_create_footer_menu_with_legal_pages() must exist');
 
         $this->assertStringContainsString(
-            'contai_nav_location_is_usable( $target, $registered )',
+            'contai_nav_location_is_usable( $target, $registered, $stale )',
             $body,
             'The footer location must be validated against the registered nav menus ' .
             'before short-circuiting, or an unregistered mapped location fails silently (#48)'
@@ -116,11 +116,22 @@ class SiteGenerationDefaultsTest extends TestCase
             'fallback and the diagnostic warning dead code (#48)'
         );
 
+        // The diagnostic used to be a bare error_log(). It now goes through the
+        // shared recorder, which ALSO error_log()s but additionally persists to
+        // an option, so an unbound footer menu can be diagnosed off a live
+        // install with `wp option get contai_site_generation_warnings` instead
+        // of shell access to the PHP error log (#48).
         $this->assertStringContainsString(
-            'WARNING: No footer location found for theme',
+            'contai_record_site_warning(',
             $body,
-            'The diagnostic log must remain reachable so the remaining per-theme scope ' .
+            'The diagnostic must remain reachable so the remaining per-theme scope ' .
             'of #48 can be diagnosed from a live install'
+        );
+
+        $this->assertStringContainsString(
+            'no footer location found for theme',
+            $body,
+            'The diagnostic must still name the theme it failed for'
         );
     }
 
