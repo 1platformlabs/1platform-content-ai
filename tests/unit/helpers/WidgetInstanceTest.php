@@ -185,20 +185,30 @@ class WidgetInstanceTest extends TestCase
         );
 
         // The allocator can only re-use the previous run's ids if the call site
-        // reads the sidebar's current contents BEFORE clearing them. Clearing
-        // first loses them, and every re-run then leaks a fresh instance.
+        // reads the sidebar's current contents. That capture used to exist only
+        // to survive a blanking assignment one line later; the blanking is gone
+        // now (it discarded the owner's own widgets), so what has to be asserted
+        // is that it stays gone.
         $capturePos = strpos($body, '$previous_sidebar = isset( $sidebars_widgets[ $sidebar_id ] )');
-        $clearPos   = strpos($body, '$sidebars_widgets[ $sidebar_id ] = array();');
+        $mergePos   = strpos($body, 'contai_merge_sidebar_widget_ids(');
 
         $this->assertNotFalse(
             $capturePos,
             'The ids from the previous run must be captured, or re-execution leaks widget instances (#48)'
         );
-        $this->assertNotFalse($clearPos, 'The wizard still rebuilds its own sidebar list');
+        $this->assertStringNotContainsString(
+            '$sidebars_widgets[ $sidebar_id ] = array();',
+            $body,
+            'Blanking the sidebar drops every widget the site owner placed there (#48)'
+        );
+        $this->assertNotFalse(
+            $mergePos,
+            'The wizard must merge its widgets into the sidebar, not rebuild the list (#48)'
+        );
         $this->assertLessThan(
-            $clearPos,
+            $mergePos,
             $capturePos,
-            'The capture must happen BEFORE the sidebar list is cleared'
+            'The capture must happen BEFORE the merged list is written back'
         );
 
         // And the captured list must actually reach the allocator.

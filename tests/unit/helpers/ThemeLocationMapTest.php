@@ -102,13 +102,32 @@ class ThemeLocationMapTest extends TestCase
         );
     }
 
+    /**
+     * All nine entries, each read out of that theme's own register_sidebar()
+     * call. Only three were ever verified before; the other six carried the same
+     * unaudited provenance as the nav maps that turned out to be 9/27 wrong, so
+     * they are pinned here rather than trusted (#48).
+     */
     public static function realSidebarIdProvider(): array
     {
         return [
-            // neve 4.2.8: sidebar.php:8,14 is_active_sidebar('blog-sidebar')
+            // astra 4.13.6: inc/widgets.php:94 'id' => 'sidebar-1'
+            ['astra', 'sidebar-1', 'inc/widgets.php:94 registers it'],
+            // generatepress 3.6.1: inc/general.php:153 seeds the $widgets array
+            // that inc/general.php:166 loops into register_sidebar()
+            ['generatepress', 'sidebar-1', 'inc/general.php:153 registers it as "Right Sidebar"'],
+            // neve 4.2.8: inc/core/front_end.php:529, rendered by sidebar.php:8,14
             ['neve', 'blog-sidebar', 'the theme declares no sidebar-1 anywhere'],
-            // kadence 1.5.1: inc/components/layout/component.php:78
+            // blocksy 2.1.49: inc/init.php:475 'id' => 'sidebar-1'
+            ['blocksy', 'sidebar-1', 'inc/init.php:475 registers it'],
+            // kadence 1.5.1: inc/components/layout/component.php:79
             ['kadence', 'sidebar-primary', 'the theme registers sidebar-primary/sidebar-secondary'],
+            // sydney 2.69: functions.php:172 'id' => 'sidebar-1'
+            ['sydney', 'sidebar-1', 'functions.php:172 registers it'],
+            // oceanwp: functions.php:778 'id' => 'sidebar' — no -1 suffix
+            ['oceanwp', 'sidebar', 'functions.php:778 registers a bare "sidebar"'],
+            // newsmatic 1.5.0: inc/widgets/widgets.php:18 'id' => 'sidebar-1'
+            ['newsmatic', 'sidebar-1', 'inc/widgets/widgets.php:18 registers it'],
             // colormag 4.2.1: inc/widgets/class-colormag-widgets.php:27
             ['colormag', 'colormag_right_sidebar', 'ColorMag prefixes every widget area'],
         ];
