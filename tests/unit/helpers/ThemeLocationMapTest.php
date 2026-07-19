@@ -244,7 +244,7 @@ class ThemeLocationMapTest extends TestCase
         $code    = preg_replace('#//[^\n]*#', '', $content);
 
         $this->assertStringContainsString(
-            'contai_match_footer_nav_location( $registered )',
+            'contai_match_footer_nav_location( $registered, $stale )',
             $code,
             'Footer fallback must use the shared matcher (#48)'
         );

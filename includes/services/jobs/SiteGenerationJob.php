@@ -16,6 +16,7 @@ require_once __DIR__ . '/../setup/SearchConsoleSetupService.php';
 require_once __DIR__ . '/../setup/AdsenseSetupService.php';
 require_once __DIR__ . '/../menu/MainMenuManager.php';
 require_once __DIR__ . '/../../helpers/category-menu.php';
+require_once __DIR__ . '/../../helpers/site-warnings.php';
 
 class ContaiSiteGenerationJob implements ContaiJobInterface
 {
@@ -225,29 +226,14 @@ class ContaiSiteGenerationJob implements ContaiJobInterface
      */
     private function recordStepWarning(string $stepName, string $message): void
     {
-        $message = substr($message, 0, 500);
-
-        // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-        error_log("[ContAI] WARNING: optional site-generation step '{$stepName}' failed: {$message}");
-
-        $warnings = get_option(self::OPTION_STEP_WARNINGS, []);
-        if (!is_array($warnings)) {
-            $warnings = [];
-        }
-
-        $warnings[] = [
-            'step'      => $stepName,
-            'message'   => $message,
-            'timestamp' => gmdate('c'),
-        ];
-
-        // FIFO: drop the oldest rather than letting the option grow without
-        // bound across re-executions.
-        while (count($warnings) > self::MAX_STEP_WARNINGS) {
-            array_shift($warnings);
-        }
-
-        update_option(self::OPTION_STEP_WARNINGS, $warnings);
+        // Delegates to the shared recorder so the nav-menu resolvers in
+        // includes/helpers/ write to the SAME durable store, rather than each
+        // concern growing its own FIFO (#48).
+        contai_record_site_warning(
+            $stepName,
+            $message,
+            "optional site-generation step '{$stepName}' failed"
+        );
     }
 
     private function validateCreditsStep(): void

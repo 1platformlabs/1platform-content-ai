@@ -276,7 +276,7 @@ class MainMenuManagerTest extends TestCase
         );
 
         $this->assertStringContainsString(
-            'contai_nav_location_is_usable($static_location, $registered_menus)',
+            'contai_nav_location_is_usable($static_location, $registered_menus, $registry_is_stale)',
             $source,
             'The static nav location must be validated against the registered menus ' .
             'before short-circuiting, or an unregistered location is assigned silently (#48)'
