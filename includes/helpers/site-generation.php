@@ -16,6 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 require_once __DIR__ . '/crypto.php';
 require_once __DIR__ . '/nav-location.php';
+require_once __DIR__ . '/sidebar-location.php';
 require_once __DIR__ . '/site-warnings.php';
 require_once __DIR__ . '/widget-instance.php';
 require_once __DIR__ . '/astra-settings.php';
@@ -100,18 +101,30 @@ function contai_get_primary_sidebar_id(): string {
 		return CONTAI_THEME_SIDEBAR_MAP[ $theme ];
 	}
 
-	// Try runtime detection as fallback
+	// Runtime detection, but only from a registry that describes the ACTIVE
+	// theme. The wizard reaches this in the same request as switch_theme(), where
+	// $wp_registered_sidebars still lists the outgoing theme's widget areas, so
+	// reading an id out of it hands back a sidebar the active theme does not
+	// render — a silent no-op, exactly like the nav locations (#48).
 	global $wp_registered_sidebars;
-	if ( ! empty( $wp_registered_sidebars ) ) {
-		$priority = array( 'sidebar-1', 'sidebar', 'sidebar-primary', 'primary-sidebar', 'primary-widget-area' );
-		foreach ( $priority as $id ) {
-			if ( isset( $wp_registered_sidebars[ $id ] ) ) {
-				return $id;
-			}
-		}
-		$keys = array_keys( $wp_registered_sidebars );
-		return $keys[0] ?? 'sidebar-1';
+	$resolved = contai_sidebar_id_from_registry( $wp_registered_sidebars, contai_nav_registry_is_stale() );
+
+	if ( null !== $resolved ) {
+		return $resolved;
 	}
+
+	// Nothing trustworthy to resolve from: an unmapped theme whose widget areas
+	// we cannot see. 'sidebar-1' is the WordPress convention and stays the
+	// last-resort guess, but it IS a guess, so it leaves a durable trace instead
+	// of failing invisibly the way this whole class of bug did.
+	contai_record_site_warning(
+		'sidebar id',
+		sprintf(
+			"theme '%s' is not in CONTAI_THEME_SIDEBAR_MAP and the widget-area registry could not be read%s; falling back to 'sidebar-1', which the theme may not register",
+			$theme,
+			contai_nav_registry_is_stale() ? ' (it still described the previous theme)' : ''
+		)
+	);
 
 	return 'sidebar-1';
 }
@@ -967,7 +980,10 @@ function contai_add_sidebar_widgets() {
 		? $sidebars_widgets[ $sidebar_id ]
 		: array();
 
-	$sidebars_widgets[ $sidebar_id ] = array();
+	// Collected here and merged with $previous_sidebar at the end. Assigning
+	// array() to the sidebar at this point — which is what this did — dropped
+	// every widget the site owner had placed there (#48).
+	$wizard_widget_ids = array();
 
 	// Read-merge, never rebuild. Each of these options holds EVERY instance of
 	// that widget type across EVERY sidebar, so overwriting it with a freshly
@@ -1017,15 +1033,20 @@ function contai_add_sidebar_widgets() {
         ' . $rrss_safe . '
     </div>';
 
-		$sidebars_widgets[ $sidebar_id ][] = "block-$block_id";
+		$wizard_widget_ids[]       = "block-$block_id";
 		$widget_block[ $block_id ] = array( 'content' => $about_me_html );
 	} else {
 		contai_log( 'contai_add_sidebar_widgets: Profile generation failed, skipping About Me widget.' );
 	}
 
-	$sidebars_widgets[ $sidebar_id ][] = "search-$search_id";
-	$sidebars_widgets[ $sidebar_id ][] = "recent-comments-$comments_id";
-	$sidebars_widgets[ $sidebar_id ][] = "recent-posts-$posts_id";
+	$wizard_widget_ids[] = "search-$search_id";
+	$wizard_widget_ids[] = "recent-comments-$comments_id";
+	$wizard_widget_ids[] = "recent-posts-$posts_id";
+
+	// Wizard widgets first, everything the owner already had after it. Re-runs
+	// collapse instead of duplicating because contai_pick_widget_instance_id()
+	// hands back the ids the previous run wrote.
+	$sidebars_widgets[ $sidebar_id ] = contai_merge_sidebar_widget_ids( $wizard_widget_ids, $previous_sidebar );
 
 	$widget_search[ $search_id ] = array(
 		'title' => $text['search'],
