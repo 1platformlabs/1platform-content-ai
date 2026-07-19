@@ -61,9 +61,18 @@ class LegalPagesGeneratorTest extends TestCase
             ->once()
             ->andReturn($response);
 
-        // processPage: each page already exists (skipped)
+        // Slug-aware on purpose: ensureRequiredLegalPages() now also looks a
+        // required page up BY SLUG before creating it, because a page can exist
+        // under that slug without carrying our meta (the stock WordPress
+        // 'privacy-policy' draft). A stub that finds everything would hide the
+        // creation path this test exists to check (#48).
+        $missingSlugs = ['cookie-policy'];
         WP_Mock::userFunction('get_page_by_path')
-            ->andReturn((object) ['ID' => 1, 'post_status' => 'publish']);
+            ->andReturnUsing(function ($slug) use ($missingSlugs) {
+                return in_array($slug, $missingSlugs, true)
+                    ? null
+                    : (object) ['ID' => 1, 'post_status' => 'publish', 'post_title' => 'Existing', 'post_name' => $slug];
+            });
 
         WP_Mock::userFunction('sanitize_text_field')
             ->andReturnUsing(function ($v) { return $v; });
@@ -111,8 +120,11 @@ class LegalPagesGeneratorTest extends TestCase
             ->once()
             ->andReturn(99);
 
+        // 4 existing pages adopted (source, key, lang each) + 1 created
+        // (source, key, lang, generated_at). Adoption stamps the meta the
+        // footer menu selects by, which a skipped page never had (#48).
         WP_Mock::userFunction('update_post_meta')
-            ->times(4); // source, key, lang, generated_at
+            ->times(16);
 
         WP_Mock::userFunction('current_time')
             ->andReturn('2026-04-07 12:00:00');
@@ -171,9 +183,18 @@ class LegalPagesGeneratorTest extends TestCase
             ->with('contai_legal_email', '')
             ->andReturn('owner@test.com');
 
-        // processPage: legal-notice already exists (skipped)
+        // Slug-aware on purpose: ensureRequiredLegalPages() now also looks a
+        // required page up BY SLUG before creating it, because a page can exist
+        // under that slug without carrying our meta (the stock WordPress
+        // 'privacy-policy' draft). A stub that finds everything would hide the
+        // creation path this test exists to check (#48).
+        $missingSlugs = ['cookie-policy', 'about-me', 'contact'];
         WP_Mock::userFunction('get_page_by_path')
-            ->andReturn((object) ['ID' => 1, 'post_status' => 'publish']);
+            ->andReturnUsing(function ($slug) use ($missingSlugs) {
+                return in_array($slug, $missingSlugs, true)
+                    ? null
+                    : (object) ['ID' => 1, 'post_status' => 'publish', 'post_title' => 'Existing', 'post_name' => $slug];
+            });
 
         WP_Mock::userFunction('wp_kses_post')
             ->andReturnUsing(function ($v) { return $v; });
@@ -198,6 +219,22 @@ class LegalPagesGeneratorTest extends TestCase
         WP_Mock::userFunction('wp_untrash_post')
             ->once()
             ->with(55);
+
+        // Restoring from the trash yields a DRAFT, and the footer menu only
+        // links published pages, so the adopt step must publish it (#48).
+        WP_Mock::userFunction('wp_update_post')
+            ->once()
+            ->with(Mockery::on(function ($args) {
+                return ($args['ID'] ?? null) === 55 && ($args['post_status'] ?? null) === 'publish';
+            }));
+
+        // Adopting the restored page records a durable warning.
+        WP_Mock::userFunction('get_option')
+            ->with('contai_site_generation_warnings', [])
+            ->andReturn([]);
+        WP_Mock::userFunction('update_option')
+            ->with('contai_site_generation_warnings', Mockery::any())
+            ->andReturn(true);
 
         // Missing pages: cookie-policy, about-me, contact (3 missing)
         WP_Mock::userFunction('wp_insert_post')

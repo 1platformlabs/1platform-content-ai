@@ -75,6 +75,7 @@ class FooterMenuReachabilityTest extends TestCase
         WP_Mock::userFunction('wp_update_nav_menu_item', ['return' => 99]);
         WP_Mock::userFunction('get_nav_menu_locations', ['return' => []]);
         WP_Mock::userFunction('get_registered_nav_menus', ['return' => $registered]);
+        WP_Mock::userFunction('get_stylesheet', ['return' => 'astra']);
         WP_Mock::userFunction('contai_log', ['return' => null]);
         WP_Mock::userFunction('set_theme_mod', [
             'return' => function ($name, $value) {

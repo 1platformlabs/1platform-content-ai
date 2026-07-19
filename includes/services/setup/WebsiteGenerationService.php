@@ -56,19 +56,35 @@ class ContaiWebsiteGenerationService
                 $results['errors'] = array_merge($results['errors'], $legalResult['errors']);
             }
 
+            // The generator's warnings — "missing title or content", "already
+            // exists" — were read by nobody: not merged, not logged, not stored.
+            // A legal page the wizard decided not to create left zero trace
+            // anywhere, on an issue whose whole history is invisible failures
+            // (#48).
+            foreach (($legalResult['warnings'] ?? []) as $warning) {
+                contai_record_site_warning('legal pages', (string) $warning);
+            }
+
             try {
                 contai_create_footer_menu_with_legal_pages();
                 $results['steps'][] = 'Footer menu with legal pages created';
-            } catch (Exception $e) {
+            } catch (Throwable $e) {
                 $results['errors'][] = 'Footer menu creation failed (non-critical): ' . $e->getMessage();
+                contai_record_site_warning('footer menu', $e->getMessage());
             }
 
             contai_generate_cookies_banner();
             $results['steps'][] = 'Cookie banner configured';
 
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
+            // catch (Exception) let every PHP Error through — a TypeError out of
+            // the legal-pages loop skipped the footer menu and the cookie banner
+            // and discarded $results entirely, steps and errors alike. The same
+            // fix was already applied to ContaiSiteGenerationJob::runOptionalStep
+            // and never propagated here (#48).
             $results['success'] = false;
             $results['errors'][] = $e->getMessage();
+            contai_record_site_warning('website generation', $e->getMessage());
         }
 
         return $results;

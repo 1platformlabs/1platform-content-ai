@@ -16,6 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 require_once __DIR__ . '/crypto.php';
 require_once __DIR__ . '/nav-location.php';
+require_once __DIR__ . '/nav-menu-claim.php';
 require_once __DIR__ . '/sidebar-location.php';
 require_once __DIR__ . '/site-warnings.php';
 require_once __DIR__ . '/widget-instance.php';
@@ -557,7 +558,24 @@ function contai_delete_sample_content(): void {
  * @return void
  */
 function contai_setup_site_config() {
-	update_option( 'permalink_structure', '/%postname%/' );
+	// Not update_option( 'permalink_structure', … ). $wp_rewrite caches the
+	// structure in a property read once in WP_Rewrite::init(), called from the
+	// constructor at request start (wp-settings.php), and update_option() does
+	// not resync it — core has no 'update_option_permalink_structure' hook, and
+	// every core writer goes through set_permalink_structure(), which pairs the
+	// option write with $this->init(). Writing the option directly and then
+	// flushing meant the flush below regenerated rules from the OLD structure
+	// and persisted them, and a populated stale ruleset does not self-heal
+	// (#48). It happened to be masked by the unrelated flush that
+	// check_theme_switched() runs after switch_theme(); this no longer depends
+	// on that accident.
+	if ( isset( $GLOBALS['wp_rewrite'] ) && is_object( $GLOBALS['wp_rewrite'] )
+		&& method_exists( $GLOBALS['wp_rewrite'], 'set_permalink_structure' ) ) {
+		$GLOBALS['wp_rewrite']->set_permalink_structure( '/%postname%/' );
+	} else {
+		update_option( 'permalink_structure', '/%postname%/' );
+	}
+
 	update_option( 'contai_flush_rewrite', true );
 
 	// Actually flush. Writing the permalink_structure option does NOT
@@ -666,7 +684,14 @@ function contai_create_footer_menu_with_legal_pages(): void {
 	} else {
 		$menu_id = wp_create_nav_menu( $menu_name );
 		if ( is_wp_error( $menu_id ) ) {
-			contai_log( 'contai_create_footer_menu_with_legal_pages: failed to create menu — ' . $menu_id->get_error_message() );
+			// The caller appends 'Footer menu with legal pages created' as soon
+			// as this returns without throwing, so a debug-gated contai_log()
+			// here meant the wizard claimed a footer menu it had failed to
+			// create — with nothing to read anywhere (#48).
+			contai_record_site_warning(
+				'footer menu',
+				'failed to create the menu: ' . $menu_id->get_error_message()
+			);
 			return;
 		}
 	}
@@ -747,7 +772,6 @@ function contai_create_footer_menu_with_legal_pages(): void {
 		'newsmatic'     => 'menu-3',
 	);
 
-	$locations  = get_nav_menu_locations();
 	$target     = $theme_footer_map[ $theme ] ?? null;
 	$registered = get_registered_nav_menus();
 
@@ -763,8 +787,10 @@ function contai_create_footer_menu_with_legal_pages(): void {
 	// fallback and the diagnostic warning below unreachable for every mapped
 	// theme — the silent failure behind "footer has no legal links" (#48).
 	if ( contai_nav_location_is_usable( $target, $registered, $stale ) ) {
-		$locations[ $target ] = $menu_id;
-		set_theme_mod( 'nav_menu_locations', $locations );
+		// Claims the assignment as well, so core's post-switch remapping cannot
+		// silently hand the location back to the previous theme (#48) — see
+		// contai_assign_nav_menu_location().
+		contai_assign_nav_menu_location( $target, $menu_id );
 		return;
 	}
 
@@ -772,8 +798,7 @@ function contai_create_footer_menu_with_legal_pages(): void {
 	$matched = contai_match_footer_nav_location( $registered, $stale );
 
 	if ( null !== $matched ) {
-		$locations[ $matched ] = $menu_id;
-		set_theme_mod( 'nav_menu_locations', $locations );
+		contai_assign_nav_menu_location( $matched, $menu_id );
 		error_log( "[ContAI] Footer menu assigned to '{$matched}' via pattern match for theme '{$theme}'" );
 		return;
 	}
@@ -999,11 +1024,14 @@ function contai_add_sidebar_widgets() {
 	$widget_recent_posts    = is_array( $widget_recent_posts ) ? $widget_recent_posts : array();
 	$widget_block           = is_array( $widget_block ) ? $widget_block : array();
 
-	// Hardcoding 1 collided with whatever already occupied instance 1.
-	$search_id   = contai_pick_widget_instance_id( $widget_search, $previous_sidebar, 'search' );
-	$comments_id = contai_pick_widget_instance_id( $widget_recent_comments, $previous_sidebar, 'recent-comments' );
-	$posts_id    = contai_pick_widget_instance_id( $widget_recent_posts, $previous_sidebar, 'recent-posts' );
-	$block_id    = contai_pick_widget_instance_id( $widget_block, $previous_sidebar, 'block' );
+	// Hardcoding 1 collided with whatever already occupied instance 1. The
+	// fingerprints are what keep re-use from adopting a widget the site owner
+	// (or WordPress itself) put in this sidebar — 'block-2' on a stock install
+	// is core's Search block, not ours (#48).
+	$search_id   = contai_pick_widget_instance_id( $widget_search, $previous_sidebar, 'search', $text['search'] );
+	$comments_id = contai_pick_widget_instance_id( $widget_recent_comments, $previous_sidebar, 'recent-comments', $text['recent_comments'] );
+	$posts_id    = contai_pick_widget_instance_id( $widget_recent_posts, $previous_sidebar, 'recent-posts', $text['recent_posts'] );
+	$block_id    = contai_pick_widget_instance_id( $widget_block, $previous_sidebar, 'block', CONTAI_ABOUT_ME_WIDGET_CLASS );
 
 	$legal_info = contai_get_legal_info();
 	$owner      = $legal_info['owner'] ?? '';
@@ -1026,7 +1054,7 @@ function contai_add_sidebar_widgets() {
 		$about_me_title = $lang === 'english' ? 'About Me' : 'Sobre mí';
 
 		$about_me_html = '
-    <div class="contai-about-me-widget" style="width: 100%; max-width: 320px; padding: 20px; border: 1px solid #ccc; border-radius: 10px; font-family: Arial, sans-serif; background-color: #f0f4fa; box-sizing: border-box; margin: 0 auto;">
+    <div class="' . CONTAI_ABOUT_ME_WIDGET_CLASS . '" style="width: 100%; max-width: 320px; padding: 20px; border: 1px solid #ccc; border-radius: 10px; font-family: Arial, sans-serif; background-color: #f0f4fa; box-sizing: border-box; margin: 0 auto;">
         <img src="' . esc_url( $image_url ) . '" alt="' . esc_attr( $fullname ) . '" style="width: 100%; height: auto; border-radius: 10px; margin-bottom: 15px; display: block;">
         <h2 style="margin-top: 0; font-size: 18px; margin-bottom: 10px;">' . esc_html( $about_me_title ) . '</h2>
         <p style="margin: 10px 0; font-size: 14px; line-height: 1.6;">' . $bio_safe . '</p>
@@ -1036,7 +1064,13 @@ function contai_add_sidebar_widgets() {
 		$wizard_widget_ids[]       = "block-$block_id";
 		$widget_block[ $block_id ] = array( 'content' => $about_me_html );
 	} else {
-		contai_log( 'contai_add_sidebar_widgets: Profile generation failed, skipping About Me widget.' );
+		// Durable, not debug-gated: contai_log() writes nothing without
+		// WP_DEBUG, and the step still reports "Widgets generated", so one of
+		// the four widgets went missing with no trace anywhere (#48).
+		contai_record_site_warning(
+			'about me widget',
+			'profile generation returned nothing; the About Me widget was skipped.'
+		);
 	}
 
 	$wizard_widget_ids[] = "search-$search_id";

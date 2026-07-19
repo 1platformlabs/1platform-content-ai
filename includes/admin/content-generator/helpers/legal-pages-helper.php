@@ -72,6 +72,17 @@ class ContaiLegalPagesHelper {
         return $cookie_texts[$language] ?? $cookie_texts['spanish'];
     }
 
+    /**
+     * Persist the cookie-banner settings submitted by the admin form.
+     *
+     * The two boolean-ish fields use HTML checkbox semantics: an unchecked box
+     * is simply absent from $_POST, so absence means "off". That is correct for
+     * a form submission and WRONG for any programmatic caller, which is why
+     * this method is now form-only — see apply_cookie_banner_defaults() for the
+     * wizard path (#48).
+     *
+     * @param array $post_data Raw $_POST of the cookie-settings form.
+     */
     public static function save_cookie_settings(array $post_data): void {
         $cookie_text = self::get_cookie_text();
 
@@ -88,6 +99,38 @@ class ContaiLegalPagesHelper {
             ? 'opt_in'
             : 'opt_out';
         update_option('contai_consent_mode', $consent_mode);
+    }
+
+    /**
+     * Set up the cookie banner from the site wizard (#48).
+     *
+     * The wizard used to call save_cookie_settings(array()) and its comment
+     * claimed that "save_cookie_settings uses defaults when fields are absent".
+     * That holds for the text field (!empty falls back to the localized
+     * default) and is false for the other two, which read absence as an
+     * unchecked checkbox:
+     *
+     *   - contai_cookie_notice_enabled was written as '0'. The renderer defaults
+     *     an ABSENT option to '1' and returns early on anything else
+     *     (cookie-notice-helper.php:34-39), so the step named "Cookie banner
+     *     configured" was the only thing on a fresh site that could turn the
+     *     banner off — and it reported success either way.
+     *   - contai_consent_mode was forced back to 'opt_out' on every run, which
+     *     is read live by ContaiAnalyticsTag, so re-running the wizard silently
+     *     reverted an admin who had chosen 'opt_in'.
+     *
+     * Generating the banner means turning it ON. Consent mode is a policy
+     * choice that belongs to the admin, so an existing value is preserved and
+     * only an unset option takes the 'opt_out' default.
+     */
+    public static function apply_cookie_banner_defaults(): void {
+        update_option('contai_cookie_notice_text', self::get_cookie_text());
+        update_option('contai_cookie_notice_enabled', '1');
+
+        $existing_mode = get_option('contai_consent_mode', '');
+        if ($existing_mode !== 'opt_in' && $existing_mode !== 'opt_out') {
+            update_option('contai_consent_mode', 'opt_out');
+        }
     }
 }
 
