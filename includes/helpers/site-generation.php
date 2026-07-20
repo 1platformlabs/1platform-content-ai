@@ -27,6 +27,15 @@ require_once __DIR__ . '/../services/api/OnePlatformEndpoints.php';
 require_once __DIR__ . '/../providers/WebsiteProvider.php';
 
 /**
+ * Private text domain used to read core's own admin translations.
+ *
+ * Never used for this plugin's strings — it exists so the wizard can resolve
+ * translated core strings (the stock sample-content slugs) from a request where
+ * WordPress has not loaded admin-<locale>.mo into the 'default' domain.
+ */
+const CONTAI_CORE_ADMIN_TEXTDOMAIN = 'contai-core-admin';
+
+/**
  * Static mapping of sidebar IDs per theme.
  *
  * Used in cron/async context where $wp_registered_sidebars may be empty
@@ -531,15 +540,249 @@ function contai_handle_generate_icon_submit() {
 	}
 }
 
-function contai_delete_sample_content(): void {
-	$hello_world_post = get_page_by_path( 'hello-world', OBJECT, 'post' );
-	if ( $hello_world_post ) {
-		wp_delete_post( $hello_world_post->ID, true );
+/**
+ * Load core's admin translations for one locale into a private text domain.
+ *
+ * The slugs of the stock sample content are translated strings, and they live
+ * in admin-<locale>.mo. load_default_textdomain() only loads that file when
+ * is_admin() (wp-includes/l10n.php), and the wizard runs from the job queue --
+ * the same context that makes contai_flush_rewrite_rules_hard() load
+ * wp-admin/includes/misc.php by hand. So _x() on its own returns the English
+ * literal here, and a "fix" built on it would be one more silent no-op.
+ *
+ * Loading into a private domain rather than 'default' keeps the request's own
+ * translations untouched. Core derives the .l10n.php path from the .mo path
+ * (l10n.php, load_textdomain()), so passing the .mo covers both formats.
+ *
+ * @param string $locale Locale whose admin translations to load.
+ * @return bool True when the file was loaded and translations are available.
+ */
+function contai_load_core_admin_translations( string $locale ): bool {
+	if ( ! function_exists( 'load_textdomain' ) || ! defined( 'WP_LANG_DIR' ) ) {
+		return false;
 	}
 
-	$sample_page = get_page_by_path( 'sample-page', OBJECT, 'page' );
-	if ( $sample_page ) {
-		wp_delete_post( $sample_page->ID, true );
+	// en_US ships no translation file; the literals are already correct.
+	if ( '' === $locale || 'en_US' === $locale ) {
+		return false;
+	}
+
+	return (bool) load_textdomain(
+		CONTAI_CORE_ADMIN_TEXTDOMAIN,
+		WP_LANG_DIR . '/admin-' . $locale . '.mo',
+		$locale
+	);
+}
+
+/**
+ * Locales whose sample-content slugs are worth trying, request locale LAST.
+ *
+ * determine_locale() is the locale of THIS REQUEST, not of the install: under
+ * is_admin() (or a _locale=user JSON request) it returns get_user_locale(), and
+ * any plugin can filter it (wp-includes/l10n.php). Core, however, created the
+ * sample content once, at install time, from the SITE locale. So a site
+ * installed in Spanish whose language was later switched to English still has
+ * Spanish slugs, and resolving only the request locale would leave the original
+ * bug unfixed for exactly that population. Both are tried.
+ *
+ * The order matters: load_textdomain() calls set_locale() on the shared
+ * translation controller (l10n.php), so finishing on the request's own locale
+ * leaves the rest of the request reading translations as it did before.
+ *
+ * @return string[] Distinct locales, request locale last.
+ */
+function contai_core_locale_candidates(): array {
+	$site    = function_exists( 'get_locale' ) ? (string) get_locale() : '';
+	$request = function_exists( 'determine_locale' ) ? (string) determine_locale() : '';
+
+	$locales = array();
+	foreach ( array( $site, $request ) as $locale ) {
+		if ( '' !== $locale && ! in_array( $locale, $locales, true ) ) {
+			$locales[] = $locale;
+		}
+	}
+
+	return $locales;
+}
+
+/**
+ * What WordPress actually called the stock sample content on this install.
+ *
+ * Core creates it from translated strings -- sanitize_title( _x( 'hello-world',
+ * 'Default post slug' ) ) / __( 'Hello world!' ) at
+ * wp-admin/includes/upgrade.php:247-249, and __( 'sample-page' ) /
+ * __( 'Sample Page' ) at :352-354 -- and looks the post back up the same way
+ * (:529). On an es_ES install the slugs are 'hola-mundo' and 'pagina-ejemplo',
+ * so the English literals matched nothing and the cleanup was a silent no-op on
+ * every non-English site. This plugin's own default content language is Spanish
+ * (contai_site_language), so that is the expected install, not an edge case.
+ *
+ * Each candidate carries its title as well, because the slug alone is not
+ * enough to justify a destructive action: the title is what tells the stock
+ * item apart from a page the site owner happens to have slugged the same way.
+ *
+ * @param string $post_type 'post' or 'page'.
+ * @return array<int, array{slug: string, title: string}> Candidates, no duplicate slugs.
+ */
+function contai_stock_sample_candidates( string $post_type ): array {
+	$is_post = ( 'post' === $post_type );
+
+	$candidates = array();
+	$seen       = array();
+
+	$add = static function ( $slug, $title ) use ( &$candidates, &$seen ) {
+		$slug = (string) $slug;
+		if ( '' === $slug || isset( $seen[ $slug ] ) ) {
+			return;
+		}
+		$seen[ $slug ] = true;
+		$candidates[]  = array(
+			'slug'  => $slug,
+			'title' => (string) $title,
+		);
+	};
+
+	foreach ( contai_core_locale_candidates() as $locale ) {
+		if ( ! contai_load_core_admin_translations( $locale ) ) {
+			continue;
+		}
+
+		// phpcs:disable WordPress.WP.I18n.TextDomainMismatch
+		$slug  = $is_post
+			? _x( 'hello-world', 'Default post slug', CONTAI_CORE_ADMIN_TEXTDOMAIN )
+			: __( 'sample-page', CONTAI_CORE_ADMIN_TEXTDOMAIN );
+		$title = $is_post
+			? __( 'Hello world!', CONTAI_CORE_ADMIN_TEXTDOMAIN )
+			: __( 'Sample Page', CONTAI_CORE_ADMIN_TEXTDOMAIN );
+		// phpcs:enable WordPress.WP.I18n.TextDomainMismatch
+
+		$add( $slug, $title );
+
+		// A translation is not guaranteed to be slug-safe; core stores the post
+		// under sanitize_title() of it (upgrade.php:249).
+		if ( function_exists( 'sanitize_title' ) ) {
+			$add( sanitize_title( (string) $slug ), $title );
+		}
+	}
+
+	// Always a candidate: a site installed in English and later switched keeps
+	// the English slugs.
+	$add(
+		$is_post ? 'hello-world' : 'sample-page',
+		$is_post ? 'Hello world!' : 'Sample Page'
+	);
+
+	return $candidates;
+}
+
+/**
+ * Retire one stock sample item without ever destroying content.
+ *
+ * wp_trash_post() PERMANENTLY DELETES when EMPTY_TRASH_DAYS is 0
+ * (wp-includes/post.php:4006-4009), and that is a documented wp-config setting.
+ * This code path matched nothing on non-English installs until now, so the
+ * change that finally makes it effective must not also be the change that
+ * destroys content on those sites. Where the trash is not a trash, the item is
+ * demoted to a draft instead: unpublished is all the wizard needs -- it leaves
+ * the blog index and leaves wp_page_menu(), whose get_pages() default is
+ * 'post_status' => 'publish' (post.php:6428) -- and a draft is fully
+ * recoverable.
+ *
+ * @param int      $post_id           Item to retire.
+ * @param int|null $empty_trash_days  Override for the constant, for tests.
+ * @return bool True when the item was retired.
+ */
+function contai_retire_stock_sample( int $post_id, ?int $empty_trash_days = null ): bool {
+	if ( null === $empty_trash_days ) {
+		$empty_trash_days = defined( 'EMPTY_TRASH_DAYS' ) ? (int) EMPTY_TRASH_DAYS : 0;
+	}
+
+	if ( $empty_trash_days < 1 ) {
+		$updated = wp_update_post(
+			array(
+				'ID'          => $post_id,
+				'post_status' => 'draft',
+			)
+		);
+
+		return ! empty( $updated ) && ! is_wp_error( $updated );
+	}
+
+	return (bool) wp_trash_post( $post_id );
+}
+
+/**
+ * Retire the stock sample post and page so they stop polluting the site.
+ *
+ * They matter to navigation specifically: the wizard forces the front page to
+ * the blog index (contai_apply_theme_defaults()), where the sample post renders
+ * among the generated content, and a published "Sample Page" is picked up by
+ * the wp_page_menu() fallback -- the same listing that surfaces the legal pages
+ * as the main navigation, which is the symptom this issue opened with.
+ *
+ * Nothing is destroyed and nothing happens silently: a slug match alone is not
+ * acted on, because get_page_by_path() also matches attachments and widens to
+ * one (post.php:6177-6222), and because an owner may legitimately have a page
+ * at that slug. The title has to match the stock title too, and every outcome
+ * -- retired, skipped, failed -- leaves a record.
+ *
+ * @return void
+ */
+function contai_delete_sample_content(): void {
+	foreach ( array( 'post', 'page' ) as $post_type ) {
+		foreach ( contai_stock_sample_candidates( $post_type ) as $candidate ) {
+			$found = get_page_by_path( $candidate['slug'], OBJECT, $post_type );
+
+			// get_page_by_path() searches the requested type AND 'attachment',
+			// and assigns the id before checking the type (post.php:6215-6222),
+			// so an unattached media item at this slug can come back here.
+			if ( ! $found || ! isset( $found->post_type ) || $found->post_type !== $post_type ) {
+				continue;
+			}
+
+			if ( isset( $found->post_title ) && (string) $found->post_title !== $candidate['title'] ) {
+				// The slug is core's, the content is not. Leave it alone --
+				// but say so, because a destructive step that quietly decides
+				// not to act is the same invisibility this issue is about.
+				contai_record_site_warning(
+					'sample content',
+					sprintf(
+						"left the %s at '%s' (ID %d) alone: title %s does not match the stock %s",
+						$post_type,
+						$candidate['slug'],
+						(int) $found->ID,
+						'"' . (string) $found->post_title . '"',
+						'"' . $candidate['title'] . '"'
+					)
+				);
+				break;
+			}
+
+			if ( contai_retire_stock_sample( (int) $found->ID ) ) {
+				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+				error_log(
+					sprintf(
+						"[ContAI] retired the stock sample %s '%s' (ID %d)",
+						$post_type,
+						$candidate['slug'],
+						(int) $found->ID
+					)
+				);
+			} else {
+				contai_record_site_warning(
+					'sample content',
+					sprintf(
+						"could not remove the stock sample %s '%s' (ID %d); it will keep showing on the site",
+						$post_type,
+						$candidate['slug'],
+						(int) $found->ID
+					)
+				);
+			}
+
+			// One stock item per type; do not keep matching other candidates.
+			break;
+		}
 	}
 }
 
@@ -712,6 +955,13 @@ function contai_create_footer_menu_with_legal_pages(): void {
     // phpcs:enable WordPress.DB.SlowDBQuery.slow_db_query_meta_key, WordPress.DB.SlowDBQuery.slow_db_query_meta_value
 
 	if ( empty( $legal_pages ) ) {
+		// The only exit in this function that used to leave no trace: the step
+		// still reports "Footer menu with legal pages created" while the menu
+		// stays empty and unbound to any location (#48).
+		contai_record_site_warning(
+			'footer legal menu',
+			"no published pages carry _contai_legal_source = 'contai_api', so the footer menu was left empty and unassigned"
+		);
 		return;
 	}
 
@@ -732,7 +982,7 @@ function contai_create_footer_menu_with_legal_pages(): void {
 			continue;
 		}
 
-		wp_update_nav_menu_item( $menu_id, 0, array(
+		$item_id = wp_update_nav_menu_item( $menu_id, 0, array(
 			'menu-item-title'     => $page->post_title,
 			'menu-item-object'    => 'page',
 			'menu-item-object-id' => $page->ID,
@@ -740,6 +990,24 @@ function contai_create_footer_menu_with_legal_pages(): void {
 			'menu-item-status'    => 'publish',
 			'menu-item-position'  => $position,
 		) );
+
+		// Core inserts the item post BEFORE attaching it to the menu term and
+		// returns the WP_Error from that attach (wp-includes/nav-menu.php), so
+		// a failure here leaves a published nav_menu_item bound to no menu:
+		// it renders nowhere and, until now, said nothing.
+		if ( is_wp_error( $item_id ) || ! $item_id ) {
+			contai_record_site_warning(
+				'footer legal menu',
+				sprintf(
+					"could not add '%s' (page %d) to the footer menu: %s",
+					$page->post_title,
+					(int) $page->ID,
+					is_wp_error( $item_id ) ? $item_id->get_error_message() : 'no item id returned'
+				)
+			);
+			continue;
+		}
+
 		$position++;
 	}
 
