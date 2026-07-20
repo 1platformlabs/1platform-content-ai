@@ -27,6 +27,15 @@ require_once __DIR__ . '/../services/api/OnePlatformEndpoints.php';
 require_once __DIR__ . '/../providers/WebsiteProvider.php';
 
 /**
+ * Private text domain used to read core's own admin translations.
+ *
+ * Never used for this plugin's strings — it exists so the wizard can resolve
+ * translated core strings (the stock sample-content slugs) from a request where
+ * WordPress has not loaded admin-<locale>.mo into the 'default' domain.
+ */
+const CONTAI_CORE_ADMIN_TEXTDOMAIN = 'contai-core-admin';
+
+/**
  * Static mapping of sidebar IDs per theme.
  *
  * Used in cron/async context where $wp_registered_sidebars may be empty
@@ -531,15 +540,128 @@ function contai_handle_generate_icon_submit() {
 	}
 }
 
-function contai_delete_sample_content(): void {
-	$hello_world_post = get_page_by_path( 'hello-world', OBJECT, 'post' );
-	if ( $hello_world_post ) {
-		wp_delete_post( $hello_world_post->ID, true );
+/**
+ * Load core's admin translations into a private text domain.
+ *
+ * The slugs of the stock sample content are translated strings, and they live
+ * in admin-<locale>.mo. load_default_textdomain() only loads that file when
+ * is_admin() (wp-includes/l10n.php), and the wizard runs from the job queue —
+ * the same context that makes contai_flush_rewrite_rules_hard() load
+ * wp-admin/includes/misc.php by hand. So _x() on its own returns the English
+ * literal here, and a "fix" built on it would be one more silent no-op.
+ *
+ * Loading into a private domain rather than 'default' keeps the request's own
+ * translation state untouched. Core derives the .l10n.php path from the .mo
+ * path (l10n.php, load_textdomain()), so passing the .mo covers both formats.
+ *
+ * @return bool True when the file was loaded and translations are available.
+ */
+function contai_load_core_admin_translations(): bool {
+	if ( ! function_exists( 'load_textdomain' ) || ! defined( 'WP_LANG_DIR' ) ) {
+		return false;
 	}
 
-	$sample_page = get_page_by_path( 'sample-page', OBJECT, 'page' );
-	if ( $sample_page ) {
-		wp_delete_post( $sample_page->ID, true );
+	$locale = '';
+	if ( function_exists( 'determine_locale' ) ) {
+		$locale = (string) determine_locale();
+	} elseif ( function_exists( 'get_locale' ) ) {
+		$locale = (string) get_locale();
+	}
+
+	// en_US ships no translation file; the literals are already correct.
+	if ( '' === $locale || 'en_US' === $locale ) {
+		return false;
+	}
+
+	return (bool) load_textdomain(
+		CONTAI_CORE_ADMIN_TEXTDOMAIN,
+		WP_LANG_DIR . '/admin-' . $locale . '.mo',
+		$locale
+	);
+}
+
+/**
+ * The slugs WordPress actually gave the stock sample content on this install.
+ *
+ * Core creates them from translated strings — sanitize_title( _x( 'hello-world',
+ * 'Default post slug' ) ) at wp-admin/includes/upgrade.php:249 and
+ * __( 'sample-page' ) at :354 — and looks the post back up the same way (:529).
+ * On an es_ES install those become 'hola-mundo' and 'pagina-ejemplo', so the
+ * English literals match nothing and the cleanup was a silent no-op on every
+ * non-English site. This plugin's own default content language is Spanish
+ * (contai_site_language), so that is the expected install, not an edge case.
+ *
+ * Both the literal and the translated slug are returned: a site installed in
+ * English and later switched to another locale still has the English slugs.
+ *
+ * @param string $post_type 'post' or 'page'.
+ * @return string[] Candidate slugs, most specific first, no duplicates.
+ */
+function contai_stock_sample_slugs( string $post_type ): array {
+	$literal = ( 'post' === $post_type ) ? 'hello-world' : 'sample-page';
+	$slugs   = array();
+
+	if ( contai_load_core_admin_translations() ) {
+		$translated = ( 'post' === $post_type )
+			? _x( 'hello-world', 'Default post slug', CONTAI_CORE_ADMIN_TEXTDOMAIN )
+			// phpcs:ignore WordPress.WP.I18n.TextDomainMismatch
+			: __( 'sample-page', CONTAI_CORE_ADMIN_TEXTDOMAIN );
+
+		$translated = (string) $translated;
+		if ( '' !== $translated ) {
+			$slugs[] = $translated;
+			if ( function_exists( 'sanitize_title' ) ) {
+				$slugs[] = (string) sanitize_title( $translated );
+			}
+		}
+	}
+
+	$slugs[] = $literal;
+
+	return array_values( array_unique( array_filter( $slugs ) ) );
+}
+
+/**
+ * Remove the stock sample post and page so they stop polluting the site.
+ *
+ * They matter to navigation specifically: the wizard forces the front page to
+ * the blog index (contai_apply_theme_defaults()), where the sample post renders
+ * among the generated content, and a published "Sample Page" is picked up by
+ * the wp_page_menu() fallback — the same listing that surfaces the legal pages
+ * as the main navigation, which is the symptom this issue opened with.
+ *
+ * Trashed rather than force-deleted. This path matched nothing on non-English
+ * installs until now, so making it effective must not also make it
+ * irreversible. A trashed item is unpublished (it renders nowhere and leaves
+ * wp_page_menu()) and core appends "__trashed" to its slug
+ * (wp-includes/post.php:8395-8399), so it stops occupying the slug either way.
+ *
+ * @return void
+ */
+function contai_delete_sample_content(): void {
+	foreach ( array( 'post', 'page' ) as $post_type ) {
+		foreach ( contai_stock_sample_slugs( $post_type ) as $slug ) {
+			$found = get_page_by_path( $slug, OBJECT, $post_type );
+			if ( ! $found ) {
+				continue;
+			}
+
+			$trashed = wp_trash_post( $found->ID );
+			if ( ! $trashed ) {
+				contai_record_site_warning(
+					'sample content',
+					sprintf(
+						"could not remove the stock sample %s '%s' (ID %d); it will keep showing on the site",
+						$post_type,
+						$slug,
+						(int) $found->ID
+					)
+				);
+			}
+
+			// One stock item per type; do not keep matching other candidates.
+			break;
+		}
 	}
 }
 
@@ -712,6 +834,13 @@ function contai_create_footer_menu_with_legal_pages(): void {
     // phpcs:enable WordPress.DB.SlowDBQuery.slow_db_query_meta_key, WordPress.DB.SlowDBQuery.slow_db_query_meta_value
 
 	if ( empty( $legal_pages ) ) {
+		// The only exit in this function that used to leave no trace: the step
+		// still reports "Footer menu with legal pages created" while the menu
+		// stays empty and unbound to any location (#48).
+		contai_record_site_warning(
+			'footer legal menu',
+			'no published pages carry the _contai_legal_source meta, so the footer menu was left empty and unassigned'
+		);
 		return;
 	}
 
@@ -732,7 +861,7 @@ function contai_create_footer_menu_with_legal_pages(): void {
 			continue;
 		}
 
-		wp_update_nav_menu_item( $menu_id, 0, array(
+		$item_id = wp_update_nav_menu_item( $menu_id, 0, array(
 			'menu-item-title'     => $page->post_title,
 			'menu-item-object'    => 'page',
 			'menu-item-object-id' => $page->ID,
@@ -740,6 +869,24 @@ function contai_create_footer_menu_with_legal_pages(): void {
 			'menu-item-status'    => 'publish',
 			'menu-item-position'  => $position,
 		) );
+
+		// Core inserts the item post BEFORE attaching it to the menu term and
+		// returns the WP_Error from that attach (wp-includes/nav-menu.php), so
+		// a failure here leaves a published nav_menu_item bound to no menu:
+		// it renders nowhere and, until now, said nothing.
+		if ( is_wp_error( $item_id ) || ! $item_id ) {
+			contai_record_site_warning(
+				'footer legal menu',
+				sprintf(
+					"could not add '%s' (page %d) to the footer menu: %s",
+					$page->post_title,
+					(int) $page->ID,
+					is_wp_error( $item_id ) ? $item_id->get_error_message() : 'no item id returned'
+				)
+			);
+			continue;
+		}
+
 		$position++;
 	}
 
