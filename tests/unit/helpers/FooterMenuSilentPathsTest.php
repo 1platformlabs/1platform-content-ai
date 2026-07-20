@@ -107,7 +107,7 @@ class FooterMenuSilentPathsTest extends TestCase
         $recorded = $this->warningsForStep('footer legal menu');
 
         $this->assertCount(1, $recorded, 'An empty, unbound footer menu must leave a trace');
-        $this->assertStringContainsString('_contai_legal_source', $recorded[0]['message']);
+        $this->assertStringContainsString("_contai_legal_source = 'contai_api'", $recorded[0]['message']);
     }
 
     public function test_records_a_warning_when_an_item_cannot_be_added_to_the_menu(): void
