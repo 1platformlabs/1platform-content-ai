@@ -16,7 +16,7 @@ class ContaiConfig {
         'development' => [
             'api' => [
                 'base_url' => 'http://127.0.0.1:8000/api/v1',
-                'api_key' => 'hwL1z90qwEKxoaAb0XIzET4Q32pJ6eQ3ISwaweyKt4g4wfmAd8Pbz6DLLUTpx1EN',
+                'api_key' => 'v36MA4qV4OnSR8eKordujzkQNMx7y0VIh7Qkeoko87K3KOvfJtTef04SWARvG7nG',
                 'timeout' => 180,
                 'rate_limit_requests' => 120,
                 'rate_limit_window' => 60,
@@ -53,7 +53,7 @@ class ContaiConfig {
         'staging' => [
             'api' => [
                 'base_url' => 'https://api-qa.1platform.pro/api/v1',
-                'api_key' => 'hwL1z90qwEKxoaAb0XIzET4Q32pJ6eQ3ISwaweyKt4g4wfmAd8Pbz6DLLUTpx1EN',
+                'api_key' => 'v36MA4qV4OnSR8eKordujzkQNMx7y0VIh7Qkeoko87K3KOvfJtTef04SWARvG7nG',
                 'timeout' => 180,
                 'rate_limit_requests' => 100,
                 'rate_limit_window' => 60,
@@ -90,7 +90,7 @@ class ContaiConfig {
         'production' => [
             'api' => [
                 'base_url' => 'https://api.1platform.pro/api/v1',
-                'api_key' => 'qYadhvY9cskDj7QRNTInciRC0IlkqJ7L9z3LVLKcmOGDWJsl2cD6KDcmMhYJ4nVl',
+                'api_key' => 'mJTS3UxQA6vNOKdrJ2A2jLjgMEKo4tghOG7P2VqoKrs5fafy0TykA3b7pMRzdQod',
                 'timeout' => 180,
                 'rate_limit_requests' => 120,
                 'rate_limit_window' => 60,
