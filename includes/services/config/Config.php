@@ -151,8 +151,21 @@ class ContaiConfig {
         $custom_config = [];
 
         // NOTE: The user's personal API key (contai_api_key) is NOT loaded here.
-        // api.api_key = APP key (hardcoded per environment, used for /auth/token)
+        // api.api_key = APP key (identifies the tenant, used for /auth/token).
         // The user's key is accessed exclusively via getUserApiKey() for /users/token.
+
+        // The APP key can be provided from outside the repository — a
+        // wp-config.php constant or an environment variable — so it can be
+        // rotated without shipping a release and does not have to live in the
+        // .zip published to WordPress.org or in Git history. When nothing
+        // external is set it falls back to the value bundled below, so a fresh
+        // install keeps working with no configuration at all (MAH-08 / D-7).
+        $embedded_key = self::DEFAULT_CONFIG[$this->environment]['api']['api_key']
+            ?? self::DEFAULT_CONFIG['production']['api']['api_key'];
+        $resolved_key = self::resolveAppKey($this->environment, $embedded_key);
+        if ($resolved_key !== $embedded_key) {
+            $custom_config['api']['api_key'] = $resolved_key;
+        }
 
         $logging_enabled = get_option('contai_logging_enabled');
         if ($logging_enabled !== false) {
@@ -165,6 +178,61 @@ class ContaiConfig {
         }
 
         return $custom_config;
+    }
+
+    /**
+     * Resolve the APP key for one environment, preferring external config.
+     *
+     * Precedence, first non-empty wins:
+     *   1. the environment-specific source  (CONTAI_APP_KEY_PRODUCTION, …)
+     *   2. the generic source               (CONTAI_APP_KEY)
+     *   3. the bundled value                (the $embedded argument)
+     *
+     * The environment-specific name takes precedence so one site running
+     * development, staging and production can set each independently, while a
+     * single-environment site only needs the generic one. Each source is a
+     * wp-config.php constant or an environment variable of the same name.
+     *
+     * The reader is injectable purely so the precedence can be tested without
+     * defining real (permanent) PHP constants; in production it consults
+     * define()d constants and getenv().
+     *
+     * @param callable|null $reader  fn(string $name): ?string
+     */
+    public static function resolveAppKey(
+        string $environment,
+        string $embedded,
+        ?callable $reader = null
+    ): string {
+        $reader = $reader ?? [self::class, 'readExternalSource'];
+
+        $candidates = [
+            'CONTAI_APP_KEY_' . strtoupper($environment),
+            'CONTAI_APP_KEY',
+        ];
+
+        foreach ($candidates as $name) {
+            $value = $reader($name);
+            if (is_string($value) && $value !== '') {
+                return $value;
+            }
+        }
+
+        return $embedded;
+    }
+
+    /**
+     * Read one external source: a defined constant, else an environment
+     * variable of the same name. Returns null when neither is set.
+     */
+    private static function readExternalSource(string $name): ?string {
+        if (defined($name)) {
+            $value = constant($name);
+            return is_string($value) ? $value : null;
+        }
+
+        $env = getenv($name);
+        return ($env === false || $env === '') ? null : $env;
     }
 
     private function mergeConfigs(array $base, array $custom): array {

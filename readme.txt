@@ -160,6 +160,9 @@ The plugin sends your site URL, API key, and content generation parameters (keyw
 
 == Changelog ==
 
+= Unreleased =
+* Security: The App token can now be supplied from `wp-config.php` (constant `CONTAI_APP_KEY_PRODUCTION` / `_STAGING` / `_DEVELOPMENT`, or the generic `CONTAI_APP_KEY`) or an environment variable of the same name, so it can be rotated without publishing a release and no longer has to live in the distributed .zip. When nothing external is set the plugin falls back to the bundled default and works exactly as before — a fresh install needs no configuration (MAH-08)
+
 = 2.36.0 =
 * Added: Hold/Capture billing integration — every outbound request now advertises `X-Plugin-Version: 2.36.0` so the 1Platform API can route post-generation through its Authorize+Capture path. Each job carries its credit hold (Reserved / Charged / Refunded) instead of charging up-front and losing the balance on failure (#117)
 * Added: New migration `AddHoldFieldsToJobsTable` (v7) — adds `hold_id` and `credits_released` columns to `wp_contai_jobs`
