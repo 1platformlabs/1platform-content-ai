@@ -41,7 +41,7 @@ class ContaiMainMenuManager {
             // That is the reported "main menu shows only legal pages" symptom
             // (#48). Assigning is idempotent when the binding is already
             // correct.
-            $this->assignMenuToPrimaryLocation($menu->term_id);
+            $this->assignMenuToThemeLocations($menu->term_id);
 
             return $menu->term_id;
         }
@@ -52,9 +52,68 @@ class ContaiMainMenuManager {
             return 0;
         }
 
-        $this->assignMenuToPrimaryLocation($menu_id);
+        $this->assignMenuToThemeLocations($menu_id);
 
         return $menu_id;
+    }
+
+    /**
+     * Bind the generated menu to every location of the active theme that would
+     * otherwise render the wp_page_menu() page listing.
+     *
+     * Binding the primary location alone left the off-canvas header of Astra --
+     * this plugin's default theme -- falling back to wp_page_menu(), which lists
+     * the published pages: the generated legal pages. That is the symptom this
+     * issue reported, arriving on mobile while the desktop header was correct,
+     * and six rounds of map corrections could not see it because they were all
+     * about WHICH key the wizard writes, never about HOW MANY it has to (#48).
+     */
+    private function assignMenuToThemeLocations(int $menu_id): void {
+        $this->assignMenuToPrimaryLocation($menu_id);
+        $this->assignMenuToMobileLocation($menu_id);
+    }
+
+    /**
+     * Bind the menu to the theme's off-canvas/mobile location, when it has one.
+     *
+     * Same usability guard as the primary location: WordPress silently drops a
+     * nav_menu_locations entry the active theme does not register, so a wrong
+     * map entry would be an invisible no-op. A theme with no entry is the
+     * expected case (seven of nine) and is intentionally silent -- only a
+     * mapped location the theme rejects is worth a warning.
+     */
+    private function assignMenuToMobileLocation(int $menu_id): void {
+        // Lives in nav-location.php, which this class requires at the top, so
+        // it is ALWAYS loaded here. Deliberately not behind function_exists():
+        // that guard would make this branch skip itself in any context where
+        // the helper had not been pulled in, which is the shape of this issue's
+        // v2.38.7 root cause -- code that is present and never runs (#48).
+        $location = contai_get_mobile_nav_location();
+
+        if (null === $location || '' === $location) {
+            return;
+        }
+
+        $registered_menus = get_registered_nav_menus();
+        $registry_is_stale = function_exists('contai_nav_registry_is_stale')
+            && contai_nav_registry_is_stale();
+
+        if (!contai_nav_location_is_usable($location, $registered_menus, $registry_is_stale)) {
+            if (function_exists('contai_record_site_warning')) {
+                contai_record_site_warning(
+                    'mobile nav location',
+                    sprintf(
+                        "theme '%s' does not register the mapped mobile location '%s'; its off-canvas menu may fall back to the page listing",
+                        get_option('contai_wordpress_theme', 'astra'),
+                        $location
+                    )
+                );
+            }
+
+            return;
+        }
+
+        contai_assign_nav_menu_location($location, $menu_id);
     }
 
     private function assignMenuToPrimaryLocation(int $menu_id): void {
