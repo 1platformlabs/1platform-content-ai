@@ -174,8 +174,18 @@ class SetupNavigationCategoriesTest extends TestCase
         WP_Mock::userFunction('get_nav_menu_locations')->andReturn([]);
         WP_Mock::userFunction('get_stylesheet')->andReturn('astra');
         WP_Mock::userFunction('get_option')->with('contai_nav_menu_location_claim', [])->andReturn([]);
-        WP_Mock::userFunction('get_registered_nav_menus')->andReturn(['primary' => 'Primary Menu']);
+        // Astra's real registry, not a one-entry stand-in: it also registers the
+        // off-canvas location the wizard now binds. A registry missing it would
+        // make this fixture describe a site that does not exist and would send
+        // the run down the "mapped location the theme does not register"
+        // warning path instead of the normal one (#48).
+        WP_Mock::userFunction('get_registered_nav_menus')
+            ->andReturn(['primary' => 'Primary Menu', 'mobile_menu' => 'Off-Canvas Menu']);
         WP_Mock::userFunction('set_theme_mod')->andReturn(true);
+        // Any warning recorded during the run reads this option. Without the
+        // stub an unmatched get_option() aborts the test with an error that
+        // looks like a broken fixture rather than a recorded warning.
+        WP_Mock::userFunction('get_option')->with(CONTAI_SITE_WARNINGS_OPTION, [])->andReturn([]);
 
         // Empty menu to start with.
         WP_Mock::userFunction('wp_get_nav_menu_items')->andReturn(false);

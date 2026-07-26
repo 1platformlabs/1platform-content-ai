@@ -48,6 +48,67 @@ function contai_nav_registry_is_stale(): bool {
 }
 
 /**
+ * Static mapping of the OFF-CANVAS / MOBILE nav menu location per theme.
+ *
+ * Binding the primary location is not enough. A theme that renders its mobile
+ * header from a SECOND, separately-registered location falls back to
+ * wp_page_menu() for that location when it is unbound — and wp_page_menu()
+ * lists the published PAGES, i.e. the generated legal pages. That is this
+ * issue's original symptom, surviving on the mobile header of a site whose
+ * desktop header is correct (#48).
+ *
+ * Measured on a live es_ES install (WordPress 7.0.2, plugin 2.39.0), running
+ * the wizard's nav path per theme and loading the front end twice. Only the
+ * two themes below actually render that fallback; the other seven either
+ * register no mobile location or mirror the primary menu when it is empty:
+ *
+ *   astra         mobile_menu   #ast-hf-mobile-menu   3 page_item -> 0 when bound
+ *   blocksy       menu_mobile   #offcanvas            3 page_item -> 0 when bound
+ *   generatepress (none)        no mobile location registered      0
+ *   neve          (none)        no mobile location registered      0
+ *   kadence       mobile        registered, no fallback rendered   0
+ *   sydney        mobile        registered, no fallback rendered   0
+ *   oceanwp       mobile_menu   registered, no fallback rendered   0
+ *   newsmatic     (none)        registers menu-1/menu-2/menu-3     0
+ *   colormag      (none)        registers primary/menu-secondary   0
+ *
+ * Entries exist only where the fallback was reproduced and the binding was
+ * verified to remove it. Assigning a location a theme leaves deliberately
+ * empty is not free — it changes what that theme renders — so an unmeasured
+ * theme gets no entry, exactly like the footer map.
+ */
+define( 'CONTAI_THEME_MOBILE_NAV_LOCATION_MAP', array(
+	// Astra 4.13.6 registers 'mobile_menu' ("Off-Canvas Menu"); its
+	// #ast-hf-mobile-menu element renders wp_page_menu() when that location
+	// holds no menu. Astra is this plugin's DEFAULT theme
+	// (get_option('contai_wordpress_theme', 'astra')), so this was the common
+	// configuration.
+	'astra'   => 'mobile_menu',
+	// Blocksy 2.1.50 registers 'menu_mobile'; its #offcanvas panel falls back
+	// the same way (inc/init.php registers footer/menu_1/menu_2/menu_mobile).
+	'blocksy' => 'menu_mobile',
+) );
+
+/**
+ * Get the off-canvas / mobile nav menu location for the active theme.
+ *
+ * Null means "this theme has no separately-rendered mobile menu that needs
+ * binding" — the common case, and deliberately silent: seven of the nine
+ * supported themes are in it (see CONTAI_THEME_MOBILE_NAV_LOCATION_MAP).
+ *
+ * @return string|null The mobile nav menu location or null if the theme has none.
+ */
+function contai_get_mobile_nav_location(): ?string {
+	$theme = get_option( 'contai_wordpress_theme', 'astra' );
+
+	if ( isset( CONTAI_THEME_MOBILE_NAV_LOCATION_MAP[ $theme ] ) ) {
+		return CONTAI_THEME_MOBILE_NAV_LOCATION_MAP[ $theme ];
+	}
+
+	return null;
+}
+
+/**
  * Decide whether a statically-mapped nav menu location can be trusted.
  *
  * The plugin resolves nav menu locations from hand-maintained theme maps

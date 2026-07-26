@@ -48,9 +48,9 @@ class ThemeLocationMapTest extends TestCase
      * that tripped over its own comment in v2.38.8: an assertion about code has
      * to run on code.
      */
-    private function mapBody(string $needle, int $expectedEntries): string
+    private function mapBody(string $needle, int $expectedEntries, ?string $file = null): string
     {
-        $code = preg_replace('#//[^\n]*#', '', file_get_contents($this->helperFile));
+        $code = preg_replace('#//[^\n]*#', '', file_get_contents($file ?? $this->helperFile));
 
         preg_match('/' . preg_quote($needle, '/') . '(.*?)\);/s', $code, $matches);
         $block = $matches[1] ?? '';
@@ -273,5 +273,93 @@ class ThemeLocationMapTest extends TestCase
             $code,
             'The inline registration-order pattern walk must not survive in site-generation.php (#48)'
         );
+    }
+
+    // ── Off-canvas / mobile nav locations ──────────────────────────
+
+    /**
+     * Two, not nine: an entry here CHANGES what the theme renders, so it is
+     * only added for a theme whose off-canvas element was observed falling back
+     * to wp_page_menu() on a live install and observed to stop when bound.
+     */
+    private function mobileNavMap(): string
+    {
+        // Lives in nav-location.php, not site-generation.php: MainMenuManager
+        // requires nav-location.php directly, so the resolver next to this map
+        // is reachable from a unit test instead of being skipped by a
+        // function_exists() guard — which is the failure this issue is made of.
+        return $this->mapBody(
+            "define( 'CONTAI_THEME_MOBILE_NAV_LOCATION_MAP', array(",
+            2,
+            dirname(__DIR__, 3) . '/includes/helpers/nav-location.php'
+        );
+    }
+
+    /**
+     * @dataProvider realMobileNavLocationProvider
+     */
+    public function test_mobile_nav_map_uses_locations_the_theme_registers(string $theme, string $location, string $where): void
+    {
+        $this->assertMatchesRegularExpression(
+            "/'{$theme}'\s*=>\s*'" . preg_quote($location, '/') . "'/",
+            $this->mobileNavMap(),
+            "The '{$theme}' off-canvas menu must be '{$location}' — {$where} (#48)"
+        );
+    }
+
+    /**
+     * Literals written by hand from each theme's own registration, NOT read
+     * back out of the constant they pin — a guard whose reference value comes
+     * from its own subject cannot fail.
+     *
+     * Both were measured on a live es_ES install (WordPress 7.0.2, plugin
+     * 2.39.0): with the location unbound the home page served three
+     * `page_item page-item-N` entries, including the generated legal pages;
+     * bound, zero.
+     *
+     * @return array<string,array{0:string,1:string,2:string}>
+     */
+    public static function realMobileNavLocationProvider(): array
+    {
+        return [
+            'astra off-canvas'   => ['astra', 'mobile_menu', 'astra 4.13.6 registers mobile_menu ("Off-Canvas Menu"), rendered by #ast-hf-mobile-menu'],
+            'blocksy off-canvas' => ['blocksy', 'menu_mobile', 'blocksy 2.1.50 registers menu_mobile, rendered by #offcanvas'],
+        ];
+    }
+
+    /**
+     * The seven themes without an entry are a decision, not an oversight:
+     * generatepress/neve/newsmatic/colormag register no off-canvas location at
+     * all, and kadence/sydney/oceanwp register one their template leaves empty
+     * without falling back to the page listing. Assigning a menu to a location
+     * a theme deliberately leaves empty changes what that theme renders, so an
+     * unmeasured theme must not appear here.
+     *
+     * @dataProvider unmappedMobileThemeProvider
+     */
+    public function test_themes_without_a_measured_fallback_stay_out_of_the_mobile_map(string $theme): void
+    {
+        $this->assertDoesNotMatchRegularExpression(
+            "/'{$theme}'\s*=>/",
+            $this->mobileNavMap(),
+            "'{$theme}' rendered no wp_page_menu() fallback on a live install; adding it would " .
+            'change what the theme renders on evidence nobody collected (#48)'
+        );
+    }
+
+    /**
+     * @return array<string,array{0:string}>
+     */
+    public static function unmappedMobileThemeProvider(): array
+    {
+        return [
+            'generatepress' => ['generatepress'],
+            'neve'          => ['neve'],
+            'kadence'       => ['kadence'],
+            'sydney'        => ['sydney'],
+            'oceanwp'       => ['oceanwp'],
+            'newsmatic'     => ['newsmatic'],
+            'colormag'      => ['colormag'],
+        ];
     }
 }
