@@ -290,7 +290,10 @@ class NeveFooterMenuPlacementTest extends TestCase
      */
     public function test_the_still_unmeasured_themes_are_reported_not_guessed(): void
     {
-        foreach (['blocksy', 'kadence', 'oceanwp', 'generatepress', 'sydney', 'newsmatic', 'colormag'] as $theme) {
+        // blocksy and kadence dropped off this list once their footer builders
+        // were measured on a live install (v2.39.4) — they now have their own
+        // placement helpers and must NOT be handed a Neve layout either.
+        foreach (['oceanwp', 'generatepress', 'sydney', 'newsmatic', 'colormag'] as $theme) {
             $this->warnings = [];
             $this->writes   = 0;
             $this->mockThemeMods(null);

@@ -240,15 +240,23 @@ class FooterMenuReachabilityTest extends TestCase
      * REPORTED, never written to. A guessed layout is not a harmless no-op —
      * a hand-built one for Neve fataled the whole front end.
      *
-     * Blocksy, not Neve: Neve's builder layout has since been measured on a live
-     * install and IS written now (see NeveFooterMenuPlacementTest), so asserting
-     * a diagnostic for it would pin behaviour production no longer has. Blocksy
-     * is still in the unmeasured set — its footer is builder-driven too, and a
-     * live probe showed the bound menu rendering 0 legal links there.
+     * Colormag, not Blocksy and not Neve. This test has now outlived two subjects:
+     * each time a theme's footer builder gets measured on a live install it starts
+     * being written, and pinning a diagnostic for it would pin behaviour production
+     * no longer has. Neve moved out of the unmeasured set in v2.39.3, Blocksy and
+     * Kadence in v2.39.4 (see NeveFooterMenuPlacementTest,
+     * BlocksyFooterMenuPlacementTest, KadenceFooterMenuPlacementTest).
+     *
+     * Colormag is still in it, and for a stronger reason than the others were: it
+     * registers no footer nav location at all (colormag 4.2.1:
+     * inc/core/class-colormag-after-setup-theme.php:315-320 registers only
+     * `primary` and `menu-secondary`), and a live probe this round measured 0 legal
+     * links on its front page. The registered-location fixture below is supplied by
+     * the harness, so what this exercises is the dispatcher's unmeasured branch.
      */
     public function test_an_unmeasured_theme_is_reported_instead_of_guessed_at(): void
     {
-        $this->runWith('blocksy', ['primary' => 'Primary', 'footer' => 'Footer Menu'], false);
+        $this->runWith('colormag', ['primary' => 'Primary', 'footer' => 'Footer Menu'], false);
 
         $this->assertSame(['footer' => 11], $this->assignedLocations);
         $this->assertSame([], $this->astraSettings, 'no layout may be invented for an unmeasured theme');
@@ -260,6 +268,6 @@ class FooterMenuReachabilityTest extends TestCase
             }
         }
         $this->assertCount(1, $render, 'the wizard must leave a trace it cannot guarantee the render');
-        $this->assertStringContainsString('blocksy', $render[0]);
+        $this->assertStringContainsString('colormag', $render[0]);
     }
 }
