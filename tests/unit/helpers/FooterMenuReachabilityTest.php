@@ -239,10 +239,16 @@ class FooterMenuReachabilityTest extends TestCase
      * The control that discriminates: a theme we have not measured must be
      * REPORTED, never written to. A guessed layout is not a harmless no-op —
      * a hand-built one for Neve fataled the whole front end.
+     *
+     * Blocksy, not Neve: Neve's builder layout has since been measured on a live
+     * install and IS written now (see NeveFooterMenuPlacementTest), so asserting
+     * a diagnostic for it would pin behaviour production no longer has. Blocksy
+     * is still in the unmeasured set — its footer is builder-driven too, and a
+     * live probe showed the bound menu rendering 0 legal links there.
      */
     public function test_an_unmeasured_theme_is_reported_instead_of_guessed_at(): void
     {
-        $this->runWith('neve', ['primary' => 'Primary', 'footer' => 'Footer Menu'], false);
+        $this->runWith('blocksy', ['primary' => 'Primary', 'footer' => 'Footer Menu'], false);
 
         $this->assertSame(['footer' => 11], $this->assignedLocations);
         $this->assertSame([], $this->astraSettings, 'no layout may be invented for an unmeasured theme');
@@ -254,6 +260,6 @@ class FooterMenuReachabilityTest extends TestCase
             }
         }
         $this->assertCount(1, $render, 'the wizard must leave a trace it cannot guarantee the render');
-        $this->assertStringContainsString('neve', $render[0]);
+        $this->assertStringContainsString('blocksy', $render[0]);
     }
 }
