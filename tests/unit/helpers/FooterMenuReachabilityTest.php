@@ -23,6 +23,9 @@ class FooterMenuReachabilityTest extends TestCase
     /** @var array<string, int> Locations written via set_theme_mod(). */
     private array $assignedLocations = [];
 
+    /** @var array<string, mixed> Whatever landed in Astra's own settings option. */
+    private array $astraSettings = [];
+
     public function setUp(): void
     {
         parent::setUp();
@@ -31,6 +34,7 @@ class FooterMenuReachabilityTest extends TestCase
 
         $this->warnings          = [];
         $this->assignedLocations = [];
+        $this->astraSettings     = [];
     }
 
     public function tearDown(): void
@@ -55,6 +59,9 @@ class FooterMenuReachabilityTest extends TestCase
                 if ($name === 'theme_switched') {
                     return $midThemeSwitch ? 'the-previous-theme' : false;
                 }
+                if ($name === CONTAI_ASTRA_SETTINGS_OPTION) {
+                    return $this->astraSettings;
+                }
 
                 return $default;
             },
@@ -63,6 +70,9 @@ class FooterMenuReachabilityTest extends TestCase
             'return' => function ($name, $value) {
                 if ($name === CONTAI_SITE_WARNINGS_OPTION) {
                     $this->warnings = $value;
+                }
+                if ($name === CONTAI_ASTRA_SETTINGS_OPTION) {
+                    $this->astraSettings = $value;
                 }
                 return true;
             },
@@ -184,5 +194,66 @@ class FooterMenuReachabilityTest extends TestCase
             $messages[0],
             'The warning must distinguish staleness from "this theme has no footer location"'
         );
+    }
+
+    /**
+     * Binding is only half the job, and this is the half that was missing.
+     * Astra renders its footer menu from a builder component; with the slug
+     * absent from the layout the bound menu appears nowhere. Reaching the
+     * binding is therefore NOT evidence that the links render — the placement
+     * has to be exercised from the real entry point too (#48).
+     */
+    public function test_binding_astra_also_places_the_component_that_renders_it(): void
+    {
+        $this->runWith('astra', ['primary' => 'Primary', 'footer_menu' => 'Footer Menu'], false);
+
+        $this->assertSame(
+            ['footer_menu' => 11],
+            $this->assignedLocations,
+            'precondition: the location must still be bound'
+        );
+        $this->assertSame(
+            ['copyright', 'menu'],
+            $this->astraSettings[CONTAI_ASTRA_FOOTER_ITEMS_KEY]['below']['below_1'],
+            'the menu component must be placed in the rendered zone, or nothing shows (#48)'
+        );
+    }
+
+    /** Same wiring, on the pattern-match branch rather than the static map. */
+    public function test_the_pattern_match_branch_also_places_the_component(): void
+    {
+        $this->runWith('astra', ['primary' => 'Primary', 'theme-contai-footer' => 'Footer'], false);
+
+        $this->assertSame(
+            ['theme-contai-footer' => 11],
+            $this->assignedLocations,
+            'precondition: this must be the fallback branch, not the map branch'
+        );
+        $this->assertSame(
+            ['copyright', 'menu'],
+            $this->astraSettings[CONTAI_ASTRA_FOOTER_ITEMS_KEY]['below']['below_1']
+        );
+    }
+
+    /**
+     * The control that discriminates: a theme we have not measured must be
+     * REPORTED, never written to. A guessed layout is not a harmless no-op —
+     * a hand-built one for Neve fataled the whole front end.
+     */
+    public function test_an_unmeasured_theme_is_reported_instead_of_guessed_at(): void
+    {
+        $this->runWith('neve', ['primary' => 'Primary', 'footer' => 'Footer Menu'], false);
+
+        $this->assertSame(['footer' => 11], $this->assignedLocations);
+        $this->assertSame([], $this->astraSettings, 'no layout may be invented for an unmeasured theme');
+
+        $render = [];
+        foreach ($this->warnings as $warning) {
+            if (($warning['step'] ?? '') === 'footer menu render') {
+                $render[] = $warning['message'];
+            }
+        }
+        $this->assertCount(1, $render, 'the wizard must leave a trace it cannot guarantee the render');
+        $this->assertStringContainsString('neve', $render[0]);
     }
 }

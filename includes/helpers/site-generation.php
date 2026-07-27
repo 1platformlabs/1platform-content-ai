@@ -1059,6 +1059,10 @@ function contai_create_footer_menu_with_legal_pages(): void {
 		// silently hand the location back to the previous theme (#48) — see
 		// contai_assign_nav_menu_location().
 		contai_assign_nav_menu_location( $target, $menu_id );
+		// Binding the location is only half the job on a builder-driven theme:
+		// the theme renders the menu from a component that has to be PLACED in
+		// its footer layout, or nothing appears (#48).
+		contai_astra_ensure_footer_menu_renders( $theme, $target );
 		return;
 	}
 
@@ -1067,6 +1071,7 @@ function contai_create_footer_menu_with_legal_pages(): void {
 
 	if ( null !== $matched ) {
 		contai_assign_nav_menu_location( $matched, $menu_id );
+		contai_astra_ensure_footer_menu_renders( $theme, $matched );
 		error_log( "[ContAI] Footer menu assigned to '{$matched}' via pattern match for theme '{$theme}'" );
 		return;
 	}
