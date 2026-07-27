@@ -247,9 +247,15 @@ class AstraFooterMenuPlacementTest extends TestCase
         $this->assertStringContainsString("'neve'", $warnings[0]);
     }
 
+    /**
+     * Neve is deliberately absent: its footer layout has since been measured and
+     * is placed by contai_neve_ensure_footer_menu_renders(), so routing it here
+     * would assert a diagnostic production no longer emits. See
+     * NeveFooterMenuPlacementTest.
+     */
     public function test_every_unhandled_theme_the_wizard_can_install_is_reported(): void
     {
-        foreach (['neve', 'blocksy', 'kadence', 'oceanwp', 'generatepress', 'sydney', 'newsmatic', 'colormag'] as $theme) {
+        foreach (['blocksy', 'kadence', 'oceanwp', 'generatepress', 'sydney', 'newsmatic', 'colormag'] as $theme) {
             $this->warnings = [];
             $this->writes   = 0;
             $this->mockOptions([]);
