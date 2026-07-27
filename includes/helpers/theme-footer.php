@@ -11,6 +11,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 require_once __DIR__ . '/astra-settings.php';
 require_once __DIR__ . '/neve-settings.php';
+require_once __DIR__ . '/blocksy-settings.php';
+require_once __DIR__ . '/kadence-settings.php';
 
 /**
  * Make sure the active theme will actually RENDER the footer menu we just bound.
@@ -38,19 +40,31 @@ require_once __DIR__ . '/neve-settings.php';
  * | oceanwp       | renders                                    |
  * | newsmatic     | renders                                    |
  * | neve          | 0 — builder, handled below                 |
- * | blocksy       | 0 — builder, not measured yet              |
- * | kadence       | 0 — builder, not measured yet              |
+ * | blocksy       | 0 — builder, handled below                 |
+ * | kadence       | 0 — builder, handled below                 |
  * | generatepress | 0 — registers no footer nav location       |
  * | sydney        | 0 — registers no footer nav location       |
  * | colormag      | 0 — registers no footer nav location       |
+ *
+ * The last three register no footer nav location at all, so there is nothing to
+ * place and nothing bound: they need a different mechanism, and a core widget
+ * fallback was measured and REFUTED for them (it left the DOM byte-identical on
+ * every builder-driven theme). They keep the durable diagnostic until one is
+ * measured.
  *
  * @param string $theme    Theme slug the wizard installed.
  * @param string $location Nav menu location the footer menu was bound to.
  * @return void
  */
 function contai_theme_ensure_footer_menu_renders( string $theme, string $location ): void {
-	if ( 'neve' === $theme ) {
-		contai_neve_ensure_footer_menu_renders( $location );
+	$builders = array(
+		'neve'    => 'contai_neve_ensure_footer_menu_renders',
+		'blocksy' => 'contai_blocksy_ensure_footer_menu_renders',
+		'kadence' => 'contai_kadence_ensure_footer_menu_renders',
+	);
+
+	if ( isset( $builders[ $theme ] ) ) {
+		call_user_func( $builders[ $theme ], $location );
 		return;
 	}
 
