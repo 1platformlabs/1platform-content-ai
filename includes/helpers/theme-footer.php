@@ -9,6 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+require_once __DIR__ . '/footer-legal-fallback.php';
 require_once __DIR__ . '/astra-settings.php';
 require_once __DIR__ . '/neve-settings.php';
 require_once __DIR__ . '/blocksy-settings.php';
@@ -47,10 +48,11 @@ require_once __DIR__ . '/kadence-settings.php';
  * | colormag      | 0 — registers no footer nav location       |
  *
  * The last three register no footer nav location at all, so there is nothing to
- * place and nothing bound: they need a different mechanism, and a core widget
- * fallback was measured and REFUTED for them (it left the DOM byte-identical on
- * every builder-driven theme). They keep the durable diagnostic until one is
- * measured.
+ * place and nothing bound. A core widget fallback was measured and REFUTED for
+ * them (it left the DOM byte-identical on every theme tried). What they get
+ * instead is contai_render_footer_legal_fallback() in footer-legal-fallback.php,
+ * which renders the legal menu on wp_footer — the one hook every theme has to
+ * fire — plus the durable diagnostic below.
  *
  * @param string $theme    Theme slug the wizard installed.
  * @param string $location Nav menu location the footer menu was bound to.

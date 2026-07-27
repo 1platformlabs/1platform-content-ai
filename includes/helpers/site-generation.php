@@ -920,7 +920,9 @@ function contai_configure_site_metadata() {
  * @return void
  */
 function contai_create_footer_menu_with_legal_pages(): void {
-	$menu_name = 'Footer';
+	// Shared with the wp_footer fallback, which finds the menu by this exact
+	// name (footer-legal-fallback.php). A literal on each side would drift.
+	$menu_name = CONTAI_FOOTER_MENU_NAME;
 	$menu      = wp_get_nav_menu_object( $menu_name );
 
 	if ( $menu ) {
@@ -1077,8 +1079,11 @@ function contai_create_footer_menu_with_legal_pages(): void {
 		return;
 	}
 
-	// Durable, not debug-gated: an unbound footer menu is invisible on the site
-	// and left no trace anywhere before this (#48).
+	// Durable, not debug-gated. The links themselves are no longer lost — three
+	// of the nine mapped themes register no footer location at all, and
+	// contai_render_footer_legal_fallback() renders the menu for them on
+	// wp_footer — but "this theme exposes nowhere to bind a footer menu" is
+	// still a fact about the site the owner has to be able to read (#48).
 	contai_record_site_warning(
 		'footer nav location',
 		sprintf(

@@ -266,4 +266,38 @@ class AstraFooterMenuPlacementTest extends TestCase
             $this->assertCount(1, $this->renderWarnings(), "{$theme} must leave a trace");
         }
     }
+
+    /**
+     * The diagnostic used to end with "the legal links stay invisible until the
+     * footer menu element is added to it". Measured, that is false in both
+     * branches now: oceanwp/newsmatic render the bound menu themselves, and the
+     * themes with no footer location get contai_render_footer_legal_fallback().
+     * A warning that overstates the damage sends the owner hunting for a defect
+     * that is not there — the same class of harm as one that hides it (#48).
+     */
+    public function test_the_diagnostic_says_which_outcome_the_owner_actually_gets(): void
+    {
+        foreach (['oceanwp' => true, 'newsmatic' => true, 'generatepress' => false, 'colormag' => false] as $theme => $rendersItself) {
+            $this->warnings = [];
+            $this->mockOptions([]);
+
+            contai_astra_ensure_footer_menu_renders($theme, 'footer');
+
+            $message = $this->renderWarnings()[0];
+
+            $this->assertSame(
+                $rendersItself,
+                contai_theme_renders_bound_footer_menu($theme),
+                "{$theme} must agree with the measured allow-list"
+            );
+
+            if ($rendersItself) {
+                $this->assertStringContainsString('measured rendering the bound menu', $message);
+                $this->assertStringNotContainsString('wp_footer fallback', $message);
+            } else {
+                $this->assertStringContainsString('wp_footer fallback', $message);
+                $this->assertStringNotContainsString('measured rendering the bound menu', $message);
+            }
+        }
+    }
 }

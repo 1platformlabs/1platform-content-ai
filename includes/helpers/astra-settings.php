@@ -15,6 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 // order-dependent, and an order-dependent branch is how this issue's v2.38.7
 // root cause stayed invisible.
 require_once __DIR__ . '/site-warnings.php';
+require_once __DIR__ . '/footer-legal-fallback.php';
 
 /**
  * Option name Astra stores ALL of its theme settings under.
@@ -240,12 +241,22 @@ function contai_astra_footer_items_with_menu( $current ): ?array {
  */
 function contai_astra_ensure_footer_menu_renders( string $theme, string $location ): void {
 	if ( 'astra' !== $theme ) {
+		// The old wording ("the legal links stay invisible until the footer menu
+		// element is added") is no longer true in either branch, and a warning
+		// that overstates the damage is as misleading as one that understates
+		// it: measured themes render the menu themselves, and unmeasured ones
+		// now get contai_render_footer_legal_fallback() on wp_footer.
+		$outcome = contai_theme_renders_bound_footer_menu( $theme )
+			? 'that theme was measured rendering the bound menu in its own footer'
+			: "its legal links are served by this plugin's own wp_footer fallback until that layout is measured";
+
 		contai_record_site_warning(
 			'footer menu render',
 			sprintf(
-				"the footer menu was bound to '%s', but this plugin does not manage theme '%s' footer layout: if that theme renders its footer through a builder, the legal links stay invisible until the footer menu element is added to it",
+				"the footer menu was bound to '%s', but this plugin does not manage theme '%s' footer layout: %s",
 				$location,
-				$theme
+				$theme,
+				$outcome
 			)
 		);
 		return;
