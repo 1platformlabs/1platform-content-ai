@@ -359,6 +359,40 @@ function contai_apply_theme_defaults( string $theme ): void {
 					)
 				)
 			);
+			// The legal pages the wizard generates are the 'page' post type,
+			// which Blocksy addresses under a SEPARATE prefix ('single_page',
+			// not 'single_blog_post' -- inc/classes/screen-manager.php:159-165,
+			// compute_post_type_for_prefix() maps it to post_type 'page'), with
+			// its own hero-elements theme mod (#48: verified live -- running the
+			// wizard's theme defaults for a real page rendered 0 breadcrumb
+			// markers on 'blocksy' until this write was added). Its hero is on
+			// by default (single_page is not the 'blog' prefix that defaults to
+			// 'no' -- inc/dynamic-styles/page-title/page-title.php:9-13), so only
+			// the element list needs writing. The fallback mirrors what Blocksy
+			// itself would generate as defaults for this prefix
+			// (inc/components/hero/elements.php:17-53): custom_meta defaults to
+			// disabled here because it is gated by `! $is_page` there.
+			set_theme_mod(
+				'single_page_hero_elements',
+				contai_hero_elements_enable(
+					get_theme_mod( 'single_page_hero_elements' ),
+					'breadcrumbs',
+					array(
+						array(
+							'id'      => 'custom_title',
+							'enabled' => true,
+						),
+						array(
+							'id'      => 'custom_description',
+							'enabled' => true,
+						),
+						array(
+							'id'      => 'custom_meta',
+							'enabled' => false,
+						),
+					)
+				)
+			);
 			set_theme_mod( 'blog_hero_enabled', 'yes' );
 			set_theme_mod(
 				'blog_hero_elements',
@@ -398,6 +432,21 @@ function contai_apply_theme_defaults( string $theme ): void {
 			// (inc/components/options/component.php:2833, :2892).
 			set_theme_mod(
 				'post_title_element_breadcrumb',
+				array(
+					'enabled'    => true,
+					'show_title' => true,
+				)
+			);
+			// The legal pages the wizard generates are the 'page' post type, not
+			// 'post' -- render_title() keys the sub_option lookup off $post_type
+			// (inc/components/entry_title/component.php:60-63), so the write
+			// above never reaches them. That page-title key is separate and also
+			// defaults to disabled (inc/components/options/component.php:2650-2653)
+			// (#48: verified live -- running the wizard's theme defaults for a real
+			// page rendered 0 breadcrumb markers on 'kadence' until this write was
+			// added, even though the post/post-archive writes above are correct).
+			set_theme_mod(
+				'page_title_element_breadcrumb',
 				array(
 					'enabled'    => true,
 					'show_title' => true,

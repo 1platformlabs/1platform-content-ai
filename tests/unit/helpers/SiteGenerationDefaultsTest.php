@@ -345,9 +345,19 @@ class SiteGenerationDefaultsTest extends TestCase
             // 'type-1' = right sidebar (inc/sidebar.php:284-294)
             ['blocksy', "set_theme_mod( 'single_blog_post_structure', 'type-1' );"],
             ['blocksy', 'contai_hero_elements_enable('],
+            // legal pages are the 'page' post type — a SEPARATE hero-elements
+            // prefix from 'single_blog_post' (inc/classes/screen-manager.php:
+            // 159-165); without this, generated legal pages get 0 breadcrumbs
+            // even though blog posts get them (#48)
+            ['blocksy', "'single_page_hero_elements',"],
             // inc/components/layout/component.php:838-840
             ['kadence', "set_theme_mod( 'post_archive_layout', 'right' );"],
             ['kadence', "'post_title_element_breadcrumb',"],
+            // legal pages are the 'page' post type — a SEPARATE sub-option key
+            // from 'post_title_element_breadcrumb' (inc/components/entry_title/
+            // component.php:60-63 keys off $post_type); without this, generated
+            // legal pages get 0 breadcrumbs even though blog posts get them (#48)
+            ['kadence', "'page_title_element_breadcrumb',"],
             // inc/extras.php:427 and :437
             ['sydney', "set_theme_mod( 'sidebar_archives_position', 'sidebar-right' );"],
             ['sydney', "set_theme_mod( 'sidebar_single_post_position', 'sidebar-right' );"],
