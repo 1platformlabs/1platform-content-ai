@@ -105,7 +105,60 @@ require_once __DIR__ . '/../includes/services/http/RequestLogger.php';
 require_once __DIR__ . '/../includes/services/api/OnePlatformEndpoints.php';
 require_once __DIR__ . '/../includes/services/api/OnePlatformClient.php';
 require_once __DIR__ . '/../includes/providers/WebsiteProvider.php';
+/*
+ * Minimal WP_REST_* stubs. WP_Mock does not ship them, and the plugin's REST
+ * controllers only ever use this narrow surface: params in, status + payload
+ * out. Kept here rather than mocked per-test so a controller test exercises
+ * the real request/response handling instead of a double of it.
+ */
+if (!class_exists('WP_REST_Request')) {
+    class WP_REST_Request
+    {
+        private array $params = [];
+
+        public function set_param(string $key, $value): void
+        {
+            $this->params[$key] = $value;
+        }
+
+        public function get_param(string $key)
+        {
+            return $this->params[$key] ?? null;
+        }
+
+        public function get_params(): array
+        {
+            return $this->params;
+        }
+    }
+}
+
+if (!class_exists('WP_REST_Response')) {
+    class WP_REST_Response
+    {
+        private $data;
+        private int $status;
+
+        public function __construct($data = null, int $status = 200)
+        {
+            $this->data   = $data;
+            $this->status = $status;
+        }
+
+        public function get_data()
+        {
+            return $this->data;
+        }
+
+        public function get_status(): int
+        {
+            return $this->status;
+        }
+    }
+}
+
 require_once __DIR__ . '/../includes/services/search-console/SearchConsoleService.php';
+require_once __DIR__ . '/../includes/services/search-console/ContaiSearchConsolePerformanceRestController.php';
 require_once __DIR__ . '/../includes/services/setup/SearchConsoleSetupService.php';
 require_once __DIR__ . '/../includes/admin/apps/handlers/SearchConsoleFormHandler.php';
 

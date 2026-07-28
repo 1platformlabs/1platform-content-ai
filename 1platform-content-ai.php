@@ -4,7 +4,7 @@
  * Plugin Name: 1Platform Content AI
  * Plugin URI: https://1platform.pro/
  * Description: SaaS client for AI-powered content generation, SEO optimization, and site management. All AI processing happens on 1Platform external servers. Includes free local tools: Table of Contents and Internal Links.
- * Version: 2.39.7
+ * Version: 2.40.0
  * Author: 1Platform
  * License: GPLv2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -18,7 +18,7 @@
 
 if (!defined('ABSPATH')) exit;
 
-define('CONTAI_VERSION', '2.36.0');
+define('CONTAI_VERSION', '2.40.0');
 
 // Action Scheduler must load before any code that uses `as_*` functions.
 if (file_exists(__DIR__ . '/vendor/woocommerce/action-scheduler/action-scheduler.php')) {
@@ -255,6 +255,10 @@ add_action( 'rest_api_init', function() {
     require_once plugin_dir_path( __FILE__ ) . 'includes/services/adsense/ContaiAdSenseRestController.php';
     $adsense_controller = new ContaiAdSenseRestController();
     $adsense_controller->register_routes();
+
+    require_once plugin_dir_path( __FILE__ ) . 'includes/services/search-console/ContaiSearchConsolePerformanceRestController.php';
+    $search_console_performance_controller = new ContaiSearchConsolePerformanceRestController();
+    $search_console_performance_controller->register_routes();
 
     require_once plugin_dir_path( __FILE__ ) . 'includes/services/onboarding/ContaiOnboardingRestController.php';
     $onboarding_controller = new ContaiOnboardingRestController();

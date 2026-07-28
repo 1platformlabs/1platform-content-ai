@@ -32,6 +32,43 @@ class ContaiSearchConsoleService
         return $this->client->post($endpoint, ['action' => 'add']);
     }
 
+    /**
+     * Search Console performance for the configured website (SCP-04).
+     *
+     * Read-only and free — unlike add/verify/sitemaps, this costs nothing, so
+     * it goes through no credit guard.
+     *
+     * @param string $period One of 24h|7d|28d|3m.
+     */
+    public function getPerformance(string $period = '28d'): ContaiOnePlatformResponse
+    {
+        $websiteConfig = $this->websiteProvider->getWebsiteConfig();
+
+        if (!$websiteConfig || empty($websiteConfig['websiteId'])) {
+            return new ContaiOnePlatformResponse(false, null, 'Website not configured', 400);
+        }
+
+        $endpoint = ContaiOnePlatformEndpoints::websiteSearchConsolePerformance($websiteConfig['websiteId']);
+
+        return $this->client->get($endpoint, ['period' => $period]);
+    }
+
+    /**
+     * Real sitemap health as Search Console reports it (SCP-05). Free read.
+     */
+    public function getSitemapsStatus(): ContaiOnePlatformResponse
+    {
+        $websiteConfig = $this->websiteProvider->getWebsiteConfig();
+
+        if (!$websiteConfig || empty($websiteConfig['websiteId'])) {
+            return new ContaiOnePlatformResponse(false, null, 'Website not configured', 400);
+        }
+
+        $endpoint = ContaiOnePlatformEndpoints::websiteSearchConsoleSitemaps($websiteConfig['websiteId']);
+
+        return $this->client->get($endpoint);
+    }
+
     public function submitSitemaps(array $sitemaps): ContaiOnePlatformResponse
     {
         $websiteConfig = $this->websiteProvider->getWebsiteConfig();

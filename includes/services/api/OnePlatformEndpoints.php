@@ -102,6 +102,14 @@ class ContaiOnePlatformEndpoints {
         return sprintf('/users/websites/%s/searchconsole', $website_id);
     }
 
+    public static function websiteSearchConsolePerformance(string $website_id): string {
+        return sprintf('/users/websites/%s/searchconsole/performance', $website_id);
+    }
+
+    public static function websiteSearchConsoleSitemaps(string $website_id): string {
+        return sprintf('/users/websites/%s/searchconsole/sitemaps', $website_id);
+    }
+
     public static function websitePublisuites(string $website_id): string {
         return sprintf('/users/websites/%s/publisuites', $website_id);
     }
