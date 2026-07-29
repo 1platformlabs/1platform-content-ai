@@ -55,7 +55,7 @@ class ContaiCommentsGenerationService
                     continue;
                 }
 
-                $commentDate = $this->generateRandomPastDate();
+                [$commentDate, $commentDateGmt] = ContaiCommentsService::commentDatesForPost($post);
                 $email = $this->generateEmailFromName($fullName);
 
                 $commentId = wp_insert_comment([
@@ -66,7 +66,7 @@ class ContaiCommentsGenerationService
                     'comment_content'      => $content,
                     'comment_approved'     => 1,
                     'comment_date'         => $commentDate,
-                    'comment_date_gmt'     => get_gmt_from_date($commentDate),
+                    'comment_date_gmt'     => $commentDateGmt,
                     'user_id'              => 0,
                 ]);
 
@@ -84,12 +84,6 @@ class ContaiCommentsGenerationService
             'generated_count' => count($generatedComments),
             'comments'        => $generatedComments,
         ];
-    }
-
-    private function generateRandomPastDate(): string
-    {
-        $timestamp = wp_rand(strtotime('-1 year'), time());
-        return gmdate('Y-m-d H:i:s', $timestamp);
     }
 
     private function generateEmailFromName(string $name): string
