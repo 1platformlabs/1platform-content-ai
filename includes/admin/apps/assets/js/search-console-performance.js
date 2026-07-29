@@ -34,6 +34,20 @@
 		}
 	}
 
+	/**
+	 * Append a query parameter, honouring a URL that already carries one.
+	 *
+	 * Without pretty permalinks `rest_url()` returns
+	 * `https://site/?rest_route=/contai/v1/...`, so a blind `+ '?period='`
+	 * produces a SECOND `?` — the whole thing collapses into one `rest_route`
+	 * value, no route matches, and the panel shows "could not load" on every
+	 * install with plain permalinks.
+	 */
+	function withParam(url, key, value) {
+		var separator = url.indexOf('?') === -1 ? '?' : '&';
+		return url + separator + encodeURIComponent(key) + '=' + encodeURIComponent(value);
+	}
+
 	function formatCount(value) {
 		return Math.round(Number(value) || 0).toLocaleString();
 	}
@@ -145,7 +159,7 @@
 		if (kpisEl) kpisEl.hidden = true;
 		if (tablesEl) tablesEl.hidden = true;
 
-		fetch(config.restUrl + '?period=' + encodeURIComponent(period), {
+		fetch(withParam(config.restUrl, 'period', period), {
 			headers: { 'X-WP-Nonce': config.nonce },
 			credentials: 'same-origin'
 		})
@@ -245,17 +259,22 @@
 	}
 
 	function issuesLabel(row) {
-		if ((row.errors === null || row.errors === undefined) &&
-			(row.warnings === null || row.warnings === undefined)) {
-			return '—';
-		}
-		if (row.errors) {
+		var errorsKnown = row.errors !== null && row.errors !== undefined;
+		var warningsKnown = row.warnings !== null && row.warnings !== undefined;
+
+		// A non-zero count is worth stating even if its sibling is unknown.
+		if (errorsKnown && row.errors) {
 			return String(row.errors) + ' ' + (i18n.errors || 'errors');
 		}
-		if (row.warnings) {
+		if (warningsKnown && row.warnings) {
 			return String(row.warnings) + ' ' + (i18n.warnings || 'warnings');
 		}
-		return i18n.noIssues || 'No issues';
+		// "No issues" claims BOTH counts are zero, so it needs BOTH to be
+		// known. With either one unknown the honest answer is "—".
+		if (errorsKnown && warningsKnown) {
+			return i18n.noIssues || 'No issues';
+		}
+		return '—';
 	}
 
 	if (periodEl) {
