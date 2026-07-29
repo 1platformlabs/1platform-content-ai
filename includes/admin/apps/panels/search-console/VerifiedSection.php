@@ -86,6 +86,16 @@ class ContaiSearchConsoleVerifiedSection
                 <?php esc_html_e('Submitted Sitemaps', '1platform-content-ai'); ?>
             </h4>
 
+            <?php
+            /*
+             * SCP-05: `contai-sitemaps-table` is the hook the performance
+             * script uses to ADD the Google-reported columns (URLs indexed,
+             * issues) once they arrive. Progressive enhancement on purpose —
+             * with no JS, an unreachable Search Console, or an unverified
+             * property, this table renders exactly as it always has, showing
+             * 1Platform's own record of having submitted each entry.
+             */
+            ?>
             <table class="contai-table contai-sitemaps-table">
                 <thead>
                     <tr>
@@ -111,7 +121,7 @@ class ContaiSearchConsoleVerifiedSection
         $statusText = $isSubmitted ? __('Submitted', '1platform-content-ai') : __('Pending', '1platform-content-ai');
         $submittedAt = $sitemap['submitted_at'] ?? null;
         ?>
-        <tr>
+        <tr data-sitemap-url="<?php echo esc_attr($sitemap['url'] ?? ''); ?>">
             <td>
                 <span class="contai-sitemap-url"><?php echo esc_html($sitemap['url'] ?? ''); ?></span>
             </td>

@@ -794,3 +794,130 @@
     font-size: 18px;
   }
 }
+
+/* ===== Performance section (SCP-04) ===== */
+
+.contai-sc-performance {
+  margin-top: 24px;
+}
+
+.contai-sc-perf-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 16px;
+}
+
+.contai-sc-perf-period {
+  min-width: 150px;
+}
+
+.contai-sc-perf-status {
+  padding: 16px 0;
+  color: #646970;
+  font-size: 13px;
+}
+
+.contai-sc-perf-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 782px) {
+  .contai-sc-perf-kpis {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.contai-sc-perf-kpi {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px;
+  background: #f6f7f7;
+  border: 1px solid #dcdcde;
+  border-radius: 8px;
+}
+
+.contai-sc-perf-kpi-label {
+  font-size: 12px;
+  color: #646970;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.contai-sc-perf-kpi-value {
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: #1d2327;
+}
+
+.contai-sc-perf-kpi-delta {
+  font-size: 12px;
+  font-weight: 500;
+  min-height: 16px;
+}
+
+.contai-sc-perf-kpi-delta.is-up {
+  color: #007017;
+}
+
+.contai-sc-perf-kpi-delta.is-down {
+  color: #b32d2e;
+}
+
+.contai-sc-perf-kpi-delta.is-flat {
+  color: #646970;
+}
+
+.contai-sc-perf-note {
+  margin-top: 16px;
+  padding: 12px 14px;
+  background: #f0f6fc;
+  border-left: 4px solid #72aee6;
+  font-size: 13px;
+  color: #1d2327;
+}
+
+.contai-sc-perf-tables {
+  margin-top: 24px;
+}
+
+.contai-sc-perf-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.contai-sc-perf-tab {
+  padding: 6px 14px;
+  background: transparent;
+  border: 1px solid #dcdcde;
+  border-radius: 999px;
+  font-size: 13px;
+  color: #1d2327;
+  cursor: pointer;
+}
+
+.contai-sc-perf-tab:hover {
+  background: #f6f7f7;
+}
+
+.contai-sc-perf-tab.is-active {
+  background: #2271b1;
+  border-color: #2271b1;
+  color: #fff;
+}
+
+.contai-sc-perf-tab:focus-visible {
+  outline: 2px solid #2271b1;
+  outline-offset: 2px;
+}
+
+.contai-sc-perf-empty {
+  padding: 16px 0;
+  color: #646970;
+  font-size: 13px;
+}

@@ -9,6 +9,7 @@ require_once __DIR__ . '/../../../helpers/license-helper.php';
 require_once __DIR__ . '/search-console/AddWebsiteSection.php';
 require_once __DIR__ . '/search-console/VerificationSection.php';
 require_once __DIR__ . '/search-console/VerifiedSection.php';
+require_once __DIR__ . '/search-console/PerformanceSection.php';
 
 class ContaiSearchConsolePanel
 {
@@ -91,6 +92,12 @@ class ContaiSearchConsolePanel
         if ($this->statusChecker->isVerified($config)) {
             $verifiedSection = new ContaiSearchConsoleVerifiedSection($config);
             $verifiedSection->render();
+
+            // Only a verified property has anything for Google to report on
+            // (SCP-04) — same gate as the section above, not a second one.
+            $performanceSection = new ContaiSearchConsolePerformanceSection();
+            $performanceSection->render();
+            $this->enqueuePerformanceAssets();
             return;
         }
 
@@ -199,6 +206,52 @@ class ContaiSearchConsolePanel
             ['jquery'],
             file_exists($jsFile) ? filemtime($jsFile) : '1.0.0',
             true
+        );
+    }
+
+    /**
+     * Performance panel script + its REST config (SCP-04). Enqueued only when
+     * the section is actually rendered, so an unverified site never ships a
+     * script that would immediately 409.
+     */
+    private function enqueuePerformanceAssets(): void
+    {
+        $baseDir = dirname(__DIR__);
+        $jsFile = $baseDir . '/assets/js/search-console-performance.js';
+        $jsUrl = plugins_url('assets/js/search-console-performance.js', $baseDir . '/dummy.php');
+
+        wp_enqueue_script(
+            'contai-search-console-performance',
+            $jsUrl,
+            [],
+            file_exists($jsFile) ? filemtime($jsFile) : '1.0.0',
+            true
+        );
+
+        wp_localize_script(
+            'contai-search-console-performance',
+            'contaiScPerformance',
+            [
+                'restUrl'     => rest_url('contai/v1/search-console/performance'),
+                'sitemapsUrl' => rest_url('contai/v1/search-console/sitemaps'),
+                'nonce'       => wp_create_nonce('wp_rest'),
+                'i18n'        => [
+                    'loading'     => __('Loading performance data…', '1platform-content-ai'),
+                    'error'       => __('Could not load performance data.', '1platform-content-ai'),
+                    'quota'       => __('Too many requests right now. Try again in a few minutes.', '1platform-content-ai'),
+                    'notVerified' => __('This website is not verified in Search Console yet.', '1platform-content-ai'),
+                    'colIndexed'  => __('Indexed / read', '1platform-content-ai'),
+                    'colIssues'   => __('Issues', '1platform-content-ai'),
+                    'errors'      => __('errors', '1platform-content-ai'),
+                    'warnings'    => __('warnings', '1platform-content-ai'),
+                    'noIssues'    => __('No issues', '1platform-content-ai'),
+                    'keyHeader'   => [
+                        'queries'   => __('Query', '1platform-content-ai'),
+                        'pages'     => __('Page', '1platform-content-ai'),
+                        'countries' => __('Country', '1platform-content-ai'),
+                    ],
+                ],
+            ]
         );
     }
 }
