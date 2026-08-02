@@ -82,12 +82,12 @@ class ContaiGenerateCommentsPanel {
 
     private function generate_comments_for_posts(array $posts, int $comments_per_post): array {
         $service = ContaiCommentsService::create();
-        $lang = ContaiCommentsService::getSiteLang();
         $website_topic = get_option('contai_site_theme', '');
         $comments = [];
 
         foreach ($posts as $post) {
             $context = ContaiCommentsService::buildContext($website_topic, $post->post_title);
+            $lang = ContaiCommentsService::languageForPost($post);
             $result = $service->generateComments($comments_per_post, $lang, $context);
 
             if (!$result['success']) {
