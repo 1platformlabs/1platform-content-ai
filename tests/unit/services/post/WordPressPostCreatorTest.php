@@ -30,6 +30,11 @@ class WordPressPostCreatorTest extends TestCase
         WP_Mock::userFunction('wp_strip_all_tags')->andReturnUsing(function ($str) {
             return strip_tags($str);
         });
+        // create() checks wp_insert_post()'s return with is_wp_error(). WP_Mock
+        // declares stubs at process level, so leaving it out only worked while
+        // a sibling test declared it earlier in the run: alone, this test
+        // errored with "Call to undefined function is_wp_error()".
+        WP_Mock::userFunction('is_wp_error')->andReturn(false);
 
         $captured_data = null;
         WP_Mock::userFunction('wp_insert_post')
@@ -55,6 +60,7 @@ class WordPressPostCreatorTest extends TestCase
         WP_Mock::userFunction('wp_strip_all_tags')->andReturnUsing(function ($str) {
             return strip_tags($str);
         });
+        WP_Mock::userFunction('is_wp_error')->andReturn(false);
 
         $captured_data = null;
         WP_Mock::userFunction('wp_insert_post')
@@ -79,6 +85,7 @@ class WordPressPostCreatorTest extends TestCase
         WP_Mock::userFunction('wp_strip_all_tags')->andReturnUsing(function ($str) {
             return strip_tags($str);
         });
+        WP_Mock::userFunction('is_wp_error')->andReturn(false);
 
         $captured_data = null;
         WP_Mock::userFunction('wp_insert_post')
