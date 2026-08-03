@@ -507,6 +507,10 @@ jobs:
           # subject del commit en español dentro de un readme.txt que está entero en
           # inglés. Cuidar sólo el título del PR se lee como cubierto y falla en el
           # caso de un commit, que es el normal para un fix chico.
+          # Convención de este repo, derivada de lo de arriba: readme.txt está
+          # entero en inglés (49 entradas), así que el TÍTULO del PR y el SUBJECT
+          # del commit se escriben los dos en inglés. Con una rama de un solo
+          # commit, el subject del commit es lo único que el usuario va a leer.
           KEEP_A_CHANGELOG_SECTION = {"feat": "Added", "fix": "Fixed"}
 
 
