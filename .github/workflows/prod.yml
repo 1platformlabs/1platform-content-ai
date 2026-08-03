@@ -278,6 +278,7 @@ jobs:
         env:
           CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
           CLAUDE_MODEL: ${{ env.CLAUDE_MODEL }}
+          PR_NUMBER: ${{ needs.tests.outputs.pr_number }}
         shell: bash
         run: |
           set -euo pipefail
@@ -373,6 +374,7 @@ jobs:
           import os
           import re
           import subprocess
+          from datetime import datetime, timezone
           from pathlib import Path
 
 
@@ -381,6 +383,16 @@ jobs:
               if not path.exists():
                   return ""
               return path.read_text(encoding="utf-8", errors="replace")
+
+
+          def git(fmt: str) -> str:
+              """Un solo dueño para leer el commit de merge (subject o body)."""
+              return subprocess.run(
+                  ["git", "log", "-1", f"--pretty={fmt}"],
+                  capture_output=True,
+                  text=True,
+                  check=False,
+              ).stdout
 
 
           def bump_from_conventional_commit() -> str:
@@ -393,14 +405,6 @@ jobs:
               gana un major; `feat` gana un minor; el resto es patch.
               Sub-etiquetar una release se corrige; no publicarla, no.
               """
-              def git(fmt: str) -> str:
-                  return subprocess.run(
-                      ["git", "log", "-1", f"--pretty={fmt}"],
-                      capture_output=True,
-                      text=True,
-                      check=False,
-                  ).stdout
-
               headlines = [h for h in (git("%s").strip(), _read("pr_title.txt").strip()) if h]
               prose = git("%b") + _read("pr_body.txt")
 
@@ -465,7 +469,86 @@ jobs:
               rf"\g<1>{new_version}",
               readme_content,
           )
-          Path("readme.txt").write_bytes(new_readme.encode("utf-8"))
+          # Hasta 2.41.8 este pipeline NUNCA escribió una entrada de changelog:
+          # `release` buscaba `## [<version>]`, no lo encontraba, y publicaba
+          # "No changelog entry found for this version." en los 31 tags estables
+          # (31/31 medido; control+ por canal: los `qa-*` dan 0), mientras
+          # WordPress.org mostraba un changelog cuyo encabezado más nuevo era
+          # 2.40.0 bajo `Stable tag: 2.41.8` — 77 de 93 versiones publicadas sin
+          # una línea (issue #180). El texto de la entrada se DERIVA del propio
+          # merge (el subject convencional que ya decide el bump acá arriba);
+          # nunca se teclea en este paso.
+          KEEP_A_CHANGELOG_SECTION = {"feat": "Added", "fix": "Fixed"}
+
+
+          def changelog_entry() -> tuple[str, str]:
+              """(sección, descripción de una línea) derivadas del merge."""
+              subject = next(
+                  (h for h in (git("%s").strip(), _read("pr_title.txt").strip()) if h),
+                  "",
+              )
+              parsed = re.match(
+                  r"^(?P<type>[a-z][a-z0-9]*)(\((?P<scope>[^)]*)\))?(?P<bang>!)?:\s*(?P<desc>.+)$",
+                  subject,
+              )
+              if not parsed:
+                  # Un subject no convencional igual recibe entrada: un titular
+                  # sin parsear le sirve más a un usuario que un placeholder.
+                  return "Changed", subject or f"Release {new_version}"
+              section = KEEP_A_CHANGELOG_SECTION.get(parsed["type"], "Changed")
+              desc = parsed["desc"].strip()
+              if parsed["scope"]:
+                  desc = f"{parsed['scope']}: {desc}"
+              if parsed["bang"] or "BREAKING CHANGE" in (git("%b") + _read("pr_body.txt")):
+                  section = "Changed"
+                  desc = f"**BREAKING** {desc}"
+              pr = os.environ.get("PR_NUMBER", "").strip()
+              if pr and f"#{pr}" not in desc:
+                  desc = f"{desc} (#{pr})"
+              return section, desc
+
+
+          def insert_at(text: str, anchor: str, block: str, eol: str, after: int = 0) -> str:
+              """Inserta `block` justo antes del 1.er `anchor` posterior a `after`."""
+              found = re.compile(anchor, re.MULTILINE).search(text, after)
+              if not found:
+                  raise SystemExit(
+                      f"No hay punto de inserción de changelog para {anchor!r} — antes que publicar una release sin entrada, este paso falla"
+                  )
+              return text[: found.start()] + block.replace("\n", eol) + text[found.start() :]
+
+
+          section, description = changelog_entry()
+          today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+
+          # CHANGELOG.md — Keep a Changelog: la release va DEBAJO de [Unreleased]
+          # y encima del encabezado publicado más nuevo, que es exactamente lo que
+          # lee la extracción `## \[<version>\].*?(?=\n## \[|$)` del job `release`.
+          changelog_path = Path("CHANGELOG.md")
+          changelog_raw = changelog_path.read_bytes()
+          changelog_eol = "\r\n" if b"\r\n" in changelog_raw else "\n"
+          changelog_path.write_bytes(
+              insert_at(
+                  changelog_raw.decode("utf-8"),
+                  r"^## \[\d+\.\d+\.\d+\]",
+                  f"## [{new_version}] - {today}\n\n### {section}\n- {description}\n\n",
+                  changelog_eol,
+              ).encode("utf-8")
+          )
+
+          # readme.txt — lo que WordPress.org RENDERIZA, más nuevo primero. El
+          # ancla arranca en `== Changelog ==` para que una entrada `= x =` que
+          # aparezca en otra sección no desvíe la inserción.
+          readme_eol = "\r\n" if b"\r\n" in readme_raw else "\n"
+          Path("readme.txt").write_bytes(
+              insert_at(
+                  new_readme,
+                  r"^= (?:\d+\.\d+\.\d+|Unreleased) =\s*$",
+                  f"= {new_version} =\n* {section}: {description}\n\n",
+                  readme_eol,
+                  after=new_readme.index("== Changelog =="),
+              ).encode("utf-8")
+          )
 
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as f:
               f.write(f"new_version={new_version}\n")
@@ -475,47 +558,80 @@ jobs:
       - name: Validate version bump diff
         id: validate
         shell: bash
+        env:
+          NEW_VERSION: ${{ steps.bump.outputs.new_version }}
         run: |
           set -euo pipefail
 
+          # Este paso ya no cuenta líneas: pinea la FORMA del diff de cada
+          # archivo. El conteo ciego (+1/-1 para los 2 archivos que hubiera)
+          # no podía admitir una entrada de changelog, que es aditiva y
+          # multilínea por construcción, y tampoco distinguía CUÁL archivo
+          # había cambiado de más. Por archivo es estrictamente más fuerte.
           CHANGED_FILES=$(git diff --name-only | sort)
-          EXPECTED_FILES=$(echo -e "1platform-content-ai.php\nreadme.txt" | sort)
+          EXPECTED_FILES=$(printf '%s\n' CHANGELOG.md 1platform-content-ai.php readme.txt | sort)
 
           if [ "$CHANGED_FILES" != "$EXPECTED_FILES" ]; then
             echo "::error::Unexpected files modified: ${CHANGED_FILES}"
             exit 1
           fi
 
-          for file in $CHANGED_FILES; do
-            STATS=$(git diff --stat "$file" | tail -1)
-            INSERTIONS=$(echo "$STATS" | grep -oP '\d+ insertion' | grep -oP '\d+' || echo "0")
-            DELETIONS=$(echo "$STATS" | grep -oP '\d+ deletion' | grep -oP '\d+' || echo "0")
+          added() { git diff "$1" | grep '^+' | grep -v '^+++' || true; }
+          removed() { git diff "$1" | grep '^-' | grep -v '^---' || true; }
 
-            if [ "$INSERTIONS" != "1" ] || [ "$DELETIONS" != "1" ]; then
-              echo "::error::$file should change exactly 1 line (got +${INSERTIONS} -${DELETIONS})"
-              git diff "$file"
-              exit 1
-            fi
-          done
-
-          # Verify plugin header pattern
-          PLUGIN_LINE=$(git diff 1platform-content-ai.php | grep '^+' | grep -v '^+++' | head -1)
-          if ! echo "$PLUGIN_LINE" | grep -qP '^\+\s*\*\s*Version:\s*\d+\.\d+\.\d+'; then
+          # (a) el plugin: exactamente una línea, y es la del header Version
+          PLUGIN_ADDED=$(added 1platform-content-ai.php)
+          PLUGIN_REMOVED=$(removed 1platform-content-ai.php)
+          if [ "$(printf '%s\n' "$PLUGIN_ADDED" | grep -c .)" != "1" ] \
+             || [ "$(printf '%s\n' "$PLUGIN_REMOVED" | grep -c .)" != "1" ]; then
+            echo "::error::1platform-content-ai.php should change exactly 1 line"
+            git diff 1platform-content-ai.php
+            exit 1
+          fi
+          if ! echo "$PLUGIN_ADDED" | grep -qP '^\+\s*\*\s*Version:\s*\d+\.\d+\.\d+'; then
             echo "::error::Plugin header line does not match expected Version pattern"
-            echo "::error::Got: ${PLUGIN_LINE}"
+            echo "::error::Got: ${PLUGIN_ADDED}"
             exit 1
           fi
 
-          # Verify readme.txt pattern
-          README_LINE=$(git diff readme.txt | grep '^+' | grep -v '^+++' | head -1)
-          if ! echo "$README_LINE" | grep -qP '^\+Stable tag:\s*\d+\.\d+\.\d+'; then
-            echo "::error::readme.txt line does not match expected Stable tag pattern"
-            echo "::error::Got: ${README_LINE}"
+          # (b) readme.txt: se REEMPLAZA sólo la línea del Stable tag; el resto
+          #     de las adiciones es la entrada nueva del changelog, encabezada
+          #     por `= <NEW_VERSION> =`.
+          README_REMOVED=$(removed readme.txt)
+          if [ "$(printf '%s\n' "$README_REMOVED" | grep -c .)" != "1" ] \
+             || ! echo "$README_REMOVED" | grep -qP '^-Stable tag:\s*\d+\.\d+\.\d+'; then
+            echo "::error::readme.txt must remove exactly the old Stable tag line"
+            git diff readme.txt
+            exit 1
+          fi
+          README_ADDED=$(added readme.txt)
+          if [ "$(echo "$README_ADDED" | grep -cP '^\+Stable tag:\s*\d+\.\d+\.\d+')" != "1" ]; then
+            echo "::error::readme.txt must add exactly one Stable tag line"
+            git diff readme.txt
+            exit 1
+          fi
+          if [ "$(echo "$README_ADDED" | grep -cxF "+= ${NEW_VERSION} =")" != "1" ]; then
+            echo "::error::readme.txt must add exactly one \"= ${NEW_VERSION} =\" changelog heading — that section is what WordPress.org renders (issue #180)"
+            git diff readme.txt
+            exit 1
+          fi
+
+          # (c) CHANGELOG.md: puramente aditivo, con el encabezado que la
+          #     extracción del job `release` busca literalmente.
+          CHANGELOG_REMOVED=$(removed CHANGELOG.md)
+          if [ -n "$(printf '%s\n' "$CHANGELOG_REMOVED" | grep . || true)" ]; then
+            echo "::error::CHANGELOG.md must only gain lines, never lose them"
+            git diff CHANGELOG.md
+            exit 1
+          fi
+          if [ "$(added CHANGELOG.md | grep -cP "^\+## \[${NEW_VERSION}\] - \d{4}-\d{2}-\d{2}$")" != "1" ]; then
+            echo "::error::CHANGELOG.md must add exactly one \"## [${NEW_VERSION}] - <date>\" heading — the release job extracts the body under it (issue #180)"
+            git diff CHANGELOG.md
             exit 1
           fi
 
           echo "validated=true" >> "$GITHUB_OUTPUT"
-          echo "Version bump diff validated successfully"
+          echo "Version bump diff validated: 3 files, per-file shape pinned"
 
       - name: Commit and push version bump
         if: steps.validate.outputs.validated == 'true'
@@ -528,7 +644,7 @@ jobs:
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add 1platform-content-ai.php readme.txt
+          git add 1platform-content-ai.php readme.txt CHANGELOG.md
 
           if git diff --cached --quiet; then
             echo "::warning::No version change detected"
@@ -613,7 +729,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python3 << 'PYEOF' > release_notes.txt
+          # Fuera del workspace a propósito: el paso `Stage the production tree`
+          # rsyncea `./` al árbol que se empaqueta, así que un artefacto de
+          # tiempo de build escrito acá VIAJA — `release_notes.txt` llevaba 3
+          # de 3 releases medidas dentro del .zip del GitHub Release, con el
+          # placeholder adentro (issue #180). $RUNNER_TEMP no se empaqueta.
+          python3 << 'PYEOF' > "${RUNNER_TEMP}/release_notes.txt"
           import os
           import re
           from pathlib import Path
@@ -645,7 +766,7 @@ jobs:
           PREV=$(git tag --sort=-version:refname | grep -vx "$VERSION" | head -1 || true)
           echo "tag=${PREV}" >> "$GITHUB_OUTPUT"
 
-      - name: Build production zip
+      - name: Stage the production tree
         shell: bash
         run: |
           set -euo pipefail
@@ -677,9 +798,56 @@ jobs:
               ./ "${PLUGIN_DIR}/"
           fi
 
-          cd "${BUILD_DIR}"
-          zip -r "${GITHUB_WORKSPACE}/1platform-content-ai.zip" 1platform-content-ai/
           echo "build_dir=${BUILD_DIR}" >> "$GITHUB_ENV"
+          echo "plugin_dir=${PLUGIN_DIR}" >> "$GITHUB_ENV"
+
+      - name: Assert the staged package carries no build-time artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # La mitad de TIEMPO DE BUILD del allowlist del job `tests`. Ese gate
+          # corre sobre el checkout pelado a propósito, así que es ciego por
+          # construcción a un archivo que un paso anterior ACABA de escribir en
+          # el workspace — que es exactamente cómo `release_notes.txt` viajó
+          # dentro del .zip del Release en 3 de 3 versiones medidas (#180).
+          #
+          # El sujeto se DERIVA del índice de git, nunca de una lista de rutas
+          # tecleada acá: lo que git NO trackea y no es `vendor/` es, por
+          # definición, algo que este job fabricó.
+          TRACKED=$(mktemp)
+          git ls-files -z | tr '\0' '\n' | LC_ALL=C sort > "${TRACKED}" || true
+          STAGED=$(mktemp)
+          (cd "${plugin_dir}" && find . -type f | sed 's|^\./||') | LC_ALL=C sort > "${STAGED}" || true
+
+          # Piso doble, y se prueba por su ANOTACIÓN (no por el rc del paso: un
+          # rc=1 de una extracción muerta se lee idéntico al piso funcionando).
+          N_TRACKED=$(grep -c . "${TRACKED}" || true)
+          N_STAGED=$(grep -c . "${STAGED}" || true)
+          if [ "${N_TRACKED}" -eq 0 ] || [ "${N_STAGED}" -eq 0 ]; then
+            echo "::error::This step derives its subject from git ls-files (${N_TRACKED}) and the staged tree (${N_STAGED}) — with either at zero it is measuring nothing"
+            exit 1
+          fi
+
+          # `vendor/` es el único untracked legítimo: lo instala el paso anterior
+          # y TIENE que viajar (issue #178).
+          UNTRACKED=$(mktemp)
+          LC_ALL=C comm -23 "${STAGED}" "${TRACKED}" | grep -v '^vendor/' > "${UNTRACKED}" || true
+
+          if [ -s "${UNTRACKED}" ]; then
+            echo "::error::The published package would carry $(grep -c . "${UNTRACKED}") build-time artifact(s) that git does not track — write them outside the workspace (\$RUNNER_TEMP) or exclude them in .distignore (issue #180)"
+            cat "${UNTRACKED}"
+            exit 1
+          fi
+
+          echo "Staged package OK: ${N_STAGED} files, $(grep -c '^vendor/' "${STAGED}" || true) under vendor/, 0 untracked build-time artifacts"
+
+      - name: Build production zip
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "${build_dir}"
+          zip -r "${GITHUB_WORKSPACE}/1platform-content-ai.zip" 1platform-content-ai/
 
       - name: Create GitHub Release
         env:
@@ -691,22 +859,23 @@ jobs:
           PREV_TAG="${{ steps.prev_tag.outputs.tag }}"
           BUMP="${{ needs.version_bump.outputs.bump_type }}"
 
-          cp release_notes.txt final_release_notes.txt
+          NOTES="${RUNNER_TEMP}/final_release_notes.txt"
+          cp "${RUNNER_TEMP}/release_notes.txt" "${NOTES}"
 
           {
             echo
             echo "---"
             echo "**Version bump:** \`${BUMP}\` (auto-detected by AI)"
-          } >> final_release_notes.txt
+          } >> "${NOTES}"
 
           if [ -n "$PREV_TAG" ]; then
-            echo "**Full Changelog:** [${PREV_TAG}...${VERSION}](${{ github.server_url }}/${{ github.repository }}/compare/${PREV_TAG}...${VERSION})" >> final_release_notes.txt
+            echo "**Full Changelog:** [${PREV_TAG}...${VERSION}](${{ github.server_url }}/${{ github.repository }}/compare/${PREV_TAG}...${VERSION})" >> "${NOTES}"
           fi
 
           gh release create "$VERSION" \
             --repo "${{ github.repository }}" \
             --title "Release ${VERSION}" \
-            --notes-file final_release_notes.txt \
+            --notes-file "${NOTES}" \
             1platform-content-ai.zip
 
       - name: Remove QA pass label after merge
