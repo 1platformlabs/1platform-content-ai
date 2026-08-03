@@ -87,6 +87,72 @@ jobs:
         if: steps.check_merge.outputs.is_merge != 'true'
         run: echo "Not a merge push. Skipping PROD pipeline."
 
+      - name: Assert the published package carries no development material
+        if: steps.check_merge.outputs.is_merge == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # Stage exactly what the publisher stages. What WordPress.org serves is the tree
+          # 10up/action-wordpress-plugin-deploy rsyncs into SVN trunk, and its deploy.sh runs
+          #   rsync -rc --exclude-from="$GITHUB_WORKSPACE/.distignore" "$GITHUB_WORKSPACE/" trunk/ --delete --delete-excluded
+          # so .distignore is the only thing between a development file and every user. This
+          # step runs before Setup PHP on purpose: the workspace is still the bare checkout,
+          # which is exactly what the svn-deploy job hands to the publisher.
+          STAGE=$(mktemp -d)
+          rsync -rc --exclude-from="${GITHUB_WORKSPACE}/.distignore" "${GITHUB_WORKSPACE}/" "${STAGE}/"
+
+          # A floor for this check itself: an empty staging directory satisfies both assertions
+          # below vacuously, so an over-broad .distignore would read as a clean package.
+          if [ ! -f "${STAGE}/1platform-content-ai.php" ]; then
+            echo "::error::Staging produced no plugin — 1platform-content-ai.php is missing, so this step is measuring nothing"
+            exit 1
+          fi
+
+          # (a) Nothing named .git survives at ANY depth. A published .git is the whole private
+          #     history plus every internal branch name — 3.3 MB of the 10 MB users downloaded
+          #     until 2.41.6 (issue #176).
+          GIT_ENTRIES=$(cd "${STAGE}" && find . -name '.git' | sed 's|^\./||')
+
+          # (b) The top level is an ALLOWLIST, not a denylist. The defect in #176 was a list
+          #     that read as complete while missing one entry, so the default is inverted here:
+          #     nothing ships unless it is named. A new top-level file fails this step instead
+          #     of reaching users.
+          ALLOWED_LIST=$(mktemp)
+          printf '%s\n' \
+            1platform-content-ai.php \
+            includes \
+            uninstall.php \
+            readme.txt \
+            README.md \
+            LICENSE.txt \
+            vendor > "${ALLOWED_LIST}"
+
+          STAGED_LIST=$(mktemp)
+          (cd "${STAGE}" && ls -A) > "${STAGED_LIST}"
+
+          UNEXPECTED=""
+          while IFS= read -r e; do
+            grep -qxF -- "${e}" "${ALLOWED_LIST}" || UNEXPECTED="${UNEXPECTED} ${e}"
+          done < "${STAGED_LIST}"
+
+          FAILED=0
+          if [ -n "${GIT_ENTRIES}" ]; then
+            echo "::error::A git repository would be published: $(echo "${GIT_ENTRIES}" | tr '\n' ' ')"
+            FAILED=1
+          fi
+          if [ -n "${UNEXPECTED}" ]; then
+            echo "::error::Not in the shipped allowlist: ${UNEXPECTED# } — exclude it in .distignore, or add it to ALLOWED in this step if users need it"
+            FAILED=1
+          fi
+          if [ "${FAILED}" -ne 0 ]; then
+            echo "Staged top level was:"
+            cat "${STAGED_LIST}"
+            exit 1
+          fi
+
+          echo "Package contents OK: $(wc -l < "${STAGED_LIST}" | tr -d ' ') top-level entries, no git repository"
+
       - name: Setup PHP
         if: steps.check_merge.outputs.is_merge == 'true'
         uses: shivammathur/setup-php@v2
