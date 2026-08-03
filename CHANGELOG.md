@@ -83,6 +83,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `JobProcessorTest::test_processQueue_updatesLastTickOption()` + `test_processQueue_logsHappyPath()` — verify `contai_last_tick_at` is always written and the `[queue]` log lines are emitted under WP_DEBUG.
 - `OnePlatformClientHeadersTest::test_sendsXSiteUrlHeaderOnAllRequests()` — asserts the new header rides on GET, POST, PUT, PATCH, DELETE without regressing `X-Plugin-Version`.
 
+## [3.0.1] - 2026-08-03
+
+### Fixed
+- la senal de ruptura sale solo de lo convencional, no de mencionar la frase (#182)
+
 ## [3.0.0] - 2026-08-03
 
 ### Fixed
