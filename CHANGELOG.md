@@ -86,7 +86,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [3.0.1] - 2026-08-03
 
 ### Fixed
-- la senal de ruptura sale solo de lo convencional, no de mencionar la frase (#182)
+- the breaking-change marker now comes only from the conventional signal, so a pull request that merely mentions the phrase no longer publishes a false breaking note (#182)
 
 ## [3.0.0] - 2026-08-03
 
