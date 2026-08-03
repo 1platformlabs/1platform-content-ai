@@ -48,6 +48,21 @@ def action_buttons(extra_buttons: list | None = None) -> dict:
     return {"type": "actions", "elements": buttons}
 
 
+def ready_to_prod_status() -> str:
+    """El anuncio tiene que decir la verdad sobre lo que efectivamente corrió.
+
+    `REVIEW_VERDICT` vale `unavailable` cuando el revisor automatizado no pudo
+    ejecutarse (corte del proveedor): el pipeline deja de bloquear, pero nadie
+    puede afirmar que este código fue revisado.
+    """
+    if env("REVIEW_VERDICT") == "approved":
+        return "Tests y code review aprobados. PR listo para merge a producción."
+    return (
+        "Tests aprobados. :warning: El code review automatizado NO se ejecutó "
+        "(proveedor no disponible): este PR *no fue revisado*."
+    )
+
+
 def build_ready_to_prod() -> dict:
     fields = base_fields()
     fields.append({"type": "mrkdwn", "text": f"*Version:*\n`{env('VERSION', 'unknown')}`"})
@@ -56,7 +71,7 @@ def build_ready_to_prod() -> dict:
         "blocks": [
             {"type": "header", "text": {"type": "plain_text", "text": "\U0001f50c Plugin | Ready to PROD", "emoji": True}},
             {"type": "section", "fields": fields},
-            {"type": "section", "text": {"type": "mrkdwn", "text": "Tests y code review aprobados. PR listo para merge a producción."}},
+            {"type": "section", "text": {"type": "mrkdwn", "text": ready_to_prod_status()}},
             {
                 "type": "actions",
                 "elements": [
