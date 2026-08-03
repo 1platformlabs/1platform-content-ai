@@ -358,8 +358,19 @@ jobs:
             -d @claude_request.json) || HTTP_CODE="000"
 
           if [ "$HTTP_CODE" != "200" ]; then
-            echo "::error::Claude API returned HTTP ${HTTP_CODE}"
+            # Sin nivel todavía: acá no se sabe de quién es la falla. Anotarlo
+            # como `::error::` deja una anotación de nivel `failure` colgada de
+            # un job que concluye `success` cuando la causa es un corte, y la
+            # anotación es lo primero que ve un operador en la UI.
+            echo "Claude API returned HTTP ${HTTP_CODE}"
+            # El `echo` de cierre es portante: el cuerpo del proveedor no
+            # termina en salto de línea, así que sin él el `::warning::` de
+            # `emit_unavailable` queda PEGADO a esa línea y GitHub no lo parsea
+            # como comando de workflow — medido en el run 30785387156 del
+            # dashboard, donde la única anotación fue el `failure` y el aviso
+            # honesto no existió.
             cat claude_response.json || true
+            echo
 
             # ¿El fallo es del proveedor, o lo provocó el contenido del PR?
             # El discriminador tiene que ser INDEPENDIENTE DEL DIFF, o un PR
@@ -390,7 +401,7 @@ jobs:
               exit 0
             fi
 
-            echo "::error::La sonda de control SIN diff obtuvo HTTP 200 ⇒ el fallo depende del contenido de ESTE PR, no del proveedor. La revisión sigue siendo obligatoria."
+            echo "::error::Claude API returned HTTP ${HTTP_CODE}. La sonda de control SIN diff obtuvo HTTP 200 ⇒ el fallo depende del contenido de ESTE PR, no del proveedor. La revisión sigue siendo obligatoria."
             exit 1
           fi
 
