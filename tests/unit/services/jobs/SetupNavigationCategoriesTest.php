@@ -174,6 +174,11 @@ class SetupNavigationCategoriesTest extends TestCase
         WP_Mock::userFunction('get_nav_menu_locations')->andReturn([]);
         WP_Mock::userFunction('get_stylesheet')->andReturn('astra');
         WP_Mock::userFunction('get_option')->with('contai_nav_menu_location_claim', [])->andReturn([]);
+        // The claim is read above and WRITTEN by contai_claim_nav_menu_location().
+        // With only the read half stubbed these two tests depended on a sibling
+        // test having declared update_option() first — alone they errored with
+        // "Call to undefined function update_option()".
+        WP_Mock::userFunction('update_option')->andReturn(true);
         // Astra's real registry, not a one-entry stand-in: it also registers the
         // off-canvas location the wizard now binds. A registry missing it would
         // make this fixture describe a site that does not exist and would send

@@ -94,6 +94,36 @@ jobs:
           fi
           tail -30 test_output.txt > test_summary.txt || true
 
+      - name: PHPUnit — every test file must pass on its own
+        if: matrix.php == env.PHP_VERSION_PROD
+        shell: bash
+        run: |
+          set -euo pipefail
+          # WP_Mock declares its stubs at PROCESS level, so a test that forgets
+          # one still passes as long as some sibling declared it earlier in the
+          # run. That green is an artefact of file order: filter the suite, shard
+          # it, or just add a file that sorts earlier, and the test errors with
+          # "Call to undefined function". Running every file in its own process
+          # makes the omission fail here, on the PR that introduces it, instead
+          # of surfacing later as an unexplained flake in someone else's branch.
+          LOG=$(mktemp)
+          FAILED=""
+          COUNT=0
+          while IFS= read -r f; do
+            COUNT=$((COUNT + 1))
+            if ! vendor/bin/phpunit "$f" > "$LOG" 2>&1; then
+              FAILED="$FAILED $f"
+              echo "::group::isolated failure — $f"
+              tail -25 "$LOG"
+              echo "::endgroup::"
+            fi
+          done < <(find tests/unit tests/integration -name '*Test.php' | sort)
+          if [ -n "$FAILED" ]; then
+            echo "::error::Test files that fail when run alone (they borrow WP_Mock stubs from a sibling test):$FAILED"
+            exit 1
+          fi
+          echo "All $COUNT test files pass in isolation"
+
       - name: Run PHPUnit (integration suite)
         shell: bash
         run: |

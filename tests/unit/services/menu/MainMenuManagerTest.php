@@ -180,6 +180,11 @@ class MainMenuManagerTest extends TestCase
         WP_Mock::userFunction('get_stylesheet')->andReturn('astra');
         WP_Mock::userFunction('get_registered_nav_menus')
             ->andReturn(['primary' => 'Primary Menu']);
+        // contai_claim_nav_menu_location() records the binding through the WRITE
+        // half of the same option pair. Stubbing only the read half left this
+        // test borrowing update_option() from whichever sibling declared it
+        // first, so it errored when run on its own.
+        WP_Mock::userFunction('update_option')->andReturn(true);
 
         // A menu MUST be assigned to some nav location, carrying our menu id.
         WP_Mock::userFunction('set_theme_mod')
@@ -244,6 +249,7 @@ class MainMenuManagerTest extends TestCase
         WP_Mock::userFunction('get_stylesheet')->andReturn('astra');
         WP_Mock::userFunction('get_registered_nav_menus')
             ->andReturn(['primary' => 'Primary Menu']);
+        WP_Mock::userFunction('update_option')->andReturn(true);
 
         // The binding MUST be re-asserted, carrying the existing menu id.
         WP_Mock::userFunction('set_theme_mod')
