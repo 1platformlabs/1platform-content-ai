@@ -4,7 +4,7 @@ Tags: ai content, ai writer, seo, internal links, keyword research
 Requires at least: 5.9
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 2.41.8
+Stable tag: 3.0.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -159,6 +159,9 @@ The plugin sends your site URL, API key, and content generation parameters (keyw
 7. Tools — Google Analytics, Google Search Console, Publisuites, and Ads Manager integrations.
 
 == Changelog ==
+
+= 3.0.0 =
+* Changed: **BREAKING** every release writes its changelog entry, and the notes stop travelling inside the package (#181)
 
 = 2.40.0 =
 * Added: Search Console performance panel — clicks, impressions, CTR and average position for a chosen date range (24 hours / 7 days / 28 days / 3 months), each with its change against the previous period, plus the top queries, pages and countries. Previously the panel could connect and verify a site but had nothing to say about how it performed; seeing that meant leaving WordPress (SCP-04)
