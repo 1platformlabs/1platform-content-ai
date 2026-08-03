@@ -234,9 +234,38 @@ jobs:
         run: |
           set -euo pipefail
 
+          # Este paso tenía un solo canal de salida en rojo (`exit 1`) para dos
+          # hechos distintos: "el revisor encontró un CRITICO" —un veredicto
+          # sobre el PR— y "el revisor no pudo correr" —un hecho sobre el
+          # proveedor—. Los dos dejaban `outputs.verdict` vacío, así que
+          # `approve` (y con él `qa-release` y `ready-to-prod`) quedaba
+          # `skipped` y NINGÚN PR del repo podía declararse listo mientras
+          # durara el corte. `unavailable` es el tercer estado: no bloquea, y
+          # tampoco aprueba.
+          emit_unavailable() {
+            REASON="$1"
+            echo "::warning::Code review NO EJECUTADO — ${REASON}. Veredicto 'unavailable': esto NO es una aprobación."
+            {
+              echo "### ⚠️ Code review automatizado NO EJECUTADO"
+              echo ""
+              echo "**Motivo:** ${REASON}"
+              echo ""
+              echo "El revisor automático no pudo ejecutarse, así que **este PR no fue revisado**."
+              echo "El veredicto publicado es \`unavailable\`, que no es una aprobación: el pipeline"
+              echo "deja de bloquear para no dejar el repo entero sin camino de merge, pero ningún"
+              echo "paso posterior afirma que este código fue revisado."
+            } > claude_review.txt
+            {
+              echo "### ⚠️ Code review NO EJECUTADO"
+              echo ""
+              echo "${REASON}"
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "verdict=unavailable" >> "$GITHUB_OUTPUT"
+          }
+
           if [ -z "${CLAUDE_API_KEY}" ]; then
-            echo "::error::CLAUDE_API_KEY is not configured"
-            exit 1
+            emit_unavailable "CLAUDE_API_KEY no está configurada en este repositorio"
+            exit 0
           fi
 
           python << 'PYEOF'
@@ -318,16 +347,50 @@ jobs:
           Path("claude_request.json").write_text(json.dumps(payload), encoding="utf-8")
           PYEOF
 
+          # `|| HTTP_CODE=000`: sin esto un fallo de TRANSPORTE mata el paso en
+          # la asignación (por `set -e`) antes de imprimir nada, y el corte se
+          # lee como un rojo sin causa.
           HTTP_CODE=$(curl -sS -o claude_response.json -w "%{http_code}" \
             -X POST "https://api.anthropic.com/v1/messages" \
             -H "content-type: application/json" \
             -H "x-api-key: ${CLAUDE_API_KEY}" \
             -H "anthropic-version: 2023-06-01" \
-            -d @claude_request.json)
+            -d @claude_request.json) || HTTP_CODE="000"
 
-          if [ "$HTTP_CODE" -ne 200 ]; then
+          if [ "$HTTP_CODE" != "200" ]; then
             echo "::error::Claude API returned HTTP ${HTTP_CODE}"
             cat claude_response.json || true
+
+            # ¿El fallo es del proveedor, o lo provocó el contenido del PR?
+            # El discriminador tiene que ser INDEPENDIENTE DEL DIFF, o un PR
+            # podría fabricar un fallo (p. ej. un 400 por payload) y saltarse
+            # la revisión. La sonda manda una petición de contenido FIJO: si
+            # también falla, la causa no puede venir del diff.
+            #
+            # Sin heredoc a propósito: el `run:` es un bloque YAML y su sangría
+            # se descuenta entera, así que un terminador indentado dentro del
+            # `if` nunca cierra el heredoc. `printf` no tiene ese problema.
+            PROBE_REQ="$(mktemp)"
+            PROBE_RES="$(mktemp)"
+            printf '{"model":"%s","max_tokens":1,"messages":[{"role":"user","content":"ping"}]}' \
+              "${CLAUDE_MODEL}" > "$PROBE_REQ"
+
+            PROBE_CODE=$(curl -sS -o "$PROBE_RES" -w "%{http_code}" \
+              -X POST "https://api.anthropic.com/v1/messages" \
+              -H "content-type: application/json" \
+              -H "x-api-key: ${CLAUDE_API_KEY}" \
+              -H "anthropic-version: 2023-06-01" \
+              -d @"$PROBE_REQ") || PROBE_CODE="000"
+
+            if [ "$PROBE_CODE" != "200" ]; then
+              # El cuerpo literal del proveedor, sin parsear: es la evidencia y
+              # no puede fallar al extraerla.
+              PROBE_BODY=$(head -c 300 "$PROBE_RES" 2>/dev/null || true)
+              emit_unavailable "el proveedor de revisión no está disponible (HTTP ${HTTP_CODE}; sonda de control SIN diff: HTTP ${PROBE_CODE}${PROBE_BODY:+ — ${PROBE_BODY}})"
+              exit 0
+            fi
+
+            echo "::error::La sonda de control SIN diff obtuvo HTTP 200 ⇒ el fallo depende del contenido de ESTE PR, no del proveedor. La revisión sigue siendo obligatoria."
             exit 1
           fi
 
@@ -1129,7 +1192,11 @@ jobs:
     name: Approve & Label
     # PR-only — labels and PR approvals don't apply to dispatch.
     needs: code-review
-    if: github.event_name == 'pull_request' && needs.code-review.outputs.verdict == 'approved'
+    # `unavailable` (el revisor no pudo correr) deja seguir la cadena para que
+    # un corte del proveedor no deje al repo entero sin camino de merge, pero
+    # NO se etiqueta como revisado: la etiqueta `ci:review-passed` sigue
+    # colgando exclusivamente de `approved`.
+    if: github.event_name == 'pull_request' && (needs.code-review.outputs.verdict == 'approved' || needs.code-review.outputs.verdict == 'unavailable')
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -1145,6 +1212,7 @@ jobs:
         uses: actions/checkout@v5
 
       - name: Label PR as review-passed
+        if: needs.code-review.outputs.verdict == 'approved'
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
@@ -1153,6 +1221,19 @@ jobs:
           gh pr edit "$PR_NUMBER" \
             --repo "${{ github.repository }}" \
             --add-label "ci:review-passed"
+
+      - name: Record that the review did NOT run
+        if: needs.code-review.outputs.verdict == 'unavailable'
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "::warning::Este PR avanzó SIN code review automatizado (el proveedor no estaba disponible). No lleva la etiqueta ci:review-passed."
+          {
+            echo "### ⚠️ Avanzó sin code review"
+            echo ""
+            echo "El revisor automatizado no pudo ejecutarse, así que este PR **no fue revisado**"
+            echo "y **no** lleva la etiqueta \`ci:review-passed\`."
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Detect version
         id: detect_version
@@ -1166,7 +1247,10 @@ jobs:
     name: Ready to PROD
     # PR-only — merge-readiness signal is meaningless on dispatch.
     if: github.event_name == 'pull_request'
-    needs: approve
+    # `code-review` se agrega a `needs` sólo para leer su veredicto: este job
+    # anunciaba "code review aprobados" en Slack de forma incondicional, y esa
+    # frase es falsa cuando el revisor no llegó a correr.
+    needs: [approve, code-review]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     environment: QA
@@ -1180,6 +1264,7 @@ jobs:
       PR_URL: ${{ github.event.pull_request.html_url }}
       RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
       VERSION: ${{ needs.approve.outputs.version }}
+      REVIEW_VERDICT: ${{ needs.code-review.outputs.verdict }}
 
     steps:
       - name: Checkout repository
