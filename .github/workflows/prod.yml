@@ -214,9 +214,18 @@ jobs:
         run: |
           set -euo pipefail
 
+          # Mismo defecto que arreglamos en `qa.yml`, por el otro extremo del
+          # pipeline: el analizador ETIQUETA la release, no la gatea. Cualquier
+          # forma de no estar disponible —clave sin configurar, saldo agotado,
+          # 4xx/5xx, fallo de transporte— hacía `exit 1` acá, y tanto `release`
+          # como `svn-deploy` cuelgan de `needs.version_bump.result ==
+          # 'success'` ⇒ el plugin no se publicaba y el único job rojo era éste.
+          # Un analizador inalcanzable no puede castigarse más duro que una
+          # respuesta sin sentido, que este paso ya degrada a `patch` más abajo.
+          ANALYZER_AVAILABLE=false
+
           if [ -z "${CLAUDE_API_KEY}" ]; then
-            echo "::error::CLAUDE_API_KEY is not configured"
-            exit 1
+            echo "::warning::CLAUDE_API_KEY is not configured — deriving the bump from the conventional-commit prefix"
           fi
 
           python << 'PYEOF'
@@ -263,31 +272,85 @@ jobs:
           Path("claude_bump_request.json").write_text(json.dumps(payload), encoding="utf-8")
           PYEOF
 
-          HTTP_CODE=$(curl -sS -o claude_bump_response.json -w "%{http_code}" \
-            -X POST "https://api.anthropic.com/v1/messages" \
-            -H "content-type: application/json" \
-            -H "x-api-key: ${CLAUDE_API_KEY}" \
-            -H "anthropic-version: 2023-06-01" \
-            -d @claude_bump_request.json)
-
-          if [ "$HTTP_CODE" -ne 200 ]; then
-            echo "::error::Claude API returned HTTP ${HTTP_CODE}"
-            cat claude_bump_response.json || true
-            exit 1
+          # `|| true` y la comparación como STRING son portantes: un fallo de
+          # transporte hace salir a curl con rc≠0 y, bajo `set -e`, eso mataba
+          # el job en la propia asignación, antes de que el chequeo del HTTP
+          # pudiera clasificarlo.
+          HTTP_CODE=000
+          if [ -n "${CLAUDE_API_KEY}" ]; then
+            HTTP_CODE=$(curl -sS -o claude_bump_response.json -w "%{http_code}" \
+              -X POST "https://api.anthropic.com/v1/messages" \
+              -H "content-type: application/json" \
+              -H "x-api-key: ${CLAUDE_API_KEY}" \
+              -H "anthropic-version: 2023-06-01" \
+              -d @claude_bump_request.json || true)
+            HTTP_CODE="${HTTP_CODE:-000}"
           fi
 
-          python << 'PYEOF'
+          if [ "$HTTP_CODE" = "200" ]; then
+            ANALYZER_AVAILABLE=true
+          else
+            echo "::warning::Claude API returned HTTP ${HTTP_CODE} — deriving the bump from the conventional-commit prefix so the release is not skipped"
+            cat claude_bump_response.json 2>/dev/null || true
+          fi
+
+          ANALYZER_AVAILABLE="$ANALYZER_AVAILABLE" python << 'PYEOF'
           import json
           import os
           import re
+          import subprocess
           from pathlib import Path
 
-          raw = json.loads(Path("claude_bump_response.json").read_text(encoding="utf-8", errors="replace"))
-          bump_type = raw["content"][0]["text"].strip().lower()
 
-          if bump_type not in ("major", "minor", "patch"):
-              print(f"::warning::Claude returned unexpected bump type '{bump_type}', defaulting to 'patch'")
-              bump_type = "patch"
+          def _read(name: str) -> str:
+              path = Path(name)
+              if not path.exists():
+                  return ""
+              return path.read_text(encoding="utf-8", errors="replace")
+
+
+          def bump_from_conventional_commit() -> str:
+              """Bump determinista para cuando el analizador no pudo contestar.
+
+              Este repo commitea mensajes convencionales (`fix(site-wizard): …`,
+              `feat(search-console): …`), así que el subject del squash ya trae
+              la clasificación del propio autor. Sólo una señal explícita de
+              ruptura (`!` después del scope, o un trailer `BREAKING CHANGE`)
+              gana un major; `feat` gana un minor; el resto es patch.
+              Sub-etiquetar una release se corrige; no publicarla, no.
+              """
+              def git(fmt: str) -> str:
+                  return subprocess.run(
+                      ["git", "log", "-1", f"--pretty={fmt}"],
+                      capture_output=True,
+                      text=True,
+                      check=False,
+                  ).stdout
+
+              headlines = [h for h in (git("%s").strip(), _read("pr_title.txt").strip()) if h]
+              prose = git("%b") + _read("pr_body.txt")
+
+              breaking = re.compile(r"^[a-z][a-z0-9]*(\([^)]*\))?!:")
+              if any(breaking.match(h) for h in headlines) or "BREAKING CHANGE" in prose:
+                  return "major"
+              if any(re.match(r"^feat(\([^)]*\))?:", h) for h in headlines):
+                  return "minor"
+              return "patch"
+
+
+          if os.environ.get("ANALYZER_AVAILABLE") == "true":
+              try:
+                  raw = json.loads(_read("claude_bump_response.json"))
+                  bump_type = raw["content"][0]["text"].strip().lower()
+              except (ValueError, KeyError, IndexError, TypeError) as exc:
+                  print(f"::warning::Analyzer answered 200 but the body was unusable ({exc!r}) — deriving the bump from the conventional-commit prefix")
+                  bump_type = bump_from_conventional_commit()
+              if bump_type not in ("major", "minor", "patch"):
+                  print(f"::warning::Claude returned unexpected bump type '{bump_type}', defaulting to 'patch'")
+                  bump_type = "patch"
+          else:
+              bump_type = bump_from_conventional_commit()
+              print(f"::notice::Bump '{bump_type}' derived from the conventional-commit prefix; the release and the deploy proceed")
 
           # Read files in binary mode to preserve line endings (CRLF/LF)
           plugin_raw = Path("1platform-content-ai.php").read_bytes()
