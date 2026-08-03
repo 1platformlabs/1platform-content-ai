@@ -161,7 +161,7 @@ The plugin sends your site URL, API key, and content generation parameters (keyw
 == Changelog ==
 
 = 3.0.1 =
-* Fixed: la senal de ruptura sale solo de lo convencional, no de mencionar la frase (#182)
+* Fixed: the breaking-change marker now comes only from the conventional signal, so a pull request that merely mentions the phrase no longer publishes a false breaking note (#182)
 
 = 3.0.0 =
 * Fixed: every release writes its changelog entry, and the notes stop travelling inside the package (#181)
