@@ -4,7 +4,7 @@ Tags: ai content, ai writer, seo, internal links, keyword research
 Requires at least: 5.9
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 3.0.1
+Stable tag: 3.0.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -159,6 +159,9 @@ The plugin sends your site URL, API key, and content generation parameters (keyw
 7. Tools — Google Analytics, Google Search Console, Publisuites, and Ads Manager integrations.
 
 == Changelog ==
+
+= 3.0.2 =
+* Changed: the squash subject is user copy, and which text wins depends on the commit count (#183)
 
 = 3.0.1 =
 * Fixed: the breaking-change marker now comes only from the conventional signal, so a pull request that merely mentions the phrase no longer publishes a false breaking note (#182)
