@@ -314,7 +314,7 @@ jobs:
 
           Contexto de arquitectura CI/CD de este repositorio (NO es parte del diff):
           - El job 'auto-fix' crea un BRANCH SEPARADO y un PR independiente que requiere revisión humana obligatoria antes del merge. NO pushea directamente al branch del PR original. Este patrón es seguro y no debe ser flaggeado como crítico.
-          - El job 'version_bump' en prod.yml modifica SOLO 2 archivos (1platform-content-ai.php y readme.txt) con validación estricta de diff (1 línea por archivo, patrón Version/Stable tag) antes del push.
+          - El job 'version_bump' en prod.yml modifica SOLO 3 archivos (1platform-content-ai.php, readme.txt y CHANGELOG.md) con validación estricta de la FORMA del diff por archivo (línea Version / línea Stable tag / encabezados de changelog aditivos) antes del push.
           - El rollback de version bump usa el SHA exacto del commit (no HEAD), eliminando race conditions.
           - Estos patrones ya han sido auditados y mitigados. No los reportes como hallazgos críticos.
 
