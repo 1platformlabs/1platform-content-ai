@@ -98,8 +98,12 @@ class ContaiCommentsService {
      * landed *before* their own article — a reader (or an ad-network policy
      * reviewer) sees a January article answered the previous March. That is the
      * "appears inactive or lacks sufficient curation" signal reported in
-     * issues 118 and 119, and it is the one part of those reports that is a
-     * plain defect rather than a content decision.
+     * issues 118 and 119, and it is one of the plain defects in those reports
+     * rather than a content decision. Do not read that as a claim that it is
+     * the only one: the reporter listed three observations, and each of the
+     * other two turned out to be a plain defect as well — comment language
+     * (see getPostLang below) and the post_date/post_date_gmt direction in
+     * ContaiWordPressPostCreator::create.
      *
      * Arithmetic runs in GMT because post_date is a *local* column: passing it
      * to strtotime() would have PHP read it in its own timezone (UTC under
@@ -240,8 +244,9 @@ class ContaiCommentsService {
      * getSiteLang() falls through to the *admin* locale -- answers every
      * English article with Spanish comments. That is the "the language
      * detected is Spanish" observation on an English site in issues 118/119,
-     * and it is the second plain defect in those reports rather than a
-     * content decision.
+     * and it is the second of the three plain defects in those reports rather
+     * than a content decision. The third is the post_date/post_date_gmt
+     * direction in ContaiWordPressPostCreator::create.
      *
      * Only a well-formed tag is taken from the meta: a primary subtag of two
      * letters, optionally followed by region/script subtags ("es", "en_US",

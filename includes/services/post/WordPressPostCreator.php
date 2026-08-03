@@ -29,8 +29,17 @@ class ContaiWordPressPostCreator {
         }
 
         if ($post_date !== null) {
-            $post_data['post_date'] = $this->sanitizePostDate($post_date);
-            $post_data['post_date_gmt'] = get_gmt_from_date($post_data['post_date']);
+            // sanitizePostDate() renders the instant with gmdate(), so its result
+            // is GMT: post_date_gmt takes it verbatim and the *local* post_date
+            // column is derived from it. Writing the GMT rendering straight into
+            // post_date and then asking get_gmt_from_date() — which reads its
+            // argument as local — for the companion shifted both columns by the
+            // site's UTC offset. This is the direction ContaiAgentActionHandler
+            // already uses for the identical gmdate() value, and the one
+            // CommentsService::commentDatesForPost documents.
+            $post_date_gmt = $this->sanitizePostDate($post_date);
+            $post_data['post_date_gmt'] = $post_date_gmt;
+            $post_data['post_date'] = get_date_from_gmt($post_date_gmt);
         }
 
         $post_id = wp_insert_post($post_data);
@@ -47,11 +56,21 @@ class ContaiWordPressPostCreator {
         return $post_id;
     }
 
+    /**
+     * Normalizes an incoming date to GMT 'Y-m-d H:i:s'.
+     *
+     * Both paths return GMT. The success path renders the parsed instant with
+     * gmdate(), so the fallback asks current_time() for the GMT clock rather
+     * than the site-local one: a mixed convention would be invisible at the
+     * call site, which derives the local post_date from this value.
+     *
+     * @return string 'Y-m-d H:i:s' in GMT.
+     */
     private function sanitizePostDate(string $post_date): string {
         $timestamp = strtotime($post_date);
 
         if ($timestamp === false) {
-            return current_time('mysql');
+            return current_time('mysql', true);
         }
 
         return gmdate('Y-m-d H:i:s', $timestamp);
