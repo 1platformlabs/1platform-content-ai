@@ -292,6 +292,12 @@ jobs:
           else
             echo "::warning::Claude API returned HTTP ${HTTP_CODE} — deriving the bump from the conventional-commit prefix so the release is not skipped"
             cat claude_bump_response.json 2>/dev/null || true
+            # El cuerpo del proveedor no termina en salto de línea: sin este
+            # `echo`, el primer `::notice::`/`::warning::` que imprima el
+            # bloque de Python queda pegado a esa línea y GitHub no lo parsea
+            # como comando de workflow. Medido en el run 30827182770 de este
+            # repo: `grep -c '}::notice::Bump'` = 1.
+            echo
           fi
 
           ANALYZER_AVAILABLE="$ANALYZER_AVAILABLE" python << 'PYEOF'
