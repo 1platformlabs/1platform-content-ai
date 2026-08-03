@@ -161,7 +161,7 @@ The plugin sends your site URL, API key, and content generation parameters (keyw
 == Changelog ==
 
 = 3.0.0 =
-* Changed: **BREAKING** every release writes its changelog entry, and the notes stop travelling inside the package (#181)
+* Fixed: every release writes its changelog entry, and the notes stop travelling inside the package (#181)
 
 = 2.40.0 =
 * Added: Search Console performance panel — clicks, impressions, CTR and average position for a chosen date range (24 hours / 7 days / 28 days / 3 months), each with its change against the previous period, plus the top queries, pages and countries. Previously the panel could connect and verify a site but had nothing to say about how it performed; seeing that meant leaving WordPress (SCP-04)

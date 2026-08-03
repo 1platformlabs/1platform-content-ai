@@ -395,6 +395,29 @@ jobs:
               ).stdout
 
 
+          # La cadena que arma el trailer se compone en tiempo de ejecución a
+          # proposito: escrita literal, este archivo es a la vez el sujeto que el
+          # analizador de version lee como dato ⇒ documentar la regla la disparaba.
+          BREAKING_TRAILER = r"^" + "BREAKING" + r"[ -]CHANGE:"
+          CONVENTIONAL_BANG = r"^[a-z][a-z0-9]*(\([^)]*\))?!:"
+
+
+          def breaking_change(headlines: list[str]) -> bool:
+              """Ruptura CONVENCIONAL, no «la frase en algun lugar».
+
+              Conventional Commits define el trailer en el CUERPO DEL COMMIT y
+              anclado a inicio de linea. El predicado anterior era
+              `"BREAKING CHANGE" in (git("%b") + pr_body)`, y un cuerpo de PR que
+              apenas MENCIONA la frase --documentacion, una cita, un checklist--
+              alcanzaba para empujar un major y para escribir `**BREAKING**` en lo
+              que los usuarios leen en WordPress.org. Medido: el PR #181 publico
+              exactamente eso en 3.0.0 por documentar este mapeo.
+              """
+              if any(re.match(CONVENTIONAL_BANG, h) for h in headlines):
+                  return True
+              return re.search(BREAKING_TRAILER, git("%b"), re.MULTILINE) is not None
+
+
           def bump_from_conventional_commit() -> str:
               """Bump determinista para cuando el analizador no pudo contestar.
 
@@ -406,10 +429,8 @@ jobs:
               Sub-etiquetar una release se corrige; no publicarla, no.
               """
               headlines = [h for h in (git("%s").strip(), _read("pr_title.txt").strip()) if h]
-              prose = git("%b") + _read("pr_body.txt")
 
-              breaking = re.compile(r"^[a-z][a-z0-9]*(\([^)]*\))?!:")
-              if any(breaking.match(h) for h in headlines) or "BREAKING CHANGE" in prose:
+              if breaking_change(headlines):
                   return "major"
               if any(re.match(r"^feat(\([^)]*\))?:", h) for h in headlines):
                   return "minor"
@@ -500,7 +521,7 @@ jobs:
               # readme.txt son `* <Seccion>: <texto> (#N)` y ninguna repite un
               # segundo dos-puntos (medido: 0/49). Esto es copy de usuario.
               desc = parsed["desc"].strip()
-              if parsed["bang"] or "BREAKING CHANGE" in (git("%b") + _read("pr_body.txt")):
+              if breaking_change([subject]):
                   section = "Changed"
                   desc = f"**BREAKING** {desc}"
               pr = os.environ.get("PR_NUMBER", "").strip()
