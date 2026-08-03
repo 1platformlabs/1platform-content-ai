@@ -102,6 +102,13 @@ jobs:
           STAGE=$(mktemp -d)
           rsync -rc --exclude-from="${GITHUB_WORKSPACE}/.distignore" "${GITHUB_WORKSPACE}/" "${STAGE}/"
 
+          # A floor for this check itself: an empty staging directory satisfies both assertions
+          # below vacuously, so an over-broad .distignore would read as a clean package.
+          if [ ! -f "${STAGE}/1platform-content-ai.php" ]; then
+            echo "::error::Staging produced no plugin — 1platform-content-ai.php is missing, so this step is measuring nothing"
+            exit 1
+          fi
+
           # (a) Nothing named .git survives at ANY depth. A published .git is the whole private
           #     history plus every internal branch name — 3.3 MB of the 10 MB users downloaded
           #     until 2.41.6 (issue #176).
