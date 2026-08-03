@@ -226,6 +226,46 @@ class ContaiCommentsService {
         return self::normalizeLang(get_locale());
     }
 
+    /**
+     * Language for the comments of one post.
+     *
+     * Comments used to be generated in the *site's* language: both writers
+     * hoisted getSiteLang() out of their loop and handed the same code to
+     * every post. But the language a post is written in is chosen per
+     * generation run -- the Content Generator asks for it on each extraction
+     * (contai_target_language) -- and it is recorded on the post itself as
+     * _content_lang (ContaiPostMetadataBuilder). Neither of those writes
+     * contai_site_language, so a site whose posts were generated in English
+     * while the option says Spanish -- or is empty on an es_ES install, where
+     * getSiteLang() falls through to the *admin* locale -- answers every
+     * English article with Spanish comments. That is the "the language
+     * detected is Spanish" observation on an English site in issues 118/119,
+     * and it is the second plain defect in those reports rather than a
+     * content decision.
+     *
+     * Only a well-formed tag is taken from the meta: a primary subtag of two
+     * letters, optionally followed by region/script subtags ("es", "en_US",
+     * "pt-BR"). Anything else falls back to the site language instead of
+     * being coerced, because coercion is what invents a wrong answer:
+     * substr('spanish', 0, 2) is 'sp', which is a code for nothing.
+     *
+     * @param object $post Post object (WP_Post) the comments will hang from.
+     */
+    public static function languageForPost(object $post): string {
+        $post_id = isset($post->ID) ? (int) $post->ID : 0;
+
+        if ($post_id > 0) {
+            $recorded = get_post_meta($post_id, '_content_lang', true);
+
+            if (is_string($recorded)
+                && preg_match('/^([a-z]{2})(?:[_-][a-z0-9]+)*$/i', trim($recorded), $matches)) {
+                return strtolower($matches[1]);
+            }
+        }
+
+        return self::getSiteLang();
+    }
+
     private function error_result(string $message, int $status_code = 0): array {
         return [
             'success'  => false,

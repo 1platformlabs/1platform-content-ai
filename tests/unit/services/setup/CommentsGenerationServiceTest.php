@@ -27,6 +27,14 @@ class CommentsGenerationServiceTest extends TestCase
     /** How many times local->GMT conversion was needed. */
     private int $gmtConversions = 0;
 
+    /** Language code handed to the API, in call order. */
+    /** @var array<int, string> */
+    private array $requestedLangs = [];
+
+    /** _content_lang recorded on each post id, as the meta table would hold it. */
+    /** @var array<int, string> */
+    private array $postLanguages = [];
+
     public function setUp(): void
     {
         parent::setUp();
@@ -34,6 +42,8 @@ class CommentsGenerationServiceTest extends TestCase
 
         $this->insertedComments = [];
         $this->gmtConversions = 0;
+        $this->requestedLangs = [];
+        $this->postLanguages = [];
         $this->mockCommentsService = Mockery::mock(ContaiCommentsService::class);
     }
 
@@ -118,6 +128,39 @@ class CommentsGenerationServiceTest extends TestCase
         );
     }
 
+    /**
+     * The wizard pass runs over whatever the site already holds, and a site
+     * built with the Content Generator can hold posts in more than one
+     * language: the extraction screen asks for the language on every run and
+     * records it on the post, while contai_site_language keeps whatever the
+     * wizard was configured with. Hoisting one code out of the loop is what
+     * put Spanish comments under English articles in issues 118/119.
+     */
+    public function test_each_post_is_commented_in_the_language_it_was_generated_in(): void
+    {
+        $posts = [
+            $this->post(11, '2026-06-01 12:00:00'),
+            $this->post(22, '2026-06-02 12:00:00'),
+            $this->post(33, '2026-06-03 12:00:00'),
+        ];
+
+        $this->mockWordPress($posts);
+        // The option says English (see mockWordPress); post 22 was generated in
+        // Spanish and post 33 carries no record at all.
+        $this->postLanguages = [11 => 'en', 22 => 'es'];
+        $this->mockApiReturning([['full_name' => 'Ana Ruiz', 'content' => 'Useful, thanks.']]);
+
+        (new ContaiCommentsGenerationService($this->mockCommentsService))
+            ->generateCommentsForRecentPosts(3, 1);
+
+        $this->assertSame(
+            ['en', 'es', 'en'],
+            $this->requestedLangs,
+            'Each post must be answered in its own language, and a post with no '
+            . 'recorded language falls back to the site.'
+        );
+    }
+
     /** Site timezone used by the date stubs: UTC+2, so a double shift is visible. */
     private const SITE_OFFSET = 2 * 3600;
 
@@ -145,6 +188,11 @@ class CommentsGenerationServiceTest extends TestCase
             ][$key] ?? $default
         );
         WP_Mock::userFunction('get_locale')->andReturn('en_US');
+        WP_Mock::userFunction('get_post_meta')->andReturnUsing(
+            fn (int $id, string $key, bool $single) => $key === '_content_lang'
+                ? ($this->postLanguages[$id] ?? '')
+                : ''
+        );
         WP_Mock::userFunction('sanitize_text_field')->andReturnArg(0);
         WP_Mock::userFunction('sanitize_textarea_field')->andReturnArg(0);
         WP_Mock::userFunction('wp_rand')->andReturnUsing(
@@ -171,6 +219,10 @@ class CommentsGenerationServiceTest extends TestCase
     {
         $this->mockCommentsService
             ->shouldReceive('generateComments')
-            ->andReturn(['success' => true, 'comments' => $comments, 'error' => null]);
+            ->andReturnUsing(function (int $count, string $lang, string $context) use ($comments): array {
+                $this->requestedLangs[] = $lang;
+
+                return ['success' => true, 'comments' => $comments, 'error' => null];
+            });
     }
 }

@@ -30,12 +30,12 @@ class ContaiCommentsGenerationService
             throw new Exception('No published posts found to generate comments for');
         }
 
-        $lang = ContaiCommentsService::getSiteLang();
         $websiteTopic = get_option('contai_site_theme', '');
         $generatedComments = [];
 
         foreach ($posts as $post) {
             $context = ContaiCommentsService::buildContext($websiteTopic, $post->post_title);
+            $lang = ContaiCommentsService::languageForPost($post);
             $result = $this->commentsService->generateComments($commentsPerPost, $lang, $context);
 
             if (!$result['success']) {

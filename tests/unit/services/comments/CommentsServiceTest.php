@@ -290,11 +290,154 @@ class CommentsServiceTest extends TestCase
         $this->assertStringNotContainsString('ContaiCommentsService::commentDatesForPost(', $unanchored);
     }
 
+    // ── the language of a comment ───────────────
+
+    /**
+     * The reported case, in one assertion: an English site whose plugin option
+     * still says Spanish. The post carries the language it was generated in;
+     * the option carries the language the *wizard* was run in, and those are
+     * set by different screens.
+     */
+    public function test_the_comment_language_comes_from_the_post_not_the_site(): void
+    {
+        $this->mockSiteLanguage('spanish', 'es_ES');
+        $this->mockRecordedLanguage('en');
+
+        $this->assertSame('en', ContaiCommentsService::languageForPost($this->post('2026-03-14 09:15:00')));
+    }
+
+    /**
+     * The inverse, so the test is not satisfied by a hardcoded 'en': the same
+     * code path must answer 'es' for a post generated in Spanish, on a site
+     * whose option says English.
+     */
+    public function test_a_spanish_post_on_an_english_site_is_answered_in_spanish(): void
+    {
+        $this->mockSiteLanguage('english', 'en_US');
+        $this->mockRecordedLanguage('es');
+
+        $this->assertSame('es', ContaiCommentsService::languageForPost($this->post('2026-03-14 09:15:00')));
+    }
+
+    public function test_a_post_with_no_recorded_language_falls_back_to_the_site(): void
+    {
+        $this->mockSiteLanguage('spanish', 'en_US');
+        $this->mockRecordedLanguage('');
+
+        $this->assertSame(
+            'es',
+            ContaiCommentsService::languageForPost($this->post('2026-03-14 09:15:00')),
+            'Hand-written and imported posts carry no _content_lang; they keep the old behaviour.'
+        );
+    }
+
+    public function test_a_regional_tag_is_folded_to_its_primary_subtag(): void
+    {
+        $this->mockSiteLanguage('spanish', 'es_ES');
+        $this->mockRecordedLanguage('pt-BR');
+
+        $this->assertSame('pt', ContaiCommentsService::languageForPost($this->post('2026-03-14 09:15:00')));
+    }
+
+    /**
+     * Coercion is how a resolver invents a wrong answer: substr('spanish', 0, 2)
+     * is 'sp', a code for no language at all. An unrecognised value has to fall
+     * back to the site rather than be truncated into something plausible.
+     */
+    public function test_a_word_form_in_the_meta_is_not_truncated_into_a_wrong_code(): void
+    {
+        $this->mockSiteLanguage('english', 'en_US');
+        $this->mockRecordedLanguage('spanish');
+
+        $lang = ContaiCommentsService::languageForPost($this->post('2026-03-14 09:15:00'));
+
+        $this->assertNotSame('sp', $lang, "'sp' is not a language code.");
+        $this->assertSame('en', $lang);
+    }
+
+    public function test_a_post_without_an_id_never_queries_the_meta_table(): void
+    {
+        $this->mockSiteLanguage('spanish', 'es_ES');
+        WP_Mock::userFunction('get_post_meta')->never();
+
+        $post = new \stdClass();
+
+        $this->assertSame('es', ContaiCommentsService::languageForPost($post));
+    }
+
+    /**
+     * Same argument as the date inventory above: the rule is only worth
+     * anything if every writer goes through it. Both writers used to hoist
+     * getSiteLang() out of their loop, which is precisely how one site-wide
+     * code ended up on posts written in another language.
+     */
+    public function test_every_comment_writer_takes_its_language_from_the_post(): void
+    {
+        $writers = $this->commentWriterSources();
+
+        $this->assertSame(
+            [
+                'includes/admin/content-generator/panels/generate-comments.php',
+                'includes/services/setup/CommentsGenerationService.php',
+            ],
+            array_keys($writers),
+            'A new wp_insert_comment() caller must be audited against issues 118/119.'
+        );
+
+        foreach ($writers as $path => $source) {
+            $this->assertStringContainsString(
+                'ContaiCommentsService::languageForPost(',
+                $source,
+                $path . ' must take the comment language from the post.'
+            );
+            $this->assertSame(
+                0,
+                preg_match_all($this->siteWideLanguagePattern(), $source),
+                $path . ' still asks the site for a language it should ask the post for.'
+            );
+        }
+    }
+
+    public function test_the_language_inventory_detects_a_site_wide_writer(): void
+    {
+        // Negative control: the shape this audit exists to catch, i.e. the code
+        // that shipped. Without it a pattern matching nothing reads as "clean".
+        $siteWide = <<<'PHP'
+        $lang = ContaiCommentsService::getSiteLang();
+        foreach ($posts as $post) {
+            $service->generateComments(3, $lang, $context);
+        }
+        PHP;
+
+        $this->assertSame(1, preg_match_all($this->siteWideLanguagePattern(), $siteWide));
+        $this->assertStringNotContainsString('ContaiCommentsService::languageForPost(', $siteWide);
+    }
+
     // ── helpers ────────────────────────────────────────────────────
 
     private function unanchoredDrawPattern(): string
     {
         return '/wp_rand\(\s*strtotime\(/';
+    }
+
+    private function siteWideLanguagePattern(): string
+    {
+        return '/ContaiCommentsService::getSiteLang\(/';
+    }
+
+    private function mockSiteLanguage(string $option, string $locale): void
+    {
+        WP_Mock::userFunction('get_option')->andReturnUsing(
+            static fn (string $key, $default = '') => $key === 'contai_site_language' ? $option : $default
+        );
+        WP_Mock::userFunction('get_locale')->andReturn($locale);
+    }
+
+    private function mockRecordedLanguage($value): void
+    {
+        WP_Mock::userFunction('get_post_meta')->andReturnUsing(
+            static fn (int $id, string $key, bool $single) => $key === '_content_lang' ? $value : ''
+        );
     }
 
     /**
