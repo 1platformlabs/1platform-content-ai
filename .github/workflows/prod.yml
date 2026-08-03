@@ -496,9 +496,10 @@ jobs:
                   # sin parsear le sirve más a un usuario que un placeholder.
                   return "Changed", subject or f"Release {new_version}"
               section = KEEP_A_CHANGELOG_SECTION.get(parsed["type"], "Changed")
+              # El scope NO entra al texto: las 49 entradas que ya existen en
+              # readme.txt son `* <Seccion>: <texto> (#N)` y ninguna repite un
+              # segundo dos-puntos (medido: 0/49). Esto es copy de usuario.
               desc = parsed["desc"].strip()
-              if parsed["scope"]:
-                  desc = f"{parsed['scope']}: {desc}"
               if parsed["bang"] or "BREAKING CHANGE" in (git("%b") + _read("pr_body.txt")):
                   section = "Changed"
                   desc = f"**BREAKING** {desc}"
