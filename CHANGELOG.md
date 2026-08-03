@@ -85,8 +85,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [3.0.0] - 2026-08-03
 
-### Changed
-- **BREAKING** every release writes its changelog entry, and the notes stop travelling inside the package (#181)
+### Fixed
+- every release writes its changelog entry, and the notes stop travelling inside the package (#181)
 
 ## [2.36.0] - 2026-05-19
 
