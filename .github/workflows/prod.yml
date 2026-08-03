@@ -98,7 +98,9 @@ jobs:
           #   rsync -rc --exclude-from="$GITHUB_WORKSPACE/.distignore" "$GITHUB_WORKSPACE/" trunk/ --delete --delete-excluded
           # so .distignore is the only thing between a development file and every user. This
           # step runs before Setup PHP on purpose: the workspace is still the bare checkout,
-          # which is exactly what the svn-deploy job hands to the publisher.
+          # so no development file can hide behind a build artifact. It is the DENY half
+          # only -- `vendor/` is allowlisted here but never present in a bare checkout, so
+          # that it SHIPS is asserted in svn-deploy, the only job that installs it (#178).
           STAGE=$(mktemp -d)
           rsync -rc --exclude-from="${GITHUB_WORKSPACE}/.distignore" "${GITHUB_WORKSPACE}/" "${STAGE}/"
 
@@ -807,6 +809,81 @@ jobs:
           fi
 
           echo "Version consistency OK: $TAG_VERSION"
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION_PROD }}
+          extensions: ${{ env.PHP_EXTENSIONS }}
+          coverage: none
+
+      - name: Install production dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # GitHub Actions jobs do not share a filesystem, so the `composer install`
+          # the `release` job runs for the GitHub Release asset is invisible here.
+          # Without this step `vendor/` never exists in the tree this job hands to the
+          # publisher, and WordPress.org ships the plugin without Action Scheduler --
+          # the primary queue runner -- so every install silently falls back to
+          # WP-Cron, which does depend on HTTP traffic (issue #178).
+          composer install --no-dev --prefer-dist --optimize-autoloader --no-progress --no-interaction
+
+      - name: Assert the staged package carries the bundled runtime dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # Stage exactly what the publisher stages, for the same reason the `tests`
+          # job does: 10up/action-wordpress-plugin-deploy rsyncs this tree into SVN
+          # trunk with
+          #   rsync -rc --exclude-from="$GITHUB_WORKSPACE/.distignore" ... --delete --delete-excluded
+          # This step is the symmetric half of that job's allowlist. An allowlist can
+          # only reject what is PRESENT, so it permits `vendor/` to be MISSING -- which
+          # is exactly how #178 shipped without a single red check.
+          STAGE=$(mktemp -d)
+          rsync -rc --exclude-from="${GITHUB_WORKSPACE}/.distignore" "${GITHUB_WORKSPACE}/" "${STAGE}/"
+
+          # The subject is derived from the code that loads the dependency, never from a
+          # path typed in this step: every production require of a bundled path has to
+          # resolve in the tree that ships.
+          REQUIRED=$(mktemp)
+          grep -E '(require(_once)?|file_exists)' 1platform-content-ai.php \
+            | grep -oE '/vendor/[A-Za-z0-9._/-]+\.php' \
+            | sed 's|^/||' | sort -u > "${REQUIRED}" || true
+
+          # Floor: with zero derived paths every assertion below holds vacuously, which
+          # is the failure mode the sibling gate had before its own floor was added.
+          N=$(grep -c . "${REQUIRED}" || true)
+          if [ "${N}" -eq 0 ]; then
+            echo "::error::No bundled-dependency require found in 1platform-content-ai.php -- this step derives its subject from that file, so it is measuring nothing"
+            exit 1
+          fi
+
+          MISSING=""
+          while IFS= read -r req; do
+            [ -f "${STAGE}/${req}" ] || MISSING="${MISSING} ${req}"
+          done < "${REQUIRED}"
+
+          if [ -n "${MISSING}" ]; then
+            echo "::error::The published package would not carry:${MISSING} -- 1platform-content-ai.php requires it, so WordPress.org installs fall back to WP-Cron in silence (issue #178)"
+            echo "Required paths derived from 1platform-content-ai.php:"
+            cat "${REQUIRED}"
+            exit 1
+          fi
+
+          # Reporting only. This count must not be able to fail the step: with `set -e`
+          # a `find` over an absent vendor/ aborts, which turns a progress line into an
+          # accidental second gate whose message ("No such file or directory") explains
+          # nothing. The assertion above is the only gate, so it is the only thing that
+          # can fail -- measured: without this, the floor and the STAGE-vs-workspace
+          # layers both read as redundant because this line failed first.
+          VENDOR_FILES=0
+          if [ -d "${STAGE}/vendor" ]; then
+            VENDOR_FILES=$(find "${STAGE}/vendor" -type f | wc -l | tr -d ' ')
+          fi
+          echo "Bundled runtime dependencies OK: ${N} required path(s) present, ${VENDOR_FILES} files under vendor/"
 
       - name: Deploy to WordPress.org
         uses: 10up/action-wordpress-plugin-deploy@stable
