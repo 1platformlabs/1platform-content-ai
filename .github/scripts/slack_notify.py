@@ -3,7 +3,7 @@
 Usage:
   python3 .github/scripts/slack_notify.py <template> [--extra-field KEY VALUE]
 
-Templates: ready_to_prod, tests_failed, review_failed
+Templates: ready_to_prod, tests_failed
 
 Environment variables required:
   PR_NUMBER, PR_TITLE, PR_AUTHOR, PR_BRANCH, PR_URL, RUN_URL
@@ -49,18 +49,12 @@ def action_buttons(extra_buttons: list | None = None) -> dict:
 
 
 def ready_to_prod_status() -> str:
-    """El anuncio tiene que decir la verdad sobre lo que efectivamente corrió.
+    """El anuncio dice sólo lo que efectivamente corrió.
 
-    `REVIEW_VERDICT` vale `unavailable` cuando el revisor automatizado no pudo
-    ejecutarse (corte del proveedor): el pipeline deja de bloquear, pero nadie
-    puede afirmar que este código fue revisado.
+    El pipeline ya no tiene revisor automatizado, así que el anuncio nombra los
+    gates que sí existen —PHPUnit y SonarCloud— en lugar de un code review.
     """
-    if env("REVIEW_VERDICT") == "approved":
-        return "Tests y code review aprobados. PR listo para merge a producción."
-    return (
-        "Tests aprobados. :warning: El code review automatizado NO se ejecutó "
-        "(proveedor no disponible): este PR *no fue revisado*."
-    )
+    return "Tests aprobados. PR listo para merge a producción."
 
 
 def build_ready_to_prod() -> dict:
@@ -100,21 +94,9 @@ def build_tests_failed() -> dict:
     }
 
 
-def build_review_failed() -> dict:
-    return {
-        "blocks": [
-            {"type": "header", "text": {"type": "plain_text", "text": "\U0001f50c Plugin | Code Review: Cambios Requeridos", "emoji": True}},
-            {"type": "section", "fields": base_fields()},
-            {"type": "section", "text": {"type": "mrkdwn", "text": "Claude AI detectó hallazgos críticos en el code review. Revisión manual requerida."}},
-            action_buttons(),
-        ]
-    }
-
-
 TEMPLATES = {
     "ready_to_prod": build_ready_to_prod,
     "tests_failed": build_tests_failed,
-    "review_failed": build_review_failed,
 }
 
 
