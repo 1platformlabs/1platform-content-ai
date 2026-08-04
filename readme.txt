@@ -4,7 +4,7 @@ Tags: ai content, ai writer, seo, internal links, keyword research
 Requires at least: 5.9
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 3.0.2
+Stable tag: 3.0.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -159,6 +159,9 @@ The plugin sends your site URL, API key, and content generation parameters (keyw
 7. Tools — Google Analytics, Google Search Console, Publisuites, and Ads Manager integrations.
 
 == Changelog ==
+
+= 3.0.3 =
+* Changed: quitar el code review con Anthropic y la llamada a Anthropic del bump (#184)
 
 = 3.0.2 =
 * Changed: the squash subject is user copy, and which text wins depends on the commit count (#183)

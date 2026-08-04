@@ -83,6 +83,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `JobProcessorTest::test_processQueue_updatesLastTickOption()` + `test_processQueue_logsHappyPath()` — verify `contai_last_tick_at` is always written and the `[queue]` log lines are emitted under WP_DEBUG.
 - `OnePlatformClientHeadersTest::test_sendsXSiteUrlHeaderOnAllRequests()` — asserts the new header rides on GET, POST, PUT, PATCH, DELETE without regressing `X-Plugin-Version`.
 
+## [3.0.3] - 2026-08-04
+
+### Changed
+- quitar el code review con Anthropic y la llamada a Anthropic del bump (#184)
+
 ## [3.0.2] - 2026-08-03
 
 ### Changed
