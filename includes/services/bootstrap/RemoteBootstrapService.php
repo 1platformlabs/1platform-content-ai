@@ -149,7 +149,7 @@ class ContaiRemoteBootstrapService {
 	 */
 	private function buildJobPayload( array $config ): array {
 		return array(
-			'config'   => $config,
+			'config'   => $this->resolveImageSource( $config ),
 			'progress' => array(
 				'current_step'      => 0,
 				'current_step_name' => '',
@@ -158,6 +158,42 @@ class ContaiRemoteBootstrapService {
 				'started_at'        => current_time( 'mysql' ),
 			),
 		);
+	}
+
+	/**
+	 * Translate the platform's neutral image-source code into the value the
+	 * generator actually takes.
+	 *
+	 * The translation lives HERE rather than on the platform side because the
+	 * platform's API contract is published: a provider name in that payload is a
+	 * provider name in the public OpenAPI document, which the ecosystem's own
+	 * leak gate rejects. This plugin already carries these names — its wizard's
+	 * `<select>` is built on them — so it is the honest place for the mapping.
+	 *
+	 * An unknown or absent code falls back to the same default the form uses, so
+	 * a payload from an older platform release still produces a runnable job.
+	 */
+	private function resolveImageSource( array $config ): array {
+		$map = array(
+			'stock_photos' => 'pexels',
+			'stock_images' => 'pixabay',
+		);
+
+		$posts = isset( $config['post_generation'] ) && is_array( $config['post_generation'] )
+			? $config['post_generation']
+			: array();
+
+		// Already a provider value (an older platform release) ⇒ left alone.
+		if ( isset( $posts['image_provider'] ) && '' !== $posts['image_provider'] ) {
+			return $config;
+		}
+
+		$code = isset( $posts['image_source'] ) ? (string) $posts['image_source'] : '';
+		$posts['image_provider'] = $map[ $code ] ?? 'pexels';
+		unset( $posts['image_source'] );
+
+		$config['post_generation'] = $posts;
+		return $config;
 	}
 
 	/**

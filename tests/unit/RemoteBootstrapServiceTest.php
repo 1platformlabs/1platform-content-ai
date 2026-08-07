@@ -167,4 +167,35 @@ class RemoteBootstrapServiceTest extends TestCase {
 		$this->assertTrue( $result['success'] );
 		$this->assertSame( 'licence', $result['step'] );
 	}
+
+	public function test_the_neutral_image_code_is_translated_for_the_generator(): void {
+		// The platform's payload carries a neutral code because its API contract
+		// is published and a provider name there is a provider name in the public
+		// OpenAPI document. The generator takes the provider value, so the
+		// translation has to happen on this side.
+		$captured = null;
+		$jobs     = $this->getMockBuilder( ContaiJobRepository::class )
+			->disableOriginalConstructor()
+			->onlyMethods( array( 'findActiveSiteGenerationJob', 'create' ) )
+			->getMock();
+		$jobs->method( 'findActiveSiteGenerationJob' )->willReturn( null );
+		$jobs->method( 'create' )->willReturnCallback(
+			function ( $job ) use ( &$captured ) {
+				$raw      = $job->getPayload();
+				$captured = is_string( $raw ) ? json_decode( $raw, true ) : $raw;
+				return true;
+			}
+		);
+
+		$config = $this->config();
+		$config['post_generation'] = array( 'num_posts' => 10, 'image_source' => 'stock_images' );
+
+		$service = new ContaiRemoteBootstrapService(
+			$this->profile(), $jobs, $this->websites(), $this->auth(), 12
+		);
+		$service->run( array( 'api_key' => 'sk-live-key', 'config' => $config ) );
+
+		$this->assertSame( 'pixabay', $captured['config']['post_generation']['image_provider'] );
+		$this->assertArrayNotHasKey( 'image_source', $captured['config']['post_generation'] );
+	}
 }
