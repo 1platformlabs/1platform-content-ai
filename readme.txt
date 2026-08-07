@@ -160,6 +160,9 @@ The plugin sends your site URL, API key, and content generation parameters (keyw
 
 == Changelog ==
 
+= Unreleased =
+* Added: a site created by 1Platform can activate its own licence and queue its build with no administrator present (`contai_remote_bootstrap()`).
+
 = 3.0.3 =
 * Changed: quitar el code review con Anthropic y la llamada a Anthropic del bump (#184)
 

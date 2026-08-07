@@ -68,6 +68,12 @@ require_once plugin_dir_path( __FILE__ ) . 'includes/services/agents/ContaiAgent
 require_once plugin_dir_path( __FILE__ ) . 'includes/admin/agents/ContaiAgentsAdminPage.php';
 require_once plugin_dir_path( __FILE__ ) . 'includes/cron/agent-actions-cron.php';
 
+// Remote bootstrap — the entry point a site created by 1Platform uses to
+// activate its own licence and queue its build with no administrator present.
+// Loaded unconditionally and early: its caller is a must-use plugin, which runs
+// before regular plugins and cannot autoload anything this file does not pull in.
+require_once plugin_dir_path( __FILE__ ) . 'includes/services/bootstrap/RemoteBootstrapService.php';
+
 // SEO domain
 require_once plugin_dir_path(__FILE__) . 'includes/services/seo/SeoHeadService.php';
 $contai_seo_head = new ContaiSeoHeadService();
