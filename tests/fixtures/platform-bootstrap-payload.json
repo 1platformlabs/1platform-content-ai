@@ -1,0 +1,36 @@
+{
+  "api_key": "sk-REDACTED",
+  "config": {
+    "adsense": {
+      "publisher_id": "pub-1234567890123456"
+    },
+    "comments": {
+      "comments_per_post": 1,
+      "num_posts": 10
+    },
+    "keyword_extraction": {
+      "source_topic": "private clinics",
+      "target_country": "mx",
+      "target_language": "es"
+    },
+    "legal_info": {
+      "activity": "Digital publishing",
+      "address": "Av. Reforma 100, CDMX",
+      "email": "legal@misitio.com",
+      "owner": "Owner"
+    },
+    "post_generation": {
+      "image_source": "stock_photos",
+      "num_posts": 10,
+      "target_country": "mx",
+      "target_language": "es"
+    },
+    "site_config": {
+      "site_category": "health-wellness",
+      "site_language": "spanish",
+      "site_topic": "clinics and health",
+      "wordpress_theme": "astra"
+    }
+  },
+  "plugin_slug": "1platform-content-ai"
+}
