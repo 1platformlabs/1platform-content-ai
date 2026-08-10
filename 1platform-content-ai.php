@@ -68,6 +68,14 @@ require_once plugin_dir_path( __FILE__ ) . 'includes/services/agents/ContaiAgent
 require_once plugin_dir_path( __FILE__ ) . 'includes/admin/agents/ContaiAgentsAdminPage.php';
 require_once plugin_dir_path( __FILE__ ) . 'includes/cron/agent-actions-cron.php';
 
+// Plugin management domain (WPG) — inventory publish + order polling. Loaded
+// before Remote bootstrap below, which publishes the inventory as part of a
+// site's automated first activation.
+require_once plugin_dir_path( __FILE__ ) . 'includes/services/plugins/ContaiPluginInventoryService.php';
+require_once plugin_dir_path( __FILE__ ) . 'includes/services/plugins/ContaiPluginOrderService.php';
+require_once plugin_dir_path( __FILE__ ) . 'includes/plugins/hooks.php';
+require_once plugin_dir_path( __FILE__ ) . 'includes/cron/plugin-orders-cron.php';
+
 // Remote bootstrap — the entry point a site created by 1Platform uses to
 // activate its own licence and queue its build with no administrator present.
 // Loaded unconditionally and early: its caller is a must-use plugin, which runs
@@ -132,6 +140,12 @@ function contai_activate_plugin() {
         contai_log("Agent cron registration error: " . $e->getMessage());
     }
 
+    try {
+        contai_register_plugin_orders_cron();
+    } catch (Exception $e) {
+        contai_log("Plugin orders cron registration error: " . $e->getMessage());
+    }
+
     // Set site hardening defaults for existing installs (opt-in for new installs)
     add_option('contai_disable_feeds', '1');
     add_option('contai_disable_author_pages', '1');
@@ -144,6 +158,7 @@ register_activation_hook(__FILE__, 'contai_activate_plugin');
 
 register_deactivation_hook(__FILE__, 'contai_unregister_job_processor_cron');
 register_deactivation_hook( __FILE__, 'contai_unregister_agent_actions_cron' );
+register_deactivation_hook( __FILE__, 'contai_unregister_plugin_orders_cron' );
 
 /**
  * Run upgrade routines when the plugin version changes.
@@ -171,6 +186,7 @@ function contai_maybe_upgrade() {
     // Re-register cron events (may have been lost during update)
     contai_register_job_processor_cron();
     contai_register_agent_actions_cron();
+    contai_register_plugin_orders_cron();
 
     // Invalidate OPcache so PHP serves the new files
     if (function_exists('opcache_reset')) {

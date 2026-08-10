@@ -13,12 +13,22 @@ if (!function_exists('plugin_dir_path')) {
     }
 }
 
-// Create dummy WP admin files so ImageUploader::ensureMediaFunctionsLoaded() doesn't fatal
+// Create dummy WP admin files so ImageUploader::ensureMediaFunctionsLoaded()
+// and ContaiPluginInventoryService::ensureAdminIncludesLoaded() don't fatal
+// on a require_once of a path that doesn't exist under this fake ABSPATH.
+// Deliberately left EMPTY, not populated with stub function/class bodies:
+// every function these real WordPress files would define (get_plugins(),
+// activate_plugin(), delete_plugins(), plugins_api(), ...) is instead mocked
+// per-test via WP_Mock::userFunction(). WP_Mock can only ever mock a function
+// that is not already really defined — this project has no Patchwork
+// dependency to redefine an existing one — so pre-defining any of them here
+// would silently stop WP_Mock from being able to mock it for the rest of the
+// test process.
 $wp_admin_includes = ABSPATH . 'wp-admin/includes/';
 if (!is_dir($wp_admin_includes)) {
     mkdir($wp_admin_includes, 0777, true);
 }
-foreach (['file.php', 'media.php', 'image.php'] as $stub) {
+foreach (['file.php', 'media.php', 'image.php', 'plugin.php', 'plugin-install.php', 'class-wp-upgrader.php'] as $stub) {
     $path = $wp_admin_includes . $stub;
     if (!file_exists($path)) {
         file_put_contents($path, "<?php\n");
@@ -211,9 +221,15 @@ require_once __DIR__ . '/../includes/services/seo/SeoHeadService.php';
 // ── Category API ────────────────────────────────────────────────
 require_once __DIR__ . '/../includes/services/category-api/CategoryAPIService.php';
 
+// ── Plugin Management (WPG) ────────────────────────────────────
+require_once __DIR__ . '/../includes/services/plugins/ContaiPluginInventoryService.php';
+require_once __DIR__ . '/../includes/services/plugins/ContaiPluginOrderService.php';
+require_once __DIR__ . '/../includes/plugins/hooks.php';
+
 // ── Cron ────────────────────────────────────────────────────────
 require_once __DIR__ . '/../includes/cron/job-processor-cron.php';
 require_once __DIR__ . '/../includes/cron/agent-actions-cron.php';
+require_once __DIR__ . '/../includes/cron/plugin-orders-cron.php';
 
 // ── Admin Apps (asset enqueue dispatcher) ──────────────────────
 require_once __DIR__ . '/../includes/helpers/asset-version.php';
