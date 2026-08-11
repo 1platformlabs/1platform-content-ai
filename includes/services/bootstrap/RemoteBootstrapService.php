@@ -115,6 +115,18 @@ class ContaiRemoteBootstrapService {
 		// call that makes the platform's heartbeat able to find the site later.
 		$this->websites->ensureWebsiteExists();
 
+		// Publishes the site's plugin inventory now that a websiteId exists.
+		// Never allowed to fail run(): a failed publish costs nothing more
+		// than waiting for the next 1-minute poll cycle to catch it, while an
+		// uncaught exception here would fail the licence activation itself.
+		try {
+			require_once __DIR__ . '/../plugins/ContaiPluginInventoryService.php';
+			ContaiPluginInventoryService::create()->push( 'bootstrap' );
+		} catch ( \Throwable $e ) {
+			// phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+			contai_log( 'Bootstrap plugin inventory publish failed: ' . $e->getMessage() );
+		}
+
 		// ── Wizard.
 		$config = isset( $payload['config'] ) && is_array( $payload['config'] ) ? $payload['config'] : array();
 		if ( empty( $config ) ) {

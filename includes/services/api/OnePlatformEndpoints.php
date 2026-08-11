@@ -118,6 +118,20 @@ class ContaiOnePlatformEndpoints {
         return sprintf('/users/websites/%s/legal', $website_id);
     }
 
+    // ── Plugin Management (WPG) ────────────────────────────────
+
+    public static function websitePlugins(string $website_id): string {
+        return sprintf('/users/websites/%s/plugins', $website_id);
+    }
+
+    public static function websitePluginOrders(string $website_id): string {
+        return sprintf('/users/websites/%s/plugin-orders', $website_id);
+    }
+
+    public static function websitePluginOrderById(string $website_id, string $order_id): string {
+        return sprintf('/users/websites/%s/plugin-orders/%s', $website_id, $order_id);
+    }
+
     public static function subscriptionById(string $subscription_id): string {
         return sprintf('/users/subscriptions/%s', $subscription_id);
     }

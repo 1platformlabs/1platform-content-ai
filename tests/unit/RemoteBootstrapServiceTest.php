@@ -21,6 +21,17 @@ class RemoteBootstrapServiceTest extends TestCase {
 		WP_Mock::userFunction( 'current_time', array( 'return' => '2026-08-07 10:00:00' ) );
 		WP_Mock::userFunction( 'update_option', array( 'return' => true ) );
 		WP_Mock::userFunction( 'contai_log', array( 'return' => null ) );
+
+		// run() now also fires a plugin-inventory publish right after
+		// ensureWebsiteExists() (bootstrap source). That publish builds its
+		// own real ContaiWebsiteProvider (not the mocked $this->websites()
+		// injected below) and reads contai_user_website via get_option() to
+		// resolve a websiteId — returning null here means it resolves to
+		// "not enrolled" and no-ops before ever reaching get_plugins() or the
+		// API client, which is the accurate behavior for these tests' minimal
+		// WP_Mock environment and keeps them independent of what any other
+		// test file may have already taught WP_Mock about get_option().
+		WP_Mock::userFunction( 'get_option', array( 'return' => null ) );
 	}
 
 	protected function tearDown(): void {
