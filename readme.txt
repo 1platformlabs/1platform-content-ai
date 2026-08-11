@@ -4,7 +4,7 @@ Tags: ai content, ai writer, seo, internal links, keyword research
 Requires at least: 5.9
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 3.1.0
+Stable tag: 3.2.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -159,6 +159,9 @@ The plugin sends your site URL, API key, and content generation parameters (keyw
 7. Tools — Google Analytics, Google Search Console, Publisuites, and Ads Manager integrations.
 
 == Changelog ==
+
+= 3.2.0 =
+* Added: E1 — inventory publish, order polling, actions (WPG-02/03/04/05/06/08/10) (#186)
 
 = 3.1.0 =
 * Added: a site the platform built can set itself up (#185)
