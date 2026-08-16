@@ -187,6 +187,12 @@ jobs:
           tail -30 test_output.txt > test_summary.txt || true
 
       - name: SonarCloud Scan
+        # Informativo A PROPOSITO, y bloqueante en `qa.yml`. Este workflow corre
+        # despues del merge: fallar aca no impediria que el codigo entrara —ya
+        # entro— y dejaria `main` sin desplegar por un hallazgo que la compuerta
+        # del PR es la que tiene que atajar. Lo que aporta esta corrida es la
+        # medicion de la rama principal, que es contra la que se calcula "codigo
+        # nuevo" en los PRs siguientes. Por eso corre, y por eso no bloquea.
         if: steps.check_merge.outputs.is_merge == 'true'
         uses: SonarSource/sonarcloud-github-action@v5
         continue-on-error: true

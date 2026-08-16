@@ -200,19 +200,48 @@ jobs:
           name: coverage-report
         continue-on-error: true
 
+      # La presencia del secreto se resuelve en un paso propio y explícito.
+      # `if: env.SONAR_TOKEN != ''` sobre el paso del escáner depende de que el
+      # secreto esté declarado a nivel workflow/job, no en el `env:` del propio
+      # paso — una condición que se lee como una guarda y puede no estar
+      # midiendo nada. Un output es inequívoco.
+      - name: Check for SONAR_TOKEN
+        id: sonar_token
+        shell: bash
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -n "${SONAR_TOKEN:-}" ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::SONAR_TOKEN ausente (PR desde un fork): se saltea el analisis."
+          fi
+
       - name: SonarCloud Scan
-        if: env.SONAR_TOKEN != ''
+        if: steps.sonar_token.outputs.present == 'true'
         uses: SonarSource/sonarcloud-github-action@v5
-        continue-on-error: true
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # Espera el veredicto y falla si el gate falla. Sin este argumento el
+          # paso termina en verde apenas sube el analisis, y quitar
+          # `continue-on-error` no bloquearia nada.
+          args: >
+            -Dsonar.qualitygate.wait=true
+            -Dsonar.qualitygate.timeout=600
 
   approve:
     name: Approve & Label
     # PR-only — labels and PR approvals don't apply to dispatch.
-    needs: tests
-    if: github.event_name == 'pull_request' && needs.tests.result == 'success'
+    # `sonarcloud` entra en `needs` porque el job ya existia y NADIE dependia de
+    # el: podia fallar entero y la aprobacion, el release de QA y Ready to PROD
+    # seguian igual. Un job que no bloquea a nadie es un informe, no una
+    # compuerta.
+    needs: [tests, sonarcloud]
+    if: github.event_name == 'pull_request' && needs.tests.result == 'success' && needs.sonarcloud.result == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
