@@ -221,7 +221,9 @@ jobs:
 
       - name: SonarCloud Scan
         if: steps.sonar_token.outputs.present == 'true'
-        uses: SonarSource/sonarcloud-github-action@v5
+        # Pinneada al SHA, no al tag: `githubactions:S7637`, VULNERABILITY con
+        # impacto de seguridad ALTO en un job que recibe `SONAR_TOKEN`.
+        uses: SonarSource/sonarcloud-github-action@ffc3010689be73b8e5ae0c57ce35968afd7909e8 # v5
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
