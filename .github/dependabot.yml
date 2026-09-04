@@ -1,0 +1,35 @@
+# Dependabot — actualizaciones agrupadas y SEMANALES.
+#
+# Agrupado a proposito: la lluvia de PRs sueltos entrena al equipo a ignorarlos,
+# que es exactamente el fallo que este archivo tiene que evitar. Las alertas de
+# seguridad (`vulnerability-alerts`) llegan igual y por su propio canal: esto es
+# el mantenimiento rutinario, no la respuesta a incidentes.
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 3
+    groups:
+      acciones:
+        patterns: ["*"]
+    commit-message:
+      prefix: "chore(ci)"
+
+  - package-ecosystem: "composer"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    groups:
+      produccion:
+        dependency-type: "production"
+        update-types: ["minor", "patch"]
+      desarrollo:
+        dependency-type: "development"
+        update-types: ["minor", "patch"]
+    commit-message:
+      prefix: "chore(deps)"

@@ -1,0 +1,33 @@
+# Configuración de gitleaks para 1platform-content-ai.
+# Documenta los ÚNICOS falsos-positivos permitidos: ejemplos ilustrativos en la documentación
+# de integración con la API (no son secretos reales; el corpus se deriva del portal de
+# desarrolladores público, con el mismo modelo two-token `ak-`/`sk-` que este plugin consume).
+#
+# IMPORTANTE (seguridad — CA-12/RF-10): los regexes del allowlist son **anclados/acotados** para que
+# NO suacallen credenciales REALES. Validado empíricamente con gitleaks 8.18.4: una OpenAI
+# `sk-…T3BlbkFJ…`, un JWT firmado completo, y llaves AWS/GitHub siguen BLOQUEANDO el merge; solo pasan
+# los shapes de EJEMPLO del corpus (JWT truncados con `...`, tokens cortos `ak-`/`sk-`, UUID placeholder).
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Ejemplos de documentación (placeholders ilustrativos) + artefactos de build"
+
+paths = [
+  '''vendor/.*''',
+  '''node_modules/.*''',
+  '''\.phpunit\.result\.cache''',
+  '''\.gitleaks\.toml''',
+]
+
+regexes = [
+  # JWT de ejemplo: SOLO truncados con `...` (los del corpus). Un JWT firmado real NO contiene `...`.
+  '''eyJ[A-Za-z0-9_-]+\.\.\.''',
+  # Tokens placeholder del modelo two-token (ak-/sk-): ANCLADOS (^…$) y acotados a <=28 chars, así
+  # cubren los ejemplos del corpus (`ak-your-app-token`, `sk-the-user-token`, `sk-user-…-2026`, etc.)
+  # pero NO una OpenAI `sk-proj-…`/`sk-…`(~51) ni una Anthropic `sk-ant-api03-…` (largas) — esas bloquean.
+  '''^(?:ak|sk)-[A-Za-z0-9_<>-]{2,28}$''',
+  # UUID placeholder de ejemplo (authorization_number FEL en respuestas de muestra): secuencia hex obvia.
+  '''A1B2C3D4(?:-[0-9A-Fa-f]+)+''',
+]

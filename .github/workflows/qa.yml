@@ -533,3 +533,49 @@ jobs:
         if: always()
         shell: bash
         run: rm -f slack_payload.json test_summary.txt test_output.txt || true
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # Secretos — escaneo de gitleaks sobre el árbol del PR. Informativo por ahora
+  # (rodaje: semana 1 el job existe y no bloquea, semana 3 se marca requerido en
+  # la protección de rama). No entra en el `needs:` de `approve` a propósito: es
+  # un chequeo standalone, no una compuerta de este PR.
+  # ─────────────────────────────────────────────────────────────────────────
+  secretos:
+    name: Secretos
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    permissions:
+      contents: read
+    env:
+      GITLEAKS_VERSION: "8.30.1"   # verificada contra el release el 2026-09-04
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Instalar gitleaks
+        run: |
+          set -euo pipefail
+          curl -sSL -o gitleaks.tar.gz \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          tar -xzf gitleaks.tar.gz gitleaks
+
+      # La casa no le cree a un detector que no demostro discriminar — mismo
+      # patron que `contrast:selftest` y `showcase:visual:selftest`. El token
+      # falso se CONSTRUYE aca: el literal no vive nunca en el repo, asi que
+      # este paso no se vuelve el hallazgo de la proxima auditoria.
+      - name: El detector discrimina (secreto sembrado)
+        run: |
+          set -euo pipefail
+          TMP="$(mktemp -d)"
+          FALSO="ghp_$(head -c 64 /dev/urandom | base64 | tr -dc 'A-Za-z0-9' | head -c 36)"
+          printf 'token = "%s"\n' "$FALSO" > "$TMP/sembrado.txt"
+          if ./gitleaks detect --source "$TMP" --no-git --config .gitleaks.toml --redact --exit-code 1; then
+            echo "::error::gitleaks NO marco el secreto sembrado — este gate no discrimina."
+            exit 1
+          fi
+          rm -rf "$TMP"
+
+      # `--no-git` escanea el ARBOL, no el historial: caza el secreto que se
+      # esta agregando, no el que ya esta commiteado. El barrido historico es
+      # una tarea aparte.
+      - name: Secretos en el arbol
+        run: ./gitleaks detect --source . --no-git --config .gitleaks.toml --redact --exit-code 1
