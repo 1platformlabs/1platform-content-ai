@@ -554,7 +554,11 @@ jobs:
       - name: Instalar gitleaks
         run: |
           set -euo pipefail
-          curl -sSL -o gitleaks.tar.gz \
+          # `--proto '=https'` es lo que pide `githubactions:S6506`: `-L` sigue
+          # redirecciones, y sin esto una redirección a `http://` bajaría el
+          # binario por un canal sin cifrar. `-f` además falla ante un 4xx/5xx
+          # en vez de escribir la página de error dentro del .tar.gz.
+          curl --proto '=https' --tlsv1.2 -sSLf -o gitleaks.tar.gz \
             "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
           tar -xzf gitleaks.tar.gz gitleaks
 
