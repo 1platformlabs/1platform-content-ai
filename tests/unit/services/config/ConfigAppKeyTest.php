@@ -2,6 +2,7 @@
 
 namespace ContAI\Tests\Unit\Services\Config;
 
+use WP_Mock;
 use PHPUnit\Framework\TestCase;
 use ContaiConfig;
 
@@ -118,5 +119,41 @@ class ConfigAppKeyTest extends TestCase
         $key = ContaiConfig::resolveAppKey('production', 'embedded-key');
 
         $this->assertSame('embedded-key', $key);
+    }
+
+    /**
+     * The tests above call resolveAppKey() directly, in isolation. This one
+     * goes through the real singleton flow instead — constructor ->
+     * loadConfig() -> loadCustomConfig() -> getApiKey() — because that is the
+     * only path that writes the resolved key into $custom_config and the only
+     * one every real caller (OnePlatformAuthService, validate()) actually
+     * uses. Without it, an override that resolveAppKey() computes correctly
+     * could still fail to reach a caller if the merge step regressed.
+     */
+    public function test_getApiKey_reflects_an_external_override_through_the_public_flow(): void
+    {
+        WP_Mock::setUp();
+        ContaiConfig::reset();
+
+        // '.local' selects the 'development' environment (EnvironmentDetector).
+        WP_Mock::userFunction('get_site_url')->andReturn('https://example.local');
+        WP_Mock::userFunction('get_option')
+            ->with('contai_logging_enabled')
+            ->andReturn(false);
+        WP_Mock::userFunction('get_option')
+            ->with('contai_api_base_url', '')
+            ->andReturn('');
+
+        putenv('CONTAI_APP_KEY_DEVELOPMENT=overridden-via-env');
+
+        try {
+            $key = ContaiConfig::getInstance()->getApiKey();
+
+            $this->assertSame('overridden-via-env', $key);
+        } finally {
+            putenv('CONTAI_APP_KEY_DEVELOPMENT');
+            ContaiConfig::reset();
+            WP_Mock::tearDown();
+        }
     }
 }
