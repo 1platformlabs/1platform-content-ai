@@ -12,11 +12,55 @@ class ContaiConfig {
     private string $environment;
     private array $config;
 
+    /**
+     * Bundled defaults, including the APP key of each environment.
+     *
+     * READ THIS BEFORE FILING THE APP KEY BELOW AS A LEAKED SECRET.
+     *
+     * The value in `api.api_key` is a PUBLIC IDENTIFIER of this distribution,
+     * not a credential to protect. That is a decision, not an accident:
+     *
+     *  - This plugin is published to wordpress.org over SVN (`deploy.sh`) and
+     *    `includes/` is not excluded by `.distignore`, so whatever is written
+     *    here travels inside the .zip installed on every WordPress in the
+     *    world. A client that anybody can download cannot keep a secret —
+     *    hiding the value in a build step, an obfuscation or a second file
+     *    only changes how long it takes to read it back out.
+     *  - So the value is treated as public and the protection is placed where
+     *    it can actually hold: on the server. The app key is only half of the
+     *    two-token model. It identifies the tenant and buys an app token from
+     *    `/auth/token`, and an app token ALONE reaches no user's data — every
+     *    user-scoped route also demands `x-user-token`, which is minted from
+     *    the site owner's personal key. That key is NOT here: it lives in an
+     *    encrypted WordPress option, read only by `getUserApiKey()`.
+     *  - `1platform-api` limits `/auth/token` per app key as well as per
+     *    client, so one public identifier has a bounded blast radius.
+     *
+     * Consequences for whoever edits this array:
+     *
+     *  1. Do NOT blank the production value. It is what makes a fresh install
+     *     work with no configuration at all, which is the whole contract of a
+     *     wordpress.org plugin. An empty value fails `validate()`.
+     *  2. Do NOT let two environments share a value. Sharing one means a
+     *     rotation cannot be scoped to one environment, and it puts a QA key
+     *     in production builds for nothing. `ConfigEmbeddedAppKeyTest` fails
+     *     if you do.
+     *  3. Rotating the production value does NOT revoke it. Every install that
+     *     has not updated still presents the old one, so the old one has to
+     *     stay alive or those sites break. Rotation is a way to move traffic,
+     *     never a way to contain a leak — see
+     *     `docs/RUNBOOK-rotacion-clave-app.md`.
+     *
+     * A deployment that wants a key that is NOT in the .zip already has one:
+     * `resolveAppKey()` prefers `CONTAI_APP_KEY_<ENVIRONMENT>`, then
+     * `CONTAI_APP_KEY`, from a `wp-config.php` constant or an environment
+     * variable, and only then falls back to what is written here.
+     */
     private const DEFAULT_CONFIG = [
         'development' => [
             'api' => [
                 'base_url' => 'http://127.0.0.1:8000/api/v1',
-                'api_key' => 'v36MA4qV4OnSR8eKordujzkQNMx7y0VIh7Qkeoko87K3KOvfJtTef04SWARvG7nG',
+                'api_key' => 'set-CONTAI_APP_KEY_DEVELOPMENT-in-wp-config',
                 'timeout' => 180,
                 'rate_limit_requests' => 120,
                 'rate_limit_window' => 60,
@@ -53,7 +97,7 @@ class ContaiConfig {
         'staging' => [
             'api' => [
                 'base_url' => 'https://api-qa.1platform.pro/api/v1',
-                'api_key' => 'v36MA4qV4OnSR8eKordujzkQNMx7y0VIh7Qkeoko87K3KOvfJtTef04SWARvG7nG',
+                'api_key' => 'v36MA4qV4OnSR8eKordujzkQNMx7y0VIh7Qkeoko87K3KOvfJtTef04SWARvG7nG', // gitleaks:allow — public distribution identifier, see DEFAULT_CONFIG docblock
                 'timeout' => 180,
                 'rate_limit_requests' => 100,
                 'rate_limit_window' => 60,
@@ -90,7 +134,7 @@ class ContaiConfig {
         'production' => [
             'api' => [
                 'base_url' => 'https://api.1platform.pro/api/v1',
-                'api_key' => 'mJTS3UxQA6vNOKdrJ2A2jLjgMEKo4tghOG7P2VqoKrs5fafy0TykA3b7pMRzdQod',
+                'api_key' => 'mJTS3UxQA6vNOKdrJ2A2jLjgMEKo4tghOG7P2VqoKrs5fafy0TykA3b7pMRzdQod', // gitleaks:allow — public distribution identifier, see DEFAULT_CONFIG docblock
                 'timeout' => 180,
                 'rate_limit_requests' => 120,
                 'rate_limit_window' => 60,
