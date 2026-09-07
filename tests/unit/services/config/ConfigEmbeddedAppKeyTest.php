@@ -31,7 +31,7 @@ class ConfigEmbeddedAppKeyTest extends TestCase
 
         $keys = [];
         foreach ($defaults as $environment => $config) {
-            $keys[$environment] = $config['api']['api_key'] ?? null;
+            $keys[$environment] = $config['api']['app_key'] ?? null;
         }
 
         return $keys;

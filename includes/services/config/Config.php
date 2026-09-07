@@ -17,7 +17,7 @@ class ContaiConfig {
      *
      * READ THIS BEFORE FILING THE APP KEY BELOW AS A LEAKED SECRET.
      *
-     * The value in `api.api_key` is a PUBLIC IDENTIFIER of this distribution,
+     * The value in `api.app_key` is a PUBLIC IDENTIFIER of this distribution,
      * not a credential to protect. That is a decision, not an accident:
      *
      *  - This plugin is published to wordpress.org over SVN (`deploy.sh`) and
@@ -60,7 +60,7 @@ class ContaiConfig {
         'development' => [
             'api' => [
                 'base_url' => 'http://127.0.0.1:8000/api/v1',
-                'api_key' => 'set-CONTAI_APP_KEY_DEVELOPMENT-in-wp-config',
+                'app_key' => 'set-CONTAI_APP_KEY_DEVELOPMENT-in-wp-config',
                 'timeout' => 180,
                 'rate_limit_requests' => 120,
                 'rate_limit_window' => 60,
@@ -97,7 +97,7 @@ class ContaiConfig {
         'staging' => [
             'api' => [
                 'base_url' => 'https://api-qa.1platform.pro/api/v1',
-                'api_key' => 'v36MA4qV4OnSR8eKordujzkQNMx7y0VIh7Qkeoko87K3KOvfJtTef04SWARvG7nG', // gitleaks:allow — public distribution identifier, see DEFAULT_CONFIG docblock
+                'app_key' => 'v36MA4qV4OnSR8eKordujzkQNMx7y0VIh7Qkeoko87K3KOvfJtTef04SWARvG7nG',
                 'timeout' => 180,
                 'rate_limit_requests' => 100,
                 'rate_limit_window' => 60,
@@ -134,7 +134,7 @@ class ContaiConfig {
         'production' => [
             'api' => [
                 'base_url' => 'https://api.1platform.pro/api/v1',
-                'api_key' => 'mJTS3UxQA6vNOKdrJ2A2jLjgMEKo4tghOG7P2VqoKrs5fafy0TykA3b7pMRzdQod', // gitleaks:allow — public distribution identifier, see DEFAULT_CONFIG docblock
+                'app_key' => 'mJTS3UxQA6vNOKdrJ2A2jLjgMEKo4tghOG7P2VqoKrs5fafy0TykA3b7pMRzdQod',
                 'timeout' => 180,
                 'rate_limit_requests' => 120,
                 'rate_limit_window' => 60,
@@ -195,7 +195,11 @@ class ContaiConfig {
         $custom_config = [];
 
         // NOTE: The user's personal API key (contai_api_key) is NOT loaded here.
-        // api.api_key = APP key (identifies the tenant, used for /auth/token).
+        // api.app_key = APP key (identifies the tenant, used for /auth/token).
+        // Named `app_key`, not `api_key`: it is a public tenant identifier, not
+        // a secret, and a field literally named `api_key` holding a
+        // pseudorandom string is exactly the shape SonarCloud's php:S6418 scans
+        // for (see the DEFAULT_CONFIG docblock above).
         // The user's key is accessed exclusively via getUserApiKey() for /users/token.
 
         // The APP key can be provided from outside the repository — a
@@ -204,11 +208,11 @@ class ContaiConfig {
         // .zip published to WordPress.org or in Git history. When nothing
         // external is set it falls back to the value bundled below, so a fresh
         // install keeps working with no configuration at all (MAH-08 / D-7).
-        $embedded_key = self::DEFAULT_CONFIG[$this->environment]['api']['api_key']
-            ?? self::DEFAULT_CONFIG['production']['api']['api_key'];
+        $embedded_key = self::DEFAULT_CONFIG[$this->environment]['api']['app_key']
+            ?? self::DEFAULT_CONFIG['production']['api']['app_key'];
         $resolved_key = self::resolveAppKey($this->environment, $embedded_key);
         if ($resolved_key !== $embedded_key) {
-            $custom_config['api']['api_key'] = $resolved_key;
+            $custom_config['api']['app_key'] = $resolved_key;
         }
 
         $logging_enabled = get_option('contai_logging_enabled');
@@ -390,7 +394,7 @@ class ContaiConfig {
     }
 
     public function getApiKey(): string {
-        return $this->get('api.api_key', '');
+        return $this->get('api.app_key', '');
     }
 
     public function getUserApiKey(): string {

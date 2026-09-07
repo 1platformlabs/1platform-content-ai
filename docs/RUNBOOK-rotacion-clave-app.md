@@ -26,9 +26,9 @@ rotación.
 
 | Entorno | Dónde | Estado |
 |---|---|---|
-| `development` | `Config.php` (línea del `api_key` de `development`) | ya **no** es una credencial: es el marcador `set-CONTAI_APP_KEY_DEVELOPMENT-in-wp-config` |
-| `staging` | `Config.php` (línea del `api_key` de `staging`) | **viva contra QA** (`api-qa` → 200; control negativo de 64 caracteres inventados → 401; contra PROD → 401) |
-| `production` | `Config.php` (línea del `api_key` de `production`) | **viva contra PROD** (`api` → 200; control negativo → 401; contra QA → 401) |
+| `development` | `Config.php` (línea del `app_key` de `development`) | ya **no** es una credencial: es el marcador `set-CONTAI_APP_KEY_DEVELOPMENT-in-wp-config` |
+| `staging` | `Config.php` (línea del `app_key` de `staging`) | **viva contra QA** (`api-qa` → 200; control negativo de 64 caracteres inventados → 401; contra PROD → 401) |
+| `production` | `Config.php` (línea del `app_key` de `production`) | **viva contra PROD** (`api` → 200; control negativo → 401; contra QA → 401) |
 
 Hasta este PR, `development` y `staging` compartían el mismo valor: la clave de
 QA se publicaba **dos veces** en el `.zip`, y rotar "la de development" era
