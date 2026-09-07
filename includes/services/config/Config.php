@@ -208,8 +208,7 @@ class ContaiConfig {
         // .zip published to WordPress.org or in Git history. When nothing
         // external is set it falls back to the value bundled below, so a fresh
         // install keeps working with no configuration at all (MAH-08 / D-7).
-        $embedded_key = self::DEFAULT_CONFIG[$this->environment]['api']['app_key']
-            ?? self::DEFAULT_CONFIG['production']['api']['app_key'];
+        $embedded_key = self::DEFAULT_CONFIG[$this->environment]['api']['app_key'] ?? self::DEFAULT_CONFIG['production']['api']['app_key'];
         $resolved_key = self::resolveAppKey($this->environment, $embedded_key);
         if ($resolved_key !== $embedded_key) {
             $custom_config['api']['app_key'] = $resolved_key;
