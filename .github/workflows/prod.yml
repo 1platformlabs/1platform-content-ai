@@ -219,358 +219,84 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     environment: PROD
+    # Read-only on purpose. Until 3.2.0 this job committed the new version and
+    # pushed it to `main`; `main` is protected with enforce_admins, so from
+    # 2026-08-16 every push came back GH006 and nothing was published again
+    # (issue #208). The version now comes from the latest tag and is stamped
+    # into the package copy that `release` and `svn-deploy` ship — `main` is
+    # never written. tests/unit/ReleasePipelineContractTest.php keeps it so.
     permissions:
-      contents: write
+      contents: read
     outputs:
-      new_version: ${{ steps.bump.outputs.new_version }}
-      bump_type: ${{ steps.bump.outputs.bump_type }}
-      push_sha: ${{ steps.push.outputs.push_sha }}
+      new_version: ${{ steps.resolve.outputs.new_version }}
+      bump_type: ${{ steps.resolve.outputs.bump_type }}
+      prev_tag: ${{ steps.resolve.outputs.prev_tag }}
+      already_released: ${{ steps.resolve.outputs.already_released }}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
         with:
+          # Tags are the source of the previous version: without full history
+          # there are none, and every release would compute 0.0.1.
           fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Python
         uses: actions/setup-python@v6
         with:
           python-version: "3.13"
 
-      - name: Compute version bump
-        id: bump
+      - name: Resolve the version this merge publishes (from the latest tag)
+        id: resolve
         shell: bash
         run: |
           set -euo pipefail
+          # Same deterministic classification as before (no network): a `!` or a
+          # breaking trailer is major, `feat` is minor, anything else is patch —
+          # now over every first-parent commit since the last tag, so a merge
+          # whose own run failed is still classified by the next release.
+          python3 .github/scripts/release_version.py resolve | tee -a "$GITHUB_OUTPUT"
 
-          # El nivel del bump lo decidía un modelo por HTTP. Ese analizador
-          # ETIQUETA la release, no la gatea: cualquier forma de no estar
-          # disponible —clave sin configurar, saldo agotado, 4xx/5xx, fallo de
-          # transporte— dejaba el job rojo, y tanto `release` como `svn-deploy`
-          # cuelgan de `needs.version_bump.result == 'success'` ⇒ el plugin no
-          # se publicaba. La derivación determinista que ya vivía acá como
-          # fallback queda como único camino: misma clasificación, sin red.
+      - name: Stop if this commit is already published
+        if: steps.resolve.outputs.already_released == 'true'
+        shell: bash
+        run: |
+          echo "::notice::HEAD is already published as v${{ steps.resolve.outputs.new_version }}. To retry a failed WordPress.org deploy, re-run only the failed jobs."
 
-          python << 'PYEOF'
-          import json
-          import os
-          import re
-          import subprocess
-          from datetime import datetime, timezone
-          from pathlib import Path
-
-
-          def git(fmt: str) -> str:
-              """Un solo dueño para leer el commit de merge (subject o body)."""
-              return subprocess.run(
-                  ["git", "log", "-1", f"--pretty={fmt}"],
-                  capture_output=True,
-                  text=True,
-                  check=False,
-              ).stdout
-
-
-          # La cadena que arma el trailer se compone en tiempo de ejecución a
-          # proposito: escrita literal, este archivo es a la vez el sujeto que el
-          # analizador de version lee como dato ⇒ documentar la regla la disparaba.
-          BREAKING_TRAILER = r"^" + "BREAKING" + r"[ -]CHANGE:"
-          CONVENTIONAL_BANG = r"^[a-z][a-z0-9]*(\([^)]*\))?!:"
-
-
-          def breaking_change(headlines: list[str]) -> bool:
-              """Ruptura CONVENCIONAL, no «la frase en algun lugar».
-
-              Conventional Commits define el trailer en el CUERPO DEL COMMIT y
-              anclado a inicio de linea. El predicado anterior era
-              `"BREAKING CHANGE" in (git("%b") + pr_body)`, y un cuerpo de PR que
-              apenas MENCIONA la frase --documentacion, una cita, un checklist--
-              alcanzaba para empujar un major y para escribir `**BREAKING**` en lo
-              que los usuarios leen en WordPress.org. Medido: el PR #181 publico
-              exactamente eso en 3.0.0 por documentar este mapeo.
-              """
-              if any(re.match(CONVENTIONAL_BANG, h) for h in headlines):
-                  return True
-              return re.search(BREAKING_TRAILER, git("%b"), re.MULTILINE) is not None
-
-
-          def bump_from_conventional_commit() -> str:
-              """Bump determinista para cuando el analizador no pudo contestar.
-
-              Este repo commitea mensajes convencionales (`fix(site-wizard): …`,
-              `feat(search-console): …`) y mergea por squash, así que el subject
-              del merge ya trae la clasificación del propio autor. Sólo una señal
-              explícita de ruptura (`!` después del scope, o un trailer
-              `BREAKING CHANGE`) gana un major; `feat` gana un minor; el resto es
-              patch. Sub-etiquetar una release se corrige; no publicarla, no.
-              """
-              headlines = [h for h in (git("%s").strip(),) if h]
-
-              if breaking_change(headlines):
-                  return "major"
-              if any(re.match(r"^feat(\([^)]*\))?:", h) for h in headlines):
-                  return "minor"
-              return "patch"
-
-
-          bump_type = bump_from_conventional_commit()
-          print(f"::notice::Bump '{bump_type}' derivado del prefijo conventional-commit")
-
-          # Read files in binary mode to preserve line endings (CRLF/LF)
-          plugin_raw = Path("1platform-content-ai.php").read_bytes()
-          plugin_content = plugin_raw.decode("utf-8")
-          match = re.search(r"Version:\s*([\d.]+)", plugin_content)
-          if not match:
-              raise SystemExit("Could not extract current version from 1platform-content-ai.php")
-
-          current = match.group(1)
-          parts = current.split(".")
-          if len(parts) != 3 or not all(p.isdigit() for p in parts):
-              raise SystemExit(f"Invalid version format: {current}")
-
-          major, minor, patch_v = [int(x) for x in parts]
-
-          if bump_type == "major":
-              new_version = f"{major + 1}.0.0"
-          elif bump_type == "minor":
-              new_version = f"{major}.{minor + 1}.0"
-          else:
-              new_version = f"{major}.{minor}.{patch_v + 1}"
-
-          print(f"Current: {current} → New: {new_version} (bump: {bump_type})")
-
-          # Update 1platform-content-ai.php (binary write to preserve line endings)
-          new_plugin = re.sub(
-              r"(Version:\s*)[\d.]+",
-              rf"\g<1>{new_version}",
-              plugin_content,
-          )
-          Path("1platform-content-ai.php").write_bytes(new_plugin.encode("utf-8"))
-
-          # Update readme.txt (binary write to preserve line endings)
-          readme_raw = Path("readme.txt").read_bytes()
-          readme_content = readme_raw.decode("utf-8")
-          new_readme = re.sub(
-              r"(Stable tag:\s*)[\d.]+",
-              rf"\g<1>{new_version}",
-              readme_content,
-          )
-          # Hasta 2.41.8 este pipeline NUNCA escribió una entrada de changelog:
-          # `release` buscaba `## [<version>]`, no lo encontraba, y publicaba
-          # "No changelog entry found for this version." en los 31 tags estables
-          # (31/31 medido; control+ por canal: los `qa-*` dan 0), mientras
-          # WordPress.org mostraba un changelog cuyo encabezado más nuevo era
-          # 2.40.0 bajo `Stable tag: 2.41.8` — 77 de 93 versiones publicadas sin
-          # una línea (issue #180). El texto de la entrada se DERIVA del propio
-          # merge (el subject convencional que ya decide el bump acá arriba);
-          # nunca se teclea en este paso.
-          #
-          # ⚠️ Ese subject ES COPY DE USUARIO, y de dónde sale depende del nº de
-          # commits de la rama: con >=2 GitHub usa el TÍTULO del PR, con exactamente
-          # 1 usa el SUBJECT DEL COMMIT. Medido en la misma corrida: PR #181 (2
-          # commits) publicó su título en inglés, y PR #182 (1 commit) publicó el
-          # subject del commit en español dentro de un readme.txt que está entero en
-          # inglés. Cuidar sólo el título del PR se lee como cubierto y falla en el
-          # caso de un commit, que es el normal para un fix chico.
-          # Convención de este repo, derivada de lo de arriba: readme.txt está
-          # entero en inglés (49 entradas), así que el TÍTULO del PR y el SUBJECT
-          # del commit se escriben los dos en inglés. Con una rama de un solo
-          # commit, el subject del commit es lo único que el usuario va a leer.
-          KEEP_A_CHANGELOG_SECTION = {"feat": "Added", "fix": "Fixed"}
-
-
-          def changelog_entry() -> tuple[str, str]:
-              """(sección, descripción de una línea) derivadas del merge."""
-              subject = git("%s").strip()
-              parsed = re.match(
-                  r"^(?P<type>[a-z][a-z0-9]*)(\((?P<scope>[^)]*)\))?(?P<bang>!)?:\s*(?P<desc>.+)$",
-                  subject,
-              )
-              if not parsed:
-                  # Un subject no convencional igual recibe entrada: un titular
-                  # sin parsear le sirve más a un usuario que un placeholder.
-                  return "Changed", subject or f"Release {new_version}"
-              section = KEEP_A_CHANGELOG_SECTION.get(parsed["type"], "Changed")
-              # El scope NO entra al texto: las 49 entradas que ya existen en
-              # readme.txt son `* <Seccion>: <texto> (#N)` y ninguna repite un
-              # segundo dos-puntos (medido: 0/49). Esto es copy de usuario.
-              desc = parsed["desc"].strip()
-              if breaking_change([subject]):
-                  section = "Changed"
-                  desc = f"**BREAKING** {desc}"
-              pr = os.environ.get("PR_NUMBER", "").strip()
-              if pr and f"#{pr}" not in desc:
-                  desc = f"{desc} (#{pr})"
-              return section, desc
-
-
-          def insert_at(text: str, anchor: str, block: str, eol: str, after: int = 0) -> str:
-              """Inserta `block` justo antes del 1.er `anchor` posterior a `after`."""
-              found = re.compile(anchor, re.MULTILINE).search(text, after)
-              if not found:
-                  raise SystemExit(
-                      f"No hay punto de inserción de changelog para {anchor!r} — antes que publicar una release sin entrada, este paso falla"
-                  )
-              return text[: found.start()] + block.replace("\n", eol) + text[found.start() :]
-
-
-          section, description = changelog_entry()
-          today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-
-          # CHANGELOG.md — Keep a Changelog: la release va DEBAJO de [Unreleased]
-          # y encima del encabezado publicado más nuevo, que es exactamente lo que
-          # lee la extracción `## \[<version>\].*?(?=\n## \[|$)` del job `release`.
-          changelog_path = Path("CHANGELOG.md")
-          changelog_raw = changelog_path.read_bytes()
-          changelog_eol = "\r\n" if b"\r\n" in changelog_raw else "\n"
-          changelog_path.write_bytes(
-              insert_at(
-                  changelog_raw.decode("utf-8"),
-                  r"^## \[\d+\.\d+\.\d+\]",
-                  f"## [{new_version}] - {today}\n\n### {section}\n- {description}\n\n",
-                  changelog_eol,
-              ).encode("utf-8")
-          )
-
-          # readme.txt — lo que WordPress.org RENDERIZA, más nuevo primero. El
-          # ancla arranca en `== Changelog ==` para que una entrada `= x =` que
-          # aparezca en otra sección no desvíe la inserción.
-          readme_eol = "\r\n" if b"\r\n" in readme_raw else "\n"
-          Path("readme.txt").write_bytes(
-              insert_at(
-                  new_readme,
-                  r"^= (?:\d+\.\d+\.\d+|Unreleased) =\s*$",
-                  f"= {new_version} =\n* {section}: {description}\n\n",
-                  readme_eol,
-                  after=new_readme.index("== Changelog =="),
-              ).encode("utf-8")
-          )
-
-          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as f:
-              f.write(f"new_version={new_version}\n")
-              f.write(f"bump_type={bump_type}\n")
-          PYEOF
-
-      - name: Validate version bump diff
-        id: validate
+      - name: Stamp the version into the package copy
+        if: steps.resolve.outputs.already_released != 'true'
         shell: bash
         env:
-          NEW_VERSION: ${{ steps.bump.outputs.new_version }}
+          NEW_VERSION: ${{ steps.resolve.outputs.new_version }}
         run: |
           set -euo pipefail
+          STAMP_DIR="${RUNNER_TEMP}/release-stamp"
+          # Header `Version:`, readme `Stable tag:` and its changelog section
+          # (what WordPress.org renders, with the history of earlier releases
+          # restored from their tag annotations). CONTAI_VERSION reads the
+          # header at runtime, so it follows (issue #209 b).
+          python3 .github/scripts/release_version.py stamp --version "${NEW_VERSION}" --out-dir "${STAMP_DIR}"
+          python3 .github/scripts/release_version.py verify --version "${NEW_VERSION}"
+          cp 1platform-content-ai.php readme.txt "${STAMP_DIR}/"
+          echo "Stamped ${NEW_VERSION}. Changelog lines for this release:"
+          cat "${STAMP_DIR}/notes.md"
 
-          # Este paso ya no cuenta líneas: pinea la FORMA del diff de cada
-          # archivo. El conteo ciego (+1/-1 para los 2 archivos que hubiera)
-          # no podía admitir una entrada de changelog, que es aditiva y
-          # multilínea por construcción, y tampoco distinguía CUÁL archivo
-          # había cambiado de más. Por archivo es estrictamente más fuerte.
-          CHANGED_FILES=$(git diff --name-only | sort)
-          EXPECTED_FILES=$(printf '%s\n' CHANGELOG.md 1platform-content-ai.php readme.txt | sort)
-
-          if [ "$CHANGED_FILES" != "$EXPECTED_FILES" ]; then
-            echo "::error::Unexpected files modified: ${CHANGED_FILES}"
-            exit 1
-          fi
-
-          added() { git diff "$1" | grep '^+' | grep -v '^+++' || true; }
-          removed() { git diff "$1" | grep '^-' | grep -v '^---' || true; }
-
-          # (a) el plugin: exactamente una línea, y es la del header Version
-          PLUGIN_ADDED=$(added 1platform-content-ai.php)
-          PLUGIN_REMOVED=$(removed 1platform-content-ai.php)
-          if [ "$(printf '%s\n' "$PLUGIN_ADDED" | grep -c .)" != "1" ] \
-             || [ "$(printf '%s\n' "$PLUGIN_REMOVED" | grep -c .)" != "1" ]; then
-            echo "::error::1platform-content-ai.php should change exactly 1 line"
-            git diff 1platform-content-ai.php
-            exit 1
-          fi
-          if ! echo "$PLUGIN_ADDED" | grep -qP '^\+\s*\*\s*Version:\s*\d+\.\d+\.\d+'; then
-            echo "::error::Plugin header line does not match expected Version pattern"
-            echo "::error::Got: ${PLUGIN_ADDED}"
-            exit 1
-          fi
-
-          # (b) readme.txt: se REEMPLAZA sólo la línea del Stable tag; el resto
-          #     de las adiciones es la entrada nueva del changelog, encabezada
-          #     por `= <NEW_VERSION> =`.
-          README_REMOVED=$(removed readme.txt)
-          if [ "$(printf '%s\n' "$README_REMOVED" | grep -c .)" != "1" ] \
-             || ! echo "$README_REMOVED" | grep -qP '^-Stable tag:\s*\d+\.\d+\.\d+'; then
-            echo "::error::readme.txt must remove exactly the old Stable tag line"
-            git diff readme.txt
-            exit 1
-          fi
-          README_ADDED=$(added readme.txt)
-          if [ "$(echo "$README_ADDED" | grep -cP '^\+Stable tag:\s*\d+\.\d+\.\d+')" != "1" ]; then
-            echo "::error::readme.txt must add exactly one Stable tag line"
-            git diff readme.txt
-            exit 1
-          fi
-          if [ "$(echo "$README_ADDED" | grep -cxF "+= ${NEW_VERSION} =")" != "1" ]; then
-            echo "::error::readme.txt must add exactly one \"= ${NEW_VERSION} =\" changelog heading — that section is what WordPress.org renders (issue #180)"
-            git diff readme.txt
-            exit 1
-          fi
-
-          # (c) CHANGELOG.md: puramente aditivo, con el encabezado que la
-          #     extracción del job `release` busca literalmente.
-          CHANGELOG_REMOVED=$(removed CHANGELOG.md)
-          if [ -n "$(printf '%s\n' "$CHANGELOG_REMOVED" | grep . || true)" ]; then
-            echo "::error::CHANGELOG.md must only gain lines, never lose them"
-            git diff CHANGELOG.md
-            exit 1
-          fi
-          if [ "$(added CHANGELOG.md | grep -cP "^\+## \[${NEW_VERSION}\] - \d{4}-\d{2}-\d{2}$")" != "1" ]; then
-            echo "::error::CHANGELOG.md must add exactly one \"## [${NEW_VERSION}] - <date>\" heading — the release job extracts the body under it (issue #180)"
-            git diff CHANGELOG.md
-            exit 1
-          fi
-
-          echo "validated=true" >> "$GITHUB_OUTPUT"
-          echo "Version bump diff validated: 3 files, per-file shape pinned"
-
-      - name: Commit and push version bump
-        if: steps.validate.outputs.validated == 'true'
-        id: push
-        shell: bash
-        run: |
-          set -euo pipefail
-          VERSION="${{ steps.bump.outputs.new_version }}"
-          BUMP="${{ steps.bump.outputs.bump_type }}"
-
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add 1platform-content-ai.php readme.txt CHANGELOG.md
-
-          if git diff --cached --quiet; then
-            echo "::warning::No version change detected"
-            exit 0
-          fi
-
-          git commit -m "chore: bump version to ${VERSION} (${BUMP})"
-
-          PUSH_SUCCESS=false
-          for attempt in 1 2; do
-            if git push origin main; then
-              PUSH_SUCCESS=true
-              echo "push_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
-              break
-            fi
-            if [ "$attempt" -eq 1 ]; then
-              echo "::warning::Push failed (attempt $attempt), pulling and retrying"
-              git pull --rebase origin main
-            fi
-          done
-
-          if [ "$PUSH_SUCCESS" != "true" ]; then
-            echo "::error::Failed to push version bump after 2 attempts"
-            exit 1
-          fi
+      - name: Upload the stamped files
+        if: steps.resolve.outputs.already_released != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-stamp
+          path: ${{ runner.temp }}/release-stamp/
+          if-no-files-found: error
+          retention-days: 7
 
   release:
     name: Tag & Release
     needs: [tests, version_bump]
-    if: needs.tests.outputs.is_merge == 'true' && needs.version_bump.result == 'success'
+    if: >-
+      needs.tests.outputs.is_merge == 'true' &&
+      needs.version_bump.result == 'success' &&
+      needs.version_bump.outputs.already_released != 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     environment: PROD
@@ -581,11 +307,26 @@ jobs:
       version: ${{ needs.version_bump.outputs.new_version }}
 
     steps:
+      # The commit this run was started for, never the tip of `main`: another
+      # merge may have landed since, and the tag, the zip and the SVN copy
+      # must all be the code this run tested.
       - name: Checkout repository
         uses: actions/checkout@v5
         with:
-          ref: main
           fetch-depth: 0
+
+      - name: Download the stamped files
+        uses: actions/download-artifact@v4
+        with:
+          name: release-stamp
+          path: ${{ runner.temp }}/release-stamp
+
+      - name: Apply the stamped version to the package copy
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp "${RUNNER_TEMP}/release-stamp/1platform-content-ai.php" "${RUNNER_TEMP}/release-stamp/readme.txt" .
+          python3 .github/scripts/release_version.py verify --version "${{ needs.version_bump.outputs.new_version }}"
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -596,59 +337,25 @@ jobs:
 
       - name: Create tag
         shell: bash
+        env:
+          VERSION: v${{ needs.version_bump.outputs.new_version }}
         run: |
           set -euo pipefail
-          git pull origin main
-          VERSION="v${{ needs.version_bump.outputs.new_version }}"
+          if [ "$(git rev-parse HEAD)" != "${GITHUB_SHA}" ]; then
+            echo "::error::Checkout is $(git rev-parse HEAD), expected ${GITHUB_SHA}"
+            exit 1
+          fi
+          if git rev-parse -q --verify "refs/tags/${VERSION}" >/dev/null; then
+            echo "::error::${VERSION} already exists — two runs computed the same version; nothing is published twice"
+            exit 1
+          fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git tag -a "$VERSION" -m "Release ${VERSION}"
-          git push origin "$VERSION"
-
-      - name: Extract changelog for release
-        id: changelog
-        env:
-          VERSION: ${{ needs.version_bump.outputs.new_version }}
-          CHANGELOG_FILE: ${{ env.CHANGELOG_FILE }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          # Fuera del workspace a propósito: el paso `Stage the production tree`
-          # rsyncea `./` al árbol que se empaqueta, así que un artefacto de
-          # tiempo de build escrito acá VIAJA — `release_notes.txt` llevaba 3
-          # de 3 releases medidas dentro del .zip del GitHub Release, con el
-          # placeholder adentro (issue #180). $RUNNER_TEMP no se empaqueta.
-          python3 << 'PYEOF' > "${RUNNER_TEMP}/release_notes.txt"
-          import os
-          import re
-          from pathlib import Path
-
-          version = os.environ["VERSION"]
-          changelog = Path(os.environ["CHANGELOG_FILE"])
-
-          if not changelog.exists():
-              print("No changelog file found.")
-          else:
-              content = changelog.read_text(encoding="utf-8", errors="replace")
-              pattern = rf'## \[{re.escape(version)}\].*?\n(.*?)(?=\n## \[|$)'
-              match = re.search(pattern, content, re.DOTALL)
-
-              if match:
-                  body = match.group(1).strip()
-                  body = re.sub(r'\n---\s*$', '', body)
-                  print(body)
-              else:
-                  print("No changelog entry found for this version.")
-          PYEOF
-
-      - name: Get previous tag
-        id: prev_tag
-        shell: bash
-        run: |
-          set -euo pipefail
-          VERSION="v${{ needs.version_bump.outputs.new_version }}"
-          PREV=$(git tag --sort=-version:refname | grep -vx "$VERSION" | head -1 || true)
-          echo "tag=${PREV}" >> "$GITHUB_OUTPUT"
+          # The annotation carries this release's changelog lines: they are not
+          # committed anywhere, and the next stamp restores them from here.
+          git tag -a "${VERSION}" -F "${RUNNER_TEMP}/release-stamp/tag-message.txt" "${GITHUB_SHA}"
+          git push origin "refs/tags/${VERSION}"
+          echo "tag_created=true" >> "$GITHUB_ENV"
 
       - name: Stage the production tree
         shell: bash
@@ -661,26 +368,7 @@ jobs:
           PLUGIN_DIR="${BUILD_DIR}/1platform-content-ai"
           mkdir -p "${PLUGIN_DIR}"
 
-          if [ -f .distignore ]; then
-            rsync -av --exclude-from='.distignore' ./ "${PLUGIN_DIR}/"
-          else
-            rsync -av \
-              --exclude='.github' \
-              --exclude='.claude' \
-              --exclude='tests' \
-              --exclude='.git' \
-              --exclude='.gitignore' \
-              --exclude='.editorconfig' \
-              --exclude='composer.json' \
-              --exclude='composer.lock' \
-              --exclude='phpunit.xml.dist' \
-              --exclude='CLAUDE.md' \
-              --exclude='PIPELINE_PLAN.md' \
-              --exclude='CHANGELOG.md' \
-              --exclude='.distignore' \
-              --exclude='vendor/bin' \
-              ./ "${PLUGIN_DIR}/"
-          fi
+          rsync -a --exclude-from='.distignore' ./ "${PLUGIN_DIR}/"
 
           echo "build_dir=${BUILD_DIR}" >> "$GITHUB_ENV"
           echo "plugin_dir=${PLUGIN_DIR}" >> "$GITHUB_ENV"
@@ -698,7 +386,8 @@ jobs:
           #
           # El sujeto se DERIVA del índice de git, nunca de una lista de rutas
           # tecleada acá: lo que git NO trackea y no es `vendor/` es, por
-          # definición, algo que este job fabricó.
+          # definición, algo que este job fabricó. Los dos archivos estampados
+          # SÍ están trackeados: cambia su contenido, no su existencia.
           TRACKED=$(mktemp)
           git ls-files -z | tr '\0' '\n' | LC_ALL=C sort > "${TRACKED}" || true
           STAGED=$(mktemp)
@@ -724,43 +413,48 @@ jobs:
             exit 1
           fi
 
-          echo "Staged package OK: ${N_STAGED} files, $(grep -c '^vendor/' "${STAGED}" || true) under vendor/, 0 untracked build-time artifacts"
+          # The zip has to carry the version this release is named after.
+          STAGED_VERSION=$(grep -oP "^[ \t/*#@]*Version:\s*\K[\d.]+" "${plugin_dir}/1platform-content-ai.php")
+          if [ "${STAGED_VERSION}" != "${{ needs.version_bump.outputs.new_version }}" ]; then
+            echo "::error::The staged plugin header says ${STAGED_VERSION}, the release is ${{ needs.version_bump.outputs.new_version }}"
+            exit 1
+          fi
+
+          echo "Staged package OK: ${N_STAGED} files, $(grep -c '^vendor/' "${STAGED}" || true) under vendor/, 0 untracked build-time artifacts, version ${STAGED_VERSION}"
 
       - name: Build production zip
         shell: bash
         run: |
           set -euo pipefail
           cd "${build_dir}"
-          zip -r "${GITHUB_WORKSPACE}/1platform-content-ai.zip" 1platform-content-ai/
+          zip -r "${RUNNER_TEMP}/1platform-content-ai.zip" 1platform-content-ai/
 
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
+          VERSION: v${{ needs.version_bump.outputs.new_version }}
+          PREV_TAG: ${{ needs.version_bump.outputs.prev_tag }}
+          BUMP: ${{ needs.version_bump.outputs.bump_type }}
         shell: bash
         run: |
           set -euo pipefail
-          VERSION="v${{ needs.version_bump.outputs.new_version }}"
-          PREV_TAG="${{ steps.prev_tag.outputs.tag }}"
-          BUMP="${{ needs.version_bump.outputs.bump_type }}"
-
-          NOTES="${RUNNER_TEMP}/final_release_notes.txt"
-          cp "${RUNNER_TEMP}/release_notes.txt" "${NOTES}"
-
+          NOTES="${RUNNER_TEMP}/final_release_notes.md"
+          cp "${RUNNER_TEMP}/release-stamp/notes.md" "${NOTES}"
           {
             echo
             echo "---"
-            echo "**Version bump:** \`${BUMP}\` (auto-detected by AI)"
+            echo "**Version bump:** \`${BUMP}\` (derived from conventional commits since ${PREV_TAG:-the first commit})"
           } >> "${NOTES}"
-
-          if [ -n "$PREV_TAG" ]; then
+          if [ -n "${PREV_TAG}" ]; then
             echo "**Full Changelog:** [${PREV_TAG}...${VERSION}](${{ github.server_url }}/${{ github.repository }}/compare/${PREV_TAG}...${VERSION})" >> "${NOTES}"
           fi
 
-          gh release create "$VERSION" \
+          gh release create "${VERSION}" \
             --repo "${{ github.repository }}" \
+            --verify-tag \
             --title "Release ${VERSION}" \
             --notes-file "${NOTES}" \
-            1platform-content-ai.zip
+            "${RUNNER_TEMP}/1platform-content-ai.zip"
 
       - name: Remove QA pass label after merge
         if: needs.tests.outputs.pr_number != ''
@@ -788,43 +482,26 @@ jobs:
           fi
 
       - name: Rollback on release failure
-        if: failure()
+        if: failure() && env.tag_created == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: v${{ needs.version_bump.outputs.new_version }}
-          BUMP_SHA: ${{ needs.version_bump.outputs.push_sha }}
         shell: bash
         run: |
           set -euo pipefail
-
-          echo "::error::Release job failed — rolling back"
-
-          git push origin --delete "$VERSION" 2>/dev/null || echo "Tag not found or already deleted"
-
-          if [ -z "${BUMP_SHA}" ]; then
-            echo "::error::No bump SHA available — cannot safely revert"
-            exit 1
-          fi
-
-          BUMP_MSG=$(git log -1 --pretty=%s "$BUMP_SHA" 2>/dev/null || true)
-          if ! echo "$BUMP_MSG" | grep -q "^chore: bump version to"; then
-            echo "::error::SHA ${BUMP_SHA} does not match a version bump commit (msg: ${BUMP_MSG})"
-            exit 1
-          fi
-
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git pull origin main
-          git revert --no-edit "$BUMP_SHA"
-          git push origin main
-          echo "::warning::Version bump ${BUMP_SHA} reverted. The next merge will re-trigger the pipeline."
+          # Only what THIS job created: its release (if it got that far) and its
+          # tag, so the next run computes the same version again. There is no
+          # commit to revert any more — `main` was never written.
+          echo "::error::Release job failed — deleting ${VERSION}"
+          gh release delete "${VERSION}" --repo "${{ github.repository }}" --yes 2>/dev/null || echo "No release to delete"
+          git push origin --delete "refs/tags/${VERSION}" 2>/dev/null || echo "Tag not found or already deleted"
 
       - name: Cleanup
         if: always()
         shell: bash
         run: |
-          rm -f release_notes.txt final_release_notes.txt 1platform-content-ai.zip || true
-          rm -rf "${build_dir}" || true
+          rm -f "${RUNNER_TEMP}/1platform-content-ai.zip" "${RUNNER_TEMP}/final_release_notes.md" || true
+          rm -rf "${build_dir:-/nonexistent}" || true
 
   svn-deploy:
     name: Deploy to WordPress.org (SVN)
@@ -837,23 +514,36 @@ jobs:
       contents: read
 
     steps:
+      # The tagged commit, not the tip of `main` (see `release`).
       - name: Checkout repository
         uses: actions/checkout@v5
         with:
-          ref: main
           fetch-depth: 0
 
-      - name: Pull latest (includes version bump)
-        shell: bash
-        run: git pull origin main
+      - name: Download the stamped files
+        uses: actions/download-artifact@v4
+        with:
+          name: release-stamp
+          path: ${{ runner.temp }}/release-stamp
 
-      - name: Validate version consistency
+      - name: Apply the stamped version to the package copy
         shell: bash
         run: |
           set -euo pipefail
-          PLUGIN_VERSION=$(grep -oP "Version:\s*\K[\d.]+" 1platform-content-ai.php)
+          # 10up/action-wordpress-plugin-deploy rsyncs $GITHUB_WORKSPACE through
+          # .distignore into SVN trunk, so what is in the workspace — stamped,
+          # uncommitted — is exactly what WordPress.org serves.
+          cp "${RUNNER_TEMP}/release-stamp/1platform-content-ai.php" "${RUNNER_TEMP}/release-stamp/readme.txt" .
+
+      - name: Validate version consistency
+        shell: bash
+        env:
+          TAG_VERSION: ${{ needs.version_bump.outputs.new_version }}
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/release_version.py verify --version "${TAG_VERSION}"
+          PLUGIN_VERSION=$(grep -oP "^[ \t/*#@]*Version:\s*\K[\d.]+" 1platform-content-ai.php)
           README_VERSION=$(grep -oP "Stable tag:\s*\K[\d.]+" readme.txt)
-          TAG_VERSION="${{ needs.version_bump.outputs.new_version }}"
 
           if [ "$PLUGIN_VERSION" != "$TAG_VERSION" ] || [ "$README_VERSION" != "$TAG_VERSION" ]; then
             echo "::error::Version mismatch before SVN deploy!"
@@ -861,7 +551,14 @@ jobs:
             exit 1
           fi
 
-          echo "Version consistency OK: $TAG_VERSION"
+          git fetch --force origin "refs/tags/v${TAG_VERSION}:refs/tags/v${TAG_VERSION}"
+          TAGGED=$(git rev-list -n 1 "v${TAG_VERSION}")
+          if [ "${TAGGED}" != "${GITHUB_SHA}" ]; then
+            echo "::error::v${TAG_VERSION} points at ${TAGGED}, this run deploys ${GITHUB_SHA}"
+            exit 1
+          fi
+
+          echo "Version consistency OK: $TAG_VERSION at ${GITHUB_SHA}"
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2

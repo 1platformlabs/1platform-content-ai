@@ -11,6 +11,8 @@ QA:  PR → tests + code quality → code review (Claude AI) → [auto-fix if cr
 PROD: merge main → tests → version bump (3 files) → tag & release → SVN deploy → slack
 ```
 
+> ⚠️ **Superado por #208 (2026-09-13):** el job de versión ya no commitea ni empuja a `main` (protegida con `enforce_admins`: el push volvía GH006 y no se publicaba nada desde 2026-08-16). La versión sale del último tag y se estampa en la copia empaquetada (`.github/scripts/release_version.py`); el tag y el SVN son el commit que corrió la pipeline. Las secciones de abajo que describen el commit del bump, el pull y el revert son históricas.
+
 ---
 
 ## Configuración Global
@@ -435,6 +437,8 @@ env:
 - **Output:** `is_merge`, `pr_number`
 
 ### Job 2: Auto Version Bump
+
+> ⚠️ Histórico — ver la nota de #208 al principio del documento.
 
 - **Necesita:** `tests` exitosos + `is_merge == true`
 - **Runner:** `ubuntu-latest`
