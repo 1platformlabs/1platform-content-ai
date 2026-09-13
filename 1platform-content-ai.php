@@ -18,7 +18,11 @@
 
 if (!defined('ABSPATH')) exit;
 
-define('CONTAI_VERSION', '2.40.0');
+require_once __DIR__ . '/includes/helpers/plugin-version.php';
+
+// One source for the version: the header above, which the release pipeline
+// stamps into the package it ships (issues #208, #209).
+define('CONTAI_VERSION', contai_plugin_header_version(__FILE__));
 
 // Action Scheduler must load before any code that uses `as_*` functions.
 if (file_exists(__DIR__ . '/vendor/woocommerce/action-scheduler/action-scheduler.php')) {
