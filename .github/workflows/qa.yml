@@ -182,6 +182,14 @@ jobs:
   sonarcloud:
     name: SonarCloud Analysis
     needs: tests
+    # SOLO EN PULL REQUESTS (epica `sonar-solo-en-pr`). Este workflow tambien
+    # dispara en `workflow_dispatch`, que acepta cualquier rama —la principal
+    # incluida—, y sin este `if:` un dispatch analizaba la rama elegida. Lo que
+    # factura SonarCloud es la suma del `ncloc` de las ramas principales de los
+    # proyectos: un dispatch sobre `main` volvia a facturar el plugin entero. En
+    # un dispatch no hay PR que aprobar (`approve` ya exige `pull_request`), asi
+    # que no se pierde ninguna compuerta.
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     environment: QA
