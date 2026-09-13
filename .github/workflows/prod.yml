@@ -186,38 +186,15 @@ jobs:
           vendor/bin/phpunit --testsuite=integration -v 2>&1 | tee -a test_output.txt
           tail -30 test_output.txt > test_summary.txt || true
 
-      - name: SonarCloud Scan (rama principal)
-        # APAGADO. No corre hasta que la variable de repositorio
-        # `SONAR_MAIN_ENABLED` valga exactamente 'true'. Sin definir a proposito.
-        #
-        # Este paso NUNCA produjo un analisis. Sus VEINTE ultimas corridas las
-        # rechazo SonarCloud por cuota de la organizacion —medido el 2026-08-26
-        # con `api/ce/activity?status=FAILED`: 20 de 20 fallidas, todas con
-        # "maximum allowed lines limit"— y `project_branches/list` confirma el
-        # resultado: la rama principal figura `analysisDate: NUNCA`.
-        #
-        # El comentario anterior justificaba el paso diciendo que aportaba "la
-        # medicion de la rama principal, contra la que se calcula codigo nuevo en
-        # los PRs siguientes". REFUTADO por medicion: este proyecto tiene 13 PRs
-        # analizados con la rama principal en NUNCA, y en `1platform-api` —mismo
-        # caso, 105 PRs sin main— los gates evaluan las SEIS condiciones,
-        # `new_coverage` incluida. En modo PR el codigo nuevo sale del diff contra
-        # la rama base, no de un analisis previo de la rama principal.
-        #
-        # La compuerta real vive en `qa.yml`, que es `pull_request` puro y sigue
-        # intacta. Lo que se deja de gastar aca es CI por merge para un analisis
-        # rechazado, mas una tarea FAILED por merge en el historial de SonarCloud.
-        #
-        # Para reencenderlo cuando haya cupo:
-        #   gh variable set SONAR_MAIN_ENABLED --repo 1platformlabs/1platform-content-ai --body true
-        if: vars.SONAR_MAIN_ENABLED == 'true' && steps.check_merge.outputs.is_merge == 'true'
-        # Pinneada al SHA, no al tag: `githubactions:S7637` (VULNERABILITY,
-        # impacto de seguridad ALTO) — un tag movil deja que el duenio de la
-        # accion cambie lo que corre en un job que recibe `SONAR_TOKEN`.
-        uses: SonarSource/sonarcloud-github-action@ffc3010689be73b8e5ae0c57ce35968afd7909e8 # v5
-        continue-on-error: true
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      # SonarCloud NO analiza la rama principal, y no hay interruptor para que lo
+      # haga: la decision es PR-only POR DISENO, no por falta de cuota (epica
+      # `sonar-solo-en-pr`). Aca vivia un paso apagado tras
+      # `vars.SONAR_MAIN_ENABLED`, con instrucciones para reencenderlo "cuando
+      # haya cupo". Se retiro porque encenderlo reintroduce exactamente el costo
+      # que la epica elimino: el `nclocCount` que factura la organizacion es la
+      # suma del `ncloc` de las ramas `main`, y un proyecto con PRs analizados y
+      # la rama principal sin analizar aporta 0. La compuerta real vive en
+      # `qa.yml`, que es `pull_request` puro y no cambia.
 
       - name: Upload test artifacts
         if: always() && steps.check_merge.outputs.is_merge == 'true'
