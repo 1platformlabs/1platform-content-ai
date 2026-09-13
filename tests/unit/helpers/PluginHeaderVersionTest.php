@@ -61,6 +61,21 @@ class PluginHeaderVersionTest extends TestCase
         ];
     }
 
+    /**
+     * Outside WordPress (no get_file_data) the helper must not fatal, and must
+     * return a version contai_maybe_upgrade() never acts on. A separate process,
+     * because once WP_Mock declares get_file_data it cannot be undeclared.
+     *
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
+     */
+    public function test_without_the_wordpress_header_reader_it_returns_a_version_that_never_upgrades(): void
+    {
+        $this->assertFalse(function_exists('get_file_data'), 'this case needs a process where WordPress is absent');
+
+        $this->assertSame('0.0.0', contai_plugin_header_version(self::PLUGIN_FILE));
+    }
+
     public function test_the_main_file_defines_contai_version_from_its_own_header(): void
     {
         $source = file_get_contents(self::PLUGIN_FILE);
