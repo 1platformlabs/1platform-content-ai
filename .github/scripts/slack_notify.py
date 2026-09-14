@@ -3,12 +3,14 @@
 Usage:
   python3 .github/scripts/slack_notify.py <template> [--extra-field KEY VALUE]
 
-Templates: ready_to_prod, tests_failed
+Templates: ready_to_prod, tests_failed, quality_gate_failed
 
 Environment variables required:
   PR_NUMBER, PR_TITLE, PR_AUTHOR, PR_BRANCH, PR_URL, RUN_URL
   VERSION (only for ready_to_prod)
   TEST_SUMMARY_FILE (only for tests_failed, optional)
+  SONAR_RESULT, APPROVE_RESULT, QA_RELEASE_RESULT, READY_TO_PROD_RESULT
+    (only for quality_gate_failed)
 """
 
 import argparse
@@ -94,9 +96,41 @@ def build_tests_failed() -> dict:
     }
 
 
+def build_quality_gate_failed() -> dict:
+    """Aviso de las compuertas del PR que NO son los tests unitarios.
+
+    El mensaje NOMBRA la compuerta caída. Un aviso que dijera sólo "el PR está
+    rojo" obliga a abrir el run para saber cuál de las cuatro fue, que es
+    exactamente el paso que este job existe para ahorrar.
+    """
+    # El orden es el del pipeline, y los nombres son los del job tal como
+    # aparecen en la lista de checks del PR — para que el texto del aviso se
+    # pueda buscar literal en la pestaña de checks.
+    gates = [
+        ("SonarCloud Analysis", env("SONAR_RESULT")),
+        ("Approve & Label", env("APPROVE_RESULT")),
+        ("QA Release (.zip)", env("QA_RELEASE_RESULT")),
+        ("Ready to PROD", env("READY_TO_PROD_RESULT")),
+    ]
+    failed = [name for name, result in gates if result == "failure"]
+    # Nunca vacío en la práctica (el paso que llama a esta plantilla sólo corre
+    # si alguna cayó), pero un mensaje sin detalle es peor que uno genérico.
+    detalle = "\n".join(f"• {sanitize_slack(name)}" for name in failed) or "• (sin detalle)"
+
+    return {
+        "blocks": [
+            {"type": "header", "text": {"type": "plain_text", "text": "\U0001f50c Plugin | QA Quality Gate Failed", "emoji": True}},
+            {"type": "section", "fields": base_fields()},
+            {"type": "section", "text": {"type": "mrkdwn", "text": f"*Compuertas caídas:*\n{detalle}"}},
+            action_buttons(),
+        ]
+    }
+
+
 TEMPLATES = {
     "ready_to_prod": build_ready_to_prod,
     "tests_failed": build_tests_failed,
+    "quality_gate_failed": build_quality_gate_failed,
 }
 
 
