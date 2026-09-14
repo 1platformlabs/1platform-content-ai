@@ -489,10 +489,41 @@ jobs:
           rm -f "${zip_name}" release_notes.md pr_data.json || true
           rm -rf "${build_dir}" || true
 
+  # ---------------------------------------------------------------------------
+  # El aviso a Slack cubre TODAS las compuertas del PR, no sólo los tests.
+  #
+  # Hasta aca este job miraba UNICAMENTE `tests`. Las otras cuatro compuertas
+  # del workflow —`sonarcloud`, `approve`, `qa-release` y `ready-to-prod`—
+  # fallaban EN SILENCIO: el PR quedaba rojo (o directamente bloqueado) y en
+  # Slack no aparecia nada.
+  #
+  # La peor de las cuatro es `sonarcloud`. `SonarCloud Code Analysis` es check
+  # REQUERIDO de `main` con `enforce_admins: true`, y lo publica la app de Sonar
+  # —no este job, que se llama `SonarCloud Analysis`—: si el escaner se cae
+  # antes de subir el analisis, el contexto requerido NO REPORTA y el PR no se
+  # pone rojo, se CONGELA. Y `approve` exige `needs.sonarcloud.result ==
+  # 'success'`, asi que con el escaner caido tampoco hay zip de QA ni aviso de
+  # Ready to PROD. Cero senales, tres consecuencias.
+  #
+  # `skipped` no dispara nada: las cuatro cuelgan de `tests`, asi que un fallo
+  # de los tests las saltea en cascada — y saltarse no es fallar. Por lo mismo
+  # el aviso de tests no se demora al sumar estos `needs`: si `tests` cae, las
+  # cuatro se saltean en el acto.
+  #
+  # `lighthouse` no existe en este repo; si algun dia se agrega un job
+  # informativo (`continue-on-error`), NO va en esta lista.
+  # ---------------------------------------------------------------------------
   notify:
     name: Slack Notification
-    needs: [tests]
-    if: always() && needs.tests.result == 'failure'
+    needs: [tests, sonarcloud, approve, qa-release, ready-to-prod]
+    if: >-
+      always() && (
+        needs.tests.result == 'failure' ||
+        needs.sonarcloud.result == 'failure' ||
+        needs.approve.result == 'failure' ||
+        needs['qa-release'].result == 'failure' ||
+        needs['ready-to-prod'].result == 'failure'
+      )
     runs-on: ubuntu-latest
     timeout-minutes: 5
     environment: QA
@@ -529,6 +560,33 @@ jobs:
         run: |
           set -euo pipefail
           python3 .github/scripts/slack_notify.py tests_failed
+
+          if [ -n "${SLACK_WEBHOOK}" ]; then
+            curl -fsSL -X POST \
+              -H "Content-Type: application/json" \
+              -d @slack_payload.json \
+              "${SLACK_WEBHOOK}"
+          fi
+
+      - name: Notify Slack — Quality gate failed
+        # Sin `needs.tests`: ese caso ya lo cubre el paso de arriba, con el
+        # resumen de PHPUnit adjunto. Este cubre el resto, y los dos pueden
+        # dispararse en la misma corrida (dos mensajes, una causa cada uno).
+        if: >-
+          needs.sonarcloud.result == 'failure' ||
+          needs.approve.result == 'failure' ||
+          needs['qa-release'].result == 'failure' ||
+          needs['ready-to-prod'].result == 'failure'
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_QA }}
+          SONAR_RESULT: ${{ needs.sonarcloud.result }}
+          APPROVE_RESULT: ${{ needs.approve.result }}
+          QA_RELEASE_RESULT: ${{ needs['qa-release'].result }}
+          READY_TO_PROD_RESULT: ${{ needs['ready-to-prod'].result }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/slack_notify.py quality_gate_failed
 
           if [ -n "${SLACK_WEBHOOK}" ]; then
             curl -fsSL -X POST \
