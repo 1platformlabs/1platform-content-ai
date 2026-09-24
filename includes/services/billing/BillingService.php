@@ -28,9 +28,16 @@ class ContaiBillingService
         return $this->client->get(ContaiOnePlatformEndpoints::USERS_BILLING);
     }
 
+    /**
+     * Buys credit for the site owner's OWN balance.
+     *
+     * Goes to the top-up endpoint, not to the transactions one: that one collects
+     * from a buyer, so it neither records the charge as a top-up nor keeps the
+     * owner's saved card between top-ups.
+     */
     public function createTransaction(float $amount, string $currency, string $description): ContaiOnePlatformResponse
     {
-        return $this->client->post(ContaiOnePlatformEndpoints::USERS_TRANSACTIONS, [
+        return $this->client->post(ContaiOnePlatformEndpoints::USERS_BALANCE_TOPUPS, [
             'amount' => $amount,
             'currency' => $currency,
             'description' => $description,
