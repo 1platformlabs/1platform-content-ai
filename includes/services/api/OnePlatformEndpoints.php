@@ -49,6 +49,7 @@ class ContaiOnePlatformEndpoints {
     const USERS_CATEGORIES = '/users/categories';
     const USERS_WEBSITES = '/users/websites';
     const USERS_TRANSACTIONS = '/users/transactions';
+    const USERS_BALANCE_TOPUPS = '/users/balance/topups';
 
     // ── Content Generation ──────────────────────────────────────
     const POSTS_KEYWORDS = '/posts/keywords/';
