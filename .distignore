@@ -5,6 +5,7 @@
 .git
 .github
 .gitignore
+.gitleaks.toml
 .distignore
 CLAUDE.md
 PIPELINE_PLAN.md
