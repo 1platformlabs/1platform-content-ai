@@ -599,3 +599,55 @@ jobs:
         if: always()
         shell: bash
         run: rm -f slack_payload.json test_summary.txt test_output.txt || true
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # Secretos — escaneo del arbol con gitleaks, en paralelo con el resto.
+  #
+  # Sin `needs:` y sin secretos: no espera a nadie, ningun job de despliegue
+  # depende de el y no recibe credenciales (no declara `environment:`). Los
+  # falsos positivos conocidos estan allowlisteados UNO POR UNO, anclados, en
+  # `.gitleaks.toml` (medicion del 2026-10-12 sobre `main`). No es check
+  # requerido de la rama.
+  # ───────────────────────────────────────────────────────────────────────────
+  secretos:
+    name: Secretos
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    permissions:
+      contents: read
+    env:
+      GITLEAKS_VERSION: "8.30.1"   # verificada contra el release el 2026-09-04
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Instalar gitleaks
+        run: |
+          set -euo pipefail
+          # `--proto '=https'` es lo que pide `githubactions:S6506`: `-L` sigue
+          # redirecciones, y sin esto una redirección a `http://` bajaría el
+          # binario por un canal sin cifrar. `-f` además falla ante un 4xx/5xx
+          # en vez de escribir la página de error dentro del .tar.gz.
+          curl --proto '=https' --tlsv1.2 -sSLf -o gitleaks.tar.gz \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          tar -xzf gitleaks.tar.gz gitleaks
+
+      # La casa no le cree a un detector que no demostro discriminar. El token
+      # falso se CONSTRUYE aca: el literal no vive nunca en el repo, asi que
+      # este paso no se vuelve el hallazgo de la proxima auditoria.
+      - name: El detector discrimina (secreto sembrado)
+        run: |
+          set -euo pipefail
+          TMP="$(mktemp -d)"
+          FALSO="ghp_$(head -c 64 /dev/urandom | base64 | tr -dc 'A-Za-z0-9' | head -c 36)"
+          printf 'token = "%s"\n' "$FALSO" > "$TMP/sembrado.txt"
+          if ./gitleaks detect --source "$TMP" --no-git --config .gitleaks.toml --redact --exit-code 1; then
+            echo "::error::gitleaks NO marco el secreto sembrado — este gate no discrimina."
+            exit 1
+          fi
+          rm -rf "$TMP"
+
+      # `--no-git` escanea el ARBOL, no el historial: caza el secreto que se
+      # esta agregando, no el que ya esta commiteado. El barrido historico es
+      # una tarea aparte.
+      - name: Secretos en el arbol
+        run: ./gitleaks detect --source . --no-git --config .gitleaks.toml --redact --exit-code 1
