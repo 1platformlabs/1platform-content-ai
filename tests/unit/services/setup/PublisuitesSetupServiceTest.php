@@ -299,6 +299,8 @@ class PublisuitesSetupServiceTest extends TestCase
 
         $this->assertTrue($result['success']);
         $this->assertEquals('restored', $result['action']);
+        // The message may reach the owner one refactor away: it never names the vendor (1platform-api#1043).
+        $this->assertSame('Marketplace connection restored from API', $result['message']);
     }
 
     // ── autoConnect: neutral link_building block (1platform-api#1043) ──
@@ -437,6 +439,8 @@ class PublisuitesSetupServiceTest extends TestCase
 
         $this->assertTrue($result['success']);
         $this->assertEquals('verified', $result['action']);
+        // The message may reach the owner one refactor away: it never names the vendor (1platform-api#1043).
+        $this->assertSame('Marketplace verified and connected', $result['message']);
     }
 
     // ── autoConnect: no publisuites → full activation ───────────
@@ -483,6 +487,8 @@ class PublisuitesSetupServiceTest extends TestCase
 
         $this->assertTrue($result['success']);
         $this->assertEquals('full_activation', $result['action']);
+        // The message may reach the owner one refactor away: it never names the vendor (1platform-api#1043).
+        $this->assertSame('Marketplace registered and verified', $result['message']);
     }
 
     // ── autoConnect: verification file creation fails ───────────
