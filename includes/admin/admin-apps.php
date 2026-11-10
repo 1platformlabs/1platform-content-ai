@@ -199,7 +199,19 @@ function contai_apps_section_header(string $section): array
     }
 }
 
-function contai_apps_section_panel(string $section)
+/**
+ * The Tools sections the page routes to; anything else shows the Tools overview.
+ * Each one must have a case in contai_apps_section_header() and
+ * contai_apps_section_panel() (covered by LinkBuildingLabelTest).
+ *
+ * @return string[]
+ */
+function contai_apps_valid_sections(): array
+{
+    return ['toc', 'internal-links', 'search-console', 'publisuites', 'ads-manager', 'analytics'];
+}
+
+function contai_apps_section_panel(string $section): object
 {
     switch ($section) {
         case 'toc':
@@ -223,9 +235,8 @@ function contai_apps_page()
 {
     // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display-only section navigation parameter.
     $section = sanitize_key($_GET['section'] ?? 'apps');
-    $valid_sections = ['toc', 'internal-links', 'search-console', 'publisuites', 'ads-manager', 'analytics'];
 
-    if (!in_array($section, $valid_sections, true)) {
+    if (!in_array($section, contai_apps_valid_sections(), true)) {
         $section = 'apps';
     }
 
