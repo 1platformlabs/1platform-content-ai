@@ -63,6 +63,13 @@ class LinkBuildingRouteTest extends TestCase
             $paths[] = $method->invoke(null, self::WEBSITE_ID);
         }
 
+        $constants = (new ReflectionClass(ContaiOnePlatformEndpoints::class))->getConstants();
+        foreach ($constants as $value) {
+            if (is_string($value)) {
+                $paths[] = $value;
+            }
+        }
+
         $this->assertNotEmpty($paths);
         foreach ($paths as $path) {
             $this->assertStringNotContainsStringIgnoringCase('publisuites', $path);
@@ -91,6 +98,42 @@ class LinkBuildingRouteTest extends TestCase
             ->andReturn(new ContaiOnePlatformResponse(true, [], 'ok', 200));
 
         $this->assertTrue($this->service($client)->verifyWebsite()->isSuccess());
+    }
+
+    /**
+     * The other eight actions also travel to the neutral path, each with its own action name.
+     *
+     * @dataProvider remainingActions
+     */
+    public function test_every_remaining_action_posts_to_the_neutral_path(string $expectedAction, callable $call): void
+    {
+        $this->storedConfig = ['websiteId' => self::WEBSITE_ID, 'publisuitesId' => '777'];
+        WP_Mock::userFunction('absint')->andReturnUsing(fn ($value) => abs((int) $value));
+        WP_Mock::userFunction('sanitize_text_field')->andReturnArg(0);
+        WP_Mock::userFunction('esc_url_raw')->andReturnArg(0);
+        WP_Mock::userFunction('delete_option')->andReturn(true);
+
+        $client = Mockery::mock(ContaiOnePlatformClient::class);
+        $client->shouldReceive('post')
+            ->once()
+            ->with(self::EXPECTED_PATH, Mockery::on(fn ($payload) => ($payload['action'] ?? null) === $expectedAction))
+            ->andReturn(new ContaiOnePlatformResponse(true, [], 'ok', 200));
+
+        $this->assertTrue($call($this->service($client))->isSuccess());
+    }
+
+    public function remainingActions(): array
+    {
+        return [
+            'orders'       => ['orders', fn (ContaiPublisuitesService $s) => $s->getOrders(2, 'pending')],
+            'view_order'   => ['view_order', fn (ContaiPublisuitesService $s) => $s->viewOrder(9)],
+            'sync'         => ['sync', fn (ContaiPublisuitesService $s) => $s->triggerSync()],
+            'delete'       => ['delete', fn (ContaiPublisuitesService $s) => $s->deleteWebsiteFromMarketplace()],
+            'accept_order' => ['accept_order', fn (ContaiPublisuitesService $s) => $s->acceptOrder(9)],
+            'reject_order' => ['reject_order', fn (ContaiPublisuitesService $s) => $s->rejectOrder(9)],
+            'reopen_order' => ['reopen_order', fn (ContaiPublisuitesService $s) => $s->reopenOrder(9)],
+            'send_url'     => ['send_url', fn (ContaiPublisuitesService $s) => $s->sendUrl(9, 'https://example.test/post')],
+        ];
     }
 
     public function test_marketplace_id_prefers_the_neutral_key(): void
