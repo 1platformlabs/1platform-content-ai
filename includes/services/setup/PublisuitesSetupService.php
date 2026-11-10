@@ -41,7 +41,9 @@ class ContaiPublisuitesSetupService
                 'success' => $result['success'],
                 'action'  => 'full_activation',
                 'message' => $result['success']
-                    ? 'Publisuites registered and verified'
+                    ? 'Marketplace registered and verified'
+                    // Not covered: these errors carry the API's getMessage() verbatim;
+                    // keeping vendor names out of it belongs to the API side of 1platform-api#1043.
                     : implode('; ', $result['errors']),
             ];
         }
@@ -62,7 +64,7 @@ class ContaiPublisuitesSetupService
             return [
                 'success' => true,
                 'action'  => 'restored',
-                'message' => 'Publisuites connection restored from API',
+                'message' => 'Marketplace connection restored from API',
             ];
         }
 
@@ -105,7 +107,7 @@ class ContaiPublisuitesSetupService
         return [
             'success' => true,
             'action'  => 'verified',
-            'message' => 'Publisuites verified and connected',
+            'message' => 'Marketplace verified and connected',
         ];
     }
 
