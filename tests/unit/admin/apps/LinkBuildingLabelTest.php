@@ -124,6 +124,13 @@ class LinkBuildingLabelTest extends TestCase
         $this->assertSame('—', \ContaiLogsAdapter::getProviderDisplayName(''));
     }
 
+    public function test_the_platform_own_content_service_keeps_its_name(): void
+    {
+        // The Core logs its own content service as provider "content"
+        // (app/api/v1/endpoints/logs.py); it is not an external service.
+        $this->assertSame('Content AI', \ContaiLogsAdapter::getProviderDisplayName('content'));
+    }
+
     public function test_no_provider_display_name_is_a_vendor(): void
     {
         // Only the VALUES are shown; the keys are the API's data identifiers.
