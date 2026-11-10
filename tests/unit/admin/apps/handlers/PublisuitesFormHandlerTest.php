@@ -140,6 +140,32 @@ class PublisuitesFormHandlerTest extends TestCase
         }
     }
 
+    public function test_connect_saves_the_neutral_marketplace_id(): void
+    {
+        $this->mockValidRequest('contai_connect_publisuites');
+
+        $this->service
+            ->shouldReceive('connectWebsite')
+            ->once()
+            ->andReturn(new ContaiOnePlatformResponse(true, ['marketplace_id' => 654], 'Connected', 200));
+
+        $this->service
+            ->shouldReceive('savePublisuitesConfig')
+            ->once()
+            ->with(Mockery::on(fn ($config) => $config['publisuites_id'] === 654));
+
+        WP_Mock::userFunction('__')->andReturnUsing(function ($text) { return $text; });
+
+        $this->expectRedirect();
+
+        try {
+            $this->handler->handleRequest();
+            $this->fail('Expected redirect');
+        } catch (PublisuitesRedirectException $e) {
+            $this->assertTrue(true);
+        }
+    }
+
     public function test_connect_api_failure_redirects_with_error(): void
     {
         $this->mockValidRequest('contai_connect_publisuites');

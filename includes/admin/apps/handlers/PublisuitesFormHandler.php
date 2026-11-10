@@ -114,7 +114,7 @@ class ContaiPublisuitesFormHandler
 
         // Save configuration
         $configData = [
-            'publisuites_id' => $data['publisuites_id'] ?? '',
+            'publisuites_id' => ContaiPublisuitesService::marketplaceIdFrom($data) ?? '',
             'verification_file_name' => $data['verification_file_name'] ?? '',
             'verification_file_content' => $data['verification_file_content'] ?? '',
             'message' => $data['message'] ?? '',

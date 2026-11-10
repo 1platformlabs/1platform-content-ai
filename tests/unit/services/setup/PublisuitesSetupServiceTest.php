@@ -301,6 +301,82 @@ class PublisuitesSetupServiceTest extends TestCase
         $this->assertEquals('restored', $result['action']);
     }
 
+    // ── autoConnect: neutral link_building block (1platform-api#1043) ──
+
+    public function test_autoConnect_restores_from_the_neutral_link_building_block(): void
+    {
+        $websiteData = [
+            'id' => 'ws-100',
+            'actions' => [
+                'link_building' => [
+                    'verification' => [
+                        'marketplace_id' => 4321,
+                        'file_name' => 'verify-token.html',
+                        'file_content' => '<html>ok</html>',
+                        'verified' => true,
+                        'verified_at' => '2026-04-01T10:00:00Z',
+                        'marketplace_status' => 'active',
+                    ],
+                ],
+            ],
+        ];
+
+        $this->service
+            ->shouldReceive('savePublisuitesConfig')
+            ->once()
+            ->with(Mockery::on(function ($config) {
+                return $config['publisuites_id'] === 4321
+                    && $config['verified'] === true
+                    && $config['status'] === 'active'
+                    && $config['verification_file_name'] === 'verify-token.html';
+            }));
+        $this->service->shouldNotReceive('connectWebsite');
+
+        $result = $this->setupService->autoConnect($websiteData);
+
+        $this->assertTrue($result['success']);
+        $this->assertEquals('restored', $result['action']);
+    }
+
+    public function test_autoConnect_prefers_link_building_over_the_legacy_block(): void
+    {
+        $websiteData = [
+            'actions' => [
+                'link_building' => ['verification' => ['marketplace_id' => 4321, 'verified' => true]],
+                'publisuites' => ['verification' => ['publisuites_id' => 1111, 'verified' => true]],
+            ],
+        ];
+
+        $this->service
+            ->shouldReceive('savePublisuitesConfig')
+            ->once()
+            ->with(Mockery::on(fn ($config) => $config['publisuites_id'] === 4321));
+
+        $this->assertEquals('restored', $this->setupService->autoConnect($websiteData)['action']);
+    }
+
+    public function test_activate_saves_the_neutral_marketplace_id_of_the_add_response(): void
+    {
+        $this->service
+            ->shouldReceive('connectWebsite')
+            ->once()
+            ->andReturn(new ContaiOnePlatformResponse(true, ['marketplace_id' => 987, 'verification_file_name' => 'v.html'], 'Added', 200));
+        $this->service
+            ->shouldReceive('savePublisuitesConfig')
+            ->once()
+            ->with(Mockery::on(fn ($config) => $config['publisuites_id'] === 987))
+            ->ordered();
+        $this->service->shouldReceive('savePublisuitesConfig')->once()->ordered();
+        $this->service->shouldReceive('createVerificationFile')->once()->andReturn(['success' => true]);
+        $this->service
+            ->shouldReceive('verifyWebsite')
+            ->once()
+            ->andReturn(new ContaiOnePlatformResponse(true, ['verified' => true], 'Verified', 200));
+        $this->service->shouldReceive('getPublisuitesConfig')->once()->andReturn(['publisuites_id' => 987]);
+
+        $this->assertTrue($this->setupService->activatePublisuites()['success']);
+    }
+
     // ── autoConnect: registered but not verified ────────────────
 
     public function test_autoConnect_verifies_unverified_publisuites(): void
