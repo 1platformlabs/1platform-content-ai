@@ -16,6 +16,7 @@ class ContaiLogsAdapter {
     ];
 
     const PROVIDER_DISPLAY_NAMES = [
+        'content'          => 'Content AI',
         'publisuites'      => 'Link Building',
         'search_console'   => 'Search Console',
         'openai'           => 'AI Engine',
