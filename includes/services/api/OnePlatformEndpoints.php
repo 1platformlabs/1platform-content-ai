@@ -111,8 +111,15 @@ class ContaiOnePlatformEndpoints {
         return sprintf('/users/websites/%s/searchconsole/sitemaps', $website_id);
     }
 
-    public static function websitePublisuites(string $website_id): string {
-        return sprintf('/users/websites/%s/publisuites', $website_id);
+    /**
+     * Link-building marketplace actions of a website.
+     *
+     * The platform publishes this neutral path; the vendor-named alias it
+     * replaced is hidden from the contract and answers with a Deprecation
+     * header (1platform-api#1043).
+     */
+    public static function websiteLinkBuilding(string $website_id): string {
+        return sprintf('/users/websites/%s/link-building', $website_id);
     }
 
     public static function websiteLegal(string $website_id): string {

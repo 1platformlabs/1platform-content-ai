@@ -63,6 +63,17 @@ class ContaiPublisuitesService
         return update_option(self::OPTION_PUBLISUITES_CONFIG, $config);
     }
 
+    /**
+     * The marketplace site id of an API payload.
+     *
+     * The platform publishes it as `marketplace_id`; releases before
+     * 1platform-api#1043 only sent the vendor-named key, still read as fallback.
+     */
+    public static function marketplaceIdFrom(array $data)
+    {
+        return $data['marketplace_id'] ?? $data['publisuites_id'] ?? null;
+    }
+
     public function deletePublisuitesConfig(): bool
     {
         return delete_option(self::OPTION_PUBLISUITES_CONFIG);
@@ -85,7 +96,7 @@ class ContaiPublisuitesService
             $websiteId = $this->websiteProvider->getWebsiteId();
         }
 
-        $endpoint = ContaiOnePlatformEndpoints::websitePublisuites($websiteId);
+        $endpoint = ContaiOnePlatformEndpoints::websiteLinkBuilding($websiteId);
 
         return $this->client->post($endpoint, ['action' => 'add']);
     }
@@ -103,7 +114,7 @@ class ContaiPublisuitesService
             return new ContaiOnePlatformResponse(false, null, 'Marketplace not connected', 400);
         }
 
-        $endpoint = ContaiOnePlatformEndpoints::websitePublisuites($websiteId);
+        $endpoint = ContaiOnePlatformEndpoints::websiteLinkBuilding($websiteId);
 
         return $this->client->post($endpoint, ['action' => 'verify']);
     }
@@ -228,7 +239,7 @@ class ContaiPublisuitesService
             $payload['status_filter'] = sanitize_text_field($statusFilter);
         }
 
-        $endpoint = ContaiOnePlatformEndpoints::websitePublisuites($websiteId);
+        $endpoint = ContaiOnePlatformEndpoints::websiteLinkBuilding($websiteId);
 
         return $this->client->post($endpoint, $payload);
     }
@@ -242,7 +253,7 @@ class ContaiPublisuitesService
             return new ContaiOnePlatformResponse(false, null, 'Website not configured', 400);
         }
 
-        $endpoint = ContaiOnePlatformEndpoints::websitePublisuites($websiteId);
+        $endpoint = ContaiOnePlatformEndpoints::websiteLinkBuilding($websiteId);
 
         return $this->client->post($endpoint, [
             'action'   => 'view_order',
@@ -259,7 +270,7 @@ class ContaiPublisuitesService
             return new ContaiOnePlatformResponse(false, null, 'Website not configured', 400);
         }
 
-        $endpoint = ContaiOnePlatformEndpoints::websitePublisuites($websiteId);
+        $endpoint = ContaiOnePlatformEndpoints::websiteLinkBuilding($websiteId);
 
         $response = $this->client->post($endpoint, [
             'action' => 'sync',
@@ -294,7 +305,7 @@ class ContaiPublisuitesService
             return new ContaiOnePlatformResponse(false, null, 'Website not configured', 400);
         }
 
-        $endpoint = ContaiOnePlatformEndpoints::websitePublisuites($websiteId);
+        $endpoint = ContaiOnePlatformEndpoints::websiteLinkBuilding($websiteId);
         $response = $this->client->post($endpoint, ['action' => 'delete']);
 
         if (!$response->isSuccess()) {
@@ -335,7 +346,7 @@ class ContaiPublisuitesService
             return new ContaiOnePlatformResponse(false, null, 'Website not configured', 400);
         }
 
-        $endpoint = ContaiOnePlatformEndpoints::websitePublisuites($websiteId);
+        $endpoint = ContaiOnePlatformEndpoints::websiteLinkBuilding($websiteId);
 
         return $this->client->post($endpoint, [
             'action'   => 'accept_order',
@@ -352,7 +363,7 @@ class ContaiPublisuitesService
             return new ContaiOnePlatformResponse(false, null, 'Website not configured', 400);
         }
 
-        $endpoint = ContaiOnePlatformEndpoints::websitePublisuites($websiteId);
+        $endpoint = ContaiOnePlatformEndpoints::websiteLinkBuilding($websiteId);
 
         return $this->client->post($endpoint, [
             'action'   => 'reject_order',
@@ -369,7 +380,7 @@ class ContaiPublisuitesService
             return new ContaiOnePlatformResponse(false, null, 'Website not configured', 400);
         }
 
-        $endpoint = ContaiOnePlatformEndpoints::websitePublisuites($websiteId);
+        $endpoint = ContaiOnePlatformEndpoints::websiteLinkBuilding($websiteId);
 
         return $this->client->post($endpoint, [
             'action'   => 'reopen_order',
@@ -386,7 +397,7 @@ class ContaiPublisuitesService
             return new ContaiOnePlatformResponse(false, null, 'Website not configured', 400);
         }
 
-        $endpoint = ContaiOnePlatformEndpoints::websitePublisuites($websiteId);
+        $endpoint = ContaiOnePlatformEndpoints::websiteLinkBuilding($websiteId);
 
         return $this->client->post($endpoint, [
             'action'   => 'send_url',

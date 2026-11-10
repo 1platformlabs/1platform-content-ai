@@ -17,7 +17,8 @@ class ContaiPublisuitesSetupService
     /**
      * Auto-connect Publisuites using website data from the API.
      *
-     * Reads actions.publisuites.verification from the website response and:
+     * Reads actions.link_building.verification from the website response
+     * (actions.publisuites.verification on releases before 1platform-api#1043) and:
      * - If publisuites_id exists AND verified: saves config as active (no API calls)
      * - If publisuites_id exists AND NOT verified: creates verification file + verifies
      * - If no publisuites_id: runs the full activation flow (add → file → verify)
@@ -27,8 +28,11 @@ class ContaiPublisuitesSetupService
      */
     public function autoConnect(array $websiteData): array
     {
-        $publisuites = $websiteData['actions']['publisuites']['verification'] ?? [];
-        $publisuitesId = $publisuites['publisuites_id'] ?? null;
+        $actions = $websiteData['actions'] ?? [];
+        $publisuites = $actions['link_building']['verification']
+            ?? $actions['publisuites']['verification']
+            ?? [];
+        $publisuitesId = ContaiPublisuitesService::marketplaceIdFrom($publisuites);
 
         if (empty($publisuitesId)) {
             $result = $this->activatePublisuites();
@@ -122,7 +126,7 @@ class ContaiPublisuitesSetupService
 
             $data = $connectResponse->getData();
             $this->publisuiteService->savePublisuitesConfig([
-                'publisuites_id' => $data['publisuites_id'] ?? '',
+                'publisuites_id' => ContaiPublisuitesService::marketplaceIdFrom($data) ?? '',
                 'verification_file_name' => $data['verification_file_name'] ?? '',
                 'verification_file_content' => $data['verification_file_content'] ?? '',
                 'status' => 'pending_verification',
