@@ -42,7 +42,7 @@ class ContaiAppsSidebar {
 				'home'  => false,
 			),
 			'publisuites'     => array(
-				'title' => __( 'Publisuites', '1platform-content-ai' ),
+				'title' => __( 'Link Building', '1platform-content-ai' ),
 				'icon'  => 'dashicons-money-alt',
 				'home'  => false,
 			),

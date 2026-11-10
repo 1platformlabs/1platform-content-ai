@@ -142,6 +142,83 @@ function contai_enqueue_apps_scripts()
 }
 add_action( 'admin_enqueue_scripts', 'contai_enqueue_apps_scripts', 20 );
 
+/**
+ * Title, subtitle and icon of each Tools section, as the site owner sees them.
+ *
+ * The marketplace section is labelled "Link Building", never by the
+ * marketplace's brand (1platform-api#1043, reverting content-ai#44). An
+ * unknown section gets the Tools header.
+ *
+ * @return array{0: string, 1: string, 2: string}
+ */
+function contai_apps_section_header(string $section): array
+{
+    switch ($section) {
+        case 'toc':
+            return [
+                __('Table of Contents Settings', '1platform-content-ai'),
+                __('Configure how the table of contents is displayed on your site', '1platform-content-ai'),
+                'dashicons-admin-generic',
+            ];
+        case 'internal-links':
+            return [
+                __('Internal Links', '1platform-content-ai'),
+                __('Configure automatic internal linking and view all links between your posts', '1platform-content-ai'),
+                'dashicons-admin-links',
+            ];
+        case 'search-console':
+            return [
+                __('Search Console', '1platform-content-ai'),
+                __('Connect your website to Google Search Console through Content AI', '1platform-content-ai'),
+                'dashicons-cloud',
+            ];
+        case 'publisuites':
+            return [
+                __('Link Building', '1platform-content-ai'),
+                __('Connect your website to the marketplace to monetize your content', '1platform-content-ai'),
+                'dashicons-money-alt',
+            ];
+        case 'ads-manager':
+            return [
+                __('Ads Manager', '1platform-content-ai'),
+                __('Configure AdSense publisher IDs, ads.txt generation, and custom header code', '1platform-content-ai'),
+                'dashicons-megaphone',
+            ];
+        case 'analytics':
+            return [
+                __('Google Analytics', '1platform-content-ai'),
+                __('Connect Google Analytics GA4 to track content performance and site traffic', '1platform-content-ai'),
+                'dashicons-chart-area',
+            ];
+        default:
+            return [
+                __('Tools', '1platform-content-ai'),
+                __('Overview of all available tools and integrations', '1platform-content-ai'),
+                'dashicons-list-view',
+            ];
+    }
+}
+
+function contai_apps_section_panel(string $section)
+{
+    switch ($section) {
+        case 'toc':
+            return new ContaiTocSettingsPanel(new ContaiTocConfiguration());
+        case 'internal-links':
+            return new ContaiInternalLinksPanel();
+        case 'search-console':
+            return new ContaiSearchConsolePanel();
+        case 'publisuites':
+            return new ContaiPublisuitesPanel();
+        case 'ads-manager':
+            return new ContaiAdsManagerPanel();
+        case 'analytics':
+            return new ContaiAnalyticsPanel();
+        default:
+            return new ContaiAppsPanel();
+    }
+}
+
 function contai_apps_page()
 {
     // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display-only section navigation parameter.
@@ -155,72 +232,9 @@ function contai_apps_page()
     $layout = new ContaiAppsLayout($section);
     $layout->render_header();
 
-    switch ($section) {
-        case 'toc':
-            $config = new ContaiTocConfiguration();
-            $panel = new ContaiTocSettingsPanel($config);
-            $layout->render_page_title(
-                __('Table of Contents Settings', '1platform-content-ai'),
-                __('Configure how the table of contents is displayed on your site', '1platform-content-ai'),
-                'dashicons-admin-generic'
-            );
-            $panel->render();
-            break;
-        case 'internal-links':
-            $panel = new ContaiInternalLinksPanel();
-            $layout->render_page_title(
-                __('Internal Links', '1platform-content-ai'),
-                __('Configure automatic internal linking and view all links between your posts', '1platform-content-ai'),
-                'dashicons-admin-links'
-            );
-            $panel->render();
-            break;
-        case 'search-console':
-            $panel = new ContaiSearchConsolePanel();
-            $layout->render_page_title(
-                __('Search Console', '1platform-content-ai'),
-                __('Connect your website to Google Search Console through Content AI', '1platform-content-ai'),
-                'dashicons-cloud'
-            );
-            $panel->render();
-            break;
-        case 'publisuites':
-            $panel = new ContaiPublisuitesPanel();
-            $layout->render_page_title(
-                __('Publisuites', '1platform-content-ai'),
-                __('Connect your website to the marketplace to monetize your content', '1platform-content-ai'),
-                'dashicons-money-alt'
-            );
-            $panel->render();
-            break;
-        case 'ads-manager':
-            $panel = new ContaiAdsManagerPanel();
-            $layout->render_page_title(
-                __('Ads Manager', '1platform-content-ai'),
-                __('Configure AdSense publisher IDs, ads.txt generation, and custom header code', '1platform-content-ai'),
-                'dashicons-megaphone'
-            );
-            $panel->render();
-            break;
-        case 'analytics':
-            $panel = new ContaiAnalyticsPanel();
-            $layout->render_page_title(
-                __('Google Analytics', '1platform-content-ai'),
-                __('Connect Google Analytics GA4 to track content performance and site traffic', '1platform-content-ai'),
-                'dashicons-chart-area'
-            );
-            $panel->render();
-            break;
-        case 'apps':
-        default:
-            $panel = new ContaiAppsPanel();
-            $layout->render_page_title(
-                __('Tools', '1platform-content-ai'),
-                __('Overview of all available tools and integrations', '1platform-content-ai'),
-                'dashicons-list-view'
-            );
-            $panel->render();
-    }
+    $panel = contai_apps_section_panel($section);
+    $layout->render_page_title(...contai_apps_section_header($section));
+    $panel->render();
 
     $layout->render_footer();
 }
