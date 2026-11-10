@@ -223,6 +223,19 @@ class ReleasePipelineContractTest extends TestCase {
 		$this->assertStringNotContainsString( '(#6)', $this->read( 'readme.txt' ) );
 	}
 
+	public function test_a_bullet_added_outside_the_changelog_does_not_count_as_its_own_entry(): void {
+		$this->published_repository();
+		// A feature-list bullet in == Description == is not a changelog line (1platform-api#1043).
+		$this->write( 'readme.txt', str_replace( "== Description ==\nx\n", "== Description ==\nx\n* **Link Building** — a feature bullet\n", $this->read( 'readme.txt' ) ) );
+		$this->git( 'add', 'readme.txt' );
+		$this->commit( 'fix(apps): show the tool by what it does (#7)' );
+
+		$this->stamp( '1.0.1' );
+
+		$this->assertStringContainsString( "= 1.0.1 =\n* Fixed: show the tool by what it does (#7)\n", $this->read( 'readme.txt' ) );
+		$this->assertStringNotContainsString( 'Maintenance release', $this->read( 'readme.txt' ) );
+	}
+
 	public function test_a_release_with_nothing_user_facing_still_gets_a_line(): void {
 		$this->published_repository();
 		$this->commit( 'ci: pin an action (#2)' );

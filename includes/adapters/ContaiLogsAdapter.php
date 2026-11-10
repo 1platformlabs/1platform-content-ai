@@ -16,7 +16,8 @@ class ContaiLogsAdapter {
     ];
 
     const PROVIDER_DISPLAY_NAMES = [
-        'publisuites'      => 'Publisuites',
+        'content'          => 'Content AI',
+        'publisuites'      => 'Link Building',
         'search_console'   => 'Search Console',
         'openai'           => 'AI Engine',
         'pixabay'          => 'Image Library',
@@ -101,7 +102,8 @@ class ContaiLogsAdapter {
         if (empty($provider)) {
             return '—';
         }
-        return self::PROVIDER_DISPLAY_NAMES[$provider] ?? ucfirst($provider);
+        // An unmapped provider is a vendor this plugin has not named yet: never show it raw.
+        return self::PROVIDER_DISPLAY_NAMES[$provider] ?? __('External Service', '1platform-content-ai');
     }
 
     public static function getErrorTypeLabel(string $errorType = null): string {

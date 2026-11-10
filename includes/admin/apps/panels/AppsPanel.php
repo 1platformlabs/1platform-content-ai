@@ -11,50 +11,25 @@ class ContaiAppsPanel {
     }
 
     private function init_available_apps(): void {
-        $this->available_apps = [
-            'toc_settings' => [
-                'title' => __('Table of Contents', '1platform-content-ai'),
-                'description' => __('Automatically generate table of contents for your posts with customizable settings', '1platform-content-ai'),
-                'icon' => 'dashicons-list-view',
-                'url' => add_query_arg(['section' => 'toc'], admin_url('admin.php?page=contai-apps')),
-                'status' => 'active',
-            ],
-            'internal_links' => [
-                'title' => __('Internal Links', '1platform-content-ai'),
-                'description' => __('Automatically create internal links between posts based on keywords for better SEO and navigation', '1platform-content-ai'),
-                'icon' => 'dashicons-admin-links',
-                'url' => add_query_arg(['section' => 'internal-links'], admin_url('admin.php?page=contai-apps')),
-                'status' => 'active',
-            ],
-            'search_console' => [
-                'title' => __('Search Console', '1platform-content-ai'),
-                'description' => __('Connect your website to Google Search Console to submit sitemaps and verify your site ownership', '1platform-content-ai'),
-                'icon' => 'dashicons-cloud',
-                'url' => add_query_arg(['section' => 'search-console'], admin_url('admin.php?page=contai-apps')),
-                'status' => 'active',
-            ],
-            'publisuites' => [
-                'title' => __('Publisuites', '1platform-content-ai'),
-                'description' => __('Connect your website to the marketplace to monetize your content and manage sponsored posts', '1platform-content-ai'),
-                'icon' => 'dashicons-money-alt',
-                'url' => add_query_arg(['section' => 'publisuites'], admin_url('admin.php?page=contai-apps')),
-                'status' => 'active',
-            ],
-            'ads_manager' => [
-                'title' => __('Ads Manager', '1platform-content-ai'),
-                'description' => __('Configure AdSense publisher IDs, ads.txt generation, and custom header code injection', '1platform-content-ai'),
-                'icon' => 'dashicons-megaphone',
-                'url' => add_query_arg(['section' => 'ads-manager'], admin_url('admin.php?page=contai-apps')),
-                'status' => 'active',
-            ],
-            'analytics' => [
-                'title' => __('Google Analytics', '1platform-content-ai'),
-                'description' => __('Connect Google Analytics GA4 to track AI content performance, measure ROI, and monitor site traffic', '1platform-content-ai'),
-                'icon' => 'dashicons-chart-area',
-                'url' => add_query_arg(['section' => 'analytics'], admin_url('admin.php?page=contai-apps')),
-                'status' => 'active',
-            ],
+        $rows = [
+            'toc_settings'   => ['toc', 'list-view', __('Table of Contents', '1platform-content-ai'), __('Automatically generate table of contents for your posts with customizable settings', '1platform-content-ai')],
+            'internal_links' => ['internal-links', 'admin-links', __('Internal Links', '1platform-content-ai'), __('Automatically create internal links between posts based on keywords for better SEO and navigation', '1platform-content-ai')],
+            'search_console' => ['search-console', 'cloud', __('Search Console', '1platform-content-ai'), __('Connect your website to Google Search Console to submit sitemaps and verify your site ownership', '1platform-content-ai')],
+            'publisuites'    => ['publisuites', 'money-alt', __('Link Building', '1platform-content-ai'), __('Connect your website to the marketplace to monetize your content and manage sponsored posts', '1platform-content-ai')],
+            'ads_manager'    => ['ads-manager', 'megaphone', __('Ads Manager', '1platform-content-ai'), __('Configure AdSense publisher IDs, ads.txt generation, and custom header code injection', '1platform-content-ai')],
+            'analytics'      => ['analytics', 'chart-area', __('Google Analytics', '1platform-content-ai'), __('Connect Google Analytics GA4 to track AI content performance, measure ROI, and monitor site traffic', '1platform-content-ai')],
         ];
+
+        $this->available_apps = [];
+        foreach ($rows as $slug => [$section, $icon, $title, $description]) {
+            $this->available_apps[$slug] = [
+                'title'       => $title,
+                'description' => $description,
+                'icon'        => 'dashicons-' . $icon,
+                'url'         => add_query_arg(['section' => $section], admin_url('admin.php?page=contai-apps')),
+                'status'      => 'active',
+            ];
+        }
     }
 
     public function render(): void {

@@ -34,7 +34,7 @@ AI blog post generator with SEO meta, keyword research, internal linking, tables
 
 * **Google Analytics** — Connect your GA4 property with OAuth2 and inject the tracking tag with GDPR Consent Mode v2 (analytics denied by default until user consent).
 * **Google Search Console** — Connect your site to Google Search Console through 1Platform to pull performance data.
-* **Publisuites** — Connect your website to Publisuites to explore content monetization opportunities.
+* **Link Building** — Connect your website to a sponsored-post marketplace to explore content monetization opportunities.
 * **Ads Manager** — Configure your AdSense publisher ID, auto-generate your ads.txt file, and inject custom header code.
 
 = SaaS & Data Processing =
@@ -156,7 +156,7 @@ The plugin sends your site URL, API key, and content generation parameters (keyw
 4. Job Monitor — Track all background tasks in real time.
 5. Internal Links — Configure automatic internal linking between posts.
 6. Table of Contents — Automatic TOC generation settings.
-7. Tools — Google Analytics, Google Search Console, Publisuites, and Ads Manager integrations.
+7. Tools — Google Analytics, Google Search Console, Link Building, and Ads Manager integrations.
 
 == Changelog ==
 

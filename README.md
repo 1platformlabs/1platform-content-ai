@@ -19,7 +19,7 @@
 
 If you want a single plugin that researches keywords, writes posts with images and metadata, and ties them together with internal links and tables of contents, this is it.
 
-Core capabilities include: AI blog post generation, AI featured images, keyword extraction by topic, internal linking engine, automatic tables of contents, Site Wizard, Job Monitor, legal pages & cookie banner, Google Analytics (GA4 + Consent Mode v2), Google Search Console, Publisuites sponsored posts, Google AdSense manager, AI Agents, billing & top-ups.
+Core capabilities include: AI blog post generation, AI featured images, keyword extraction by topic, internal linking engine, automatic tables of contents, Site Wizard, Job Monitor, legal pages & cookie banner, Google Analytics (GA4 + Consent Mode v2), Google Search Console, Link Building sponsored posts, Google AdSense manager, AI Agents, billing & top-ups.
 
 [Website](https://1platform.pro) · [API docs](https://developer.1platform.pro) · [WordPress.org listing](https://wordpress.org/plugins/1platform-content-ai/) · [Changelog](CHANGELOG.md) · [Terms](https://1platform.pro/terms) · [Privacy](https://1platform.pro/privacy) · [Support](https://1platform.pro/contact)
 
@@ -82,7 +82,7 @@ Full disclosure of every external service (1Platform API, Google AdSense, Pexels
 
 - **Google Analytics 4** — OAuth2 connect, GA4 tag injection with **GDPR Consent Mode v2** (analytics denied by default), custom dimensions, server-side events via Measurement Protocol.
 - **Google Search Console** — one-click connect through 1Platform to pull performance data.
-- **Publisuites** — sync sponsored-post orders from the admin: view, accept, reject, reopen, and deliver.
+- **Link Building** — sync sponsored-post orders from the admin: view, accept, reject, reopen, and deliver.
 - **Google AdSense** — publisher ID management, ads.txt auto-generation, custom header code injection, OAuth earnings overview and policy alerts.
 - **Legal pages & cookie banner** — generate privacy policy, terms, and cookie policy with a consent banner that feeds Consent Mode v2.
 
@@ -132,7 +132,7 @@ Most configuration lives in the WordPress admin (**1Platform Content AI** menu).
 | AdSense publisher ID | Tools → Ads Manager | Injects AdSense + ads.txt |
 | Google Analytics | Tools → Analytics | GA4 tag + Consent Mode v2 |
 | Search Console | Tools → Search Console | One-click connect |
-| Publisuites | Tools → Publisuites | Sponsored-post order sync |
+| Link Building | Tools → Link Building | Sponsored-post order sync |
 
 ## Changelog
 
