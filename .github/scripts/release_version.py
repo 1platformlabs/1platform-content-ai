@@ -158,10 +158,31 @@ def entry_line(subject: str) -> str:
     return f"* {section}: {desc}"
 
 
+HUNK_NEW_START = re.compile(r"^@@ -\S+ \+(?P<start>\d+)")
+
+
 def wrote_its_own_entry(sha: str) -> bool:
-    """A merge that already added a changelog line to readme.txt documented itself."""
+    """A merge that already added a changelog line to readme.txt documented itself.
+
+    Only bullets that land inside `== Changelog ==` count: a bullet added to the
+    feature list in `== Description ==` is not a changelog entry, and counting it
+    shipped the release as "Maintenance release." (1platform-api#1043).
+    """
     diff = git("show", "--format=", "--unified=0", sha, "--", README_FILE)
-    return any(line.startswith("+* ") for line in diff.splitlines())
+    if "\n+* " not in "\n" + diff:
+        return False
+    changelog = Changelog(git("show", f"{sha}:{README_FILE}"))
+    line_no = 0
+    for line in diff.splitlines():
+        hunk = HUNK_NEW_START.match(line)
+        if hunk:
+            line_no = int(hunk["start"])
+        elif line.startswith("+") and not line.startswith("+++"):
+            # `line_no` is 1-based; Changelog spans are 0-based indexes.
+            if line.startswith("+* ") and changelog.start <= line_no - 1 < changelog.end:
+                return True
+            line_no += 1
+    return False
 
 
 def generated_lines(prev_tag: str | None) -> list[str]:
