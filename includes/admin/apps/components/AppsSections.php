@@ -21,43 +21,17 @@ class ContaiAppsSections
      */
     private static function headers(): array
     {
-        return [
-            'toc' => [
-                __('Table of Contents Settings', '1platform-content-ai'),
-                __('Configure how the table of contents is displayed on your site', '1platform-content-ai'),
-                'dashicons-admin-generic',
-            ],
-            'internal-links' => [
-                __('Internal Links', '1platform-content-ai'),
-                __('Configure automatic internal linking and view all links between your posts', '1platform-content-ai'),
-                'dashicons-admin-links',
-            ],
-            'search-console' => [
-                __('Search Console', '1platform-content-ai'),
-                __('Connect your website to Google Search Console through Content AI', '1platform-content-ai'),
-                'dashicons-cloud',
-            ],
-            'publisuites' => [
-                __('Link Building', '1platform-content-ai'),
-                __('Connect your website to the marketplace to monetize your content', '1platform-content-ai'),
-                'dashicons-money-alt',
-            ],
-            'ads-manager' => [
-                __('Ads Manager', '1platform-content-ai'),
-                __('Configure AdSense publisher IDs, ads.txt generation, and custom header code', '1platform-content-ai'),
-                'dashicons-megaphone',
-            ],
-            'analytics' => [
-                __('Google Analytics', '1platform-content-ai'),
-                __('Connect Google Analytics GA4 to track content performance and site traffic', '1platform-content-ai'),
-                'dashicons-chart-area',
-            ],
-            self::DEFAULT_SECTION => [
-                __('Tools', '1platform-content-ai'),
-                __('Overview of all available tools and integrations', '1platform-content-ai'),
-                'dashicons-list-view',
-            ],
+        $rows   = [
+            'toc'                 => [__('Table of Contents Settings', '1platform-content-ai'), __('Configure how the table of contents is displayed on your site', '1platform-content-ai'), 'admin-generic'],
+            'internal-links'      => [__('Internal Links', '1platform-content-ai'), __('Configure automatic internal linking and view all links between your posts', '1platform-content-ai'), 'admin-links'],
+            'search-console'      => [__('Search Console', '1platform-content-ai'), __('Connect your website to Google Search Console through Content AI', '1platform-content-ai'), 'cloud'],
+            'publisuites'         => [__('Link Building', '1platform-content-ai'), __('Connect your website to the marketplace to monetize your content', '1platform-content-ai'), 'money-alt'],
+            'ads-manager'         => [__('Ads Manager', '1platform-content-ai'), __('Configure AdSense publisher IDs, ads.txt generation, and custom header code', '1platform-content-ai'), 'megaphone'],
+            'analytics'           => [__('Google Analytics', '1platform-content-ai'), __('Connect Google Analytics GA4 to track content performance and site traffic', '1platform-content-ai'), 'chart-area'],
+            self::DEFAULT_SECTION => [__('Tools', '1platform-content-ai'), __('Overview of all available tools and integrations', '1platform-content-ai'), 'list-view'],
         ];
+
+        return array_map(static fn(array $row): array => [$row[0], $row[1], 'dashicons-' . $row[2]], $rows);
     }
 
     /**

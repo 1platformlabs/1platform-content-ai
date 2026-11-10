@@ -20,43 +20,24 @@ class ContaiAppsSidebar {
 	}
 
 	private function init_menu_items(): void {
-		$this->menu_items = array(
-			'apps'            => array(
-				'title' => __( 'Tools', '1platform-content-ai' ),
-				'icon'  => 'dashicons-list-view',
-				'home'  => true,
-			),
-			'toc'             => array(
-				'title' => __( 'Table of Contents', '1platform-content-ai' ),
-				'icon'  => 'dashicons-list-view',
-				'home'  => false,
-			),
-			'internal-links'  => array(
-				'title' => __( 'Internal Links', '1platform-content-ai' ),
-				'icon'  => 'dashicons-admin-links',
-				'home'  => false,
-			),
-			'search-console'  => array(
-				'title' => __( 'Search Console', '1platform-content-ai' ),
-				'icon'  => 'dashicons-cloud',
-				'home'  => false,
-			),
-			'publisuites'     => array(
-				'title' => __( 'Link Building', '1platform-content-ai' ),
-				'icon'  => 'dashicons-money-alt',
-				'home'  => false,
-			),
-			'ads-manager'     => array(
-				'title' => __( 'Ads Manager', '1platform-content-ai' ),
-				'icon'  => 'dashicons-megaphone',
-				'home'  => false,
-			),
-			'analytics'       => array(
-				'title' => __( 'Google Analytics', '1platform-content-ai' ),
-				'icon'  => 'dashicons-chart-area',
-				'home'  => false,
-			),
+		$rows   = array(
+			'apps'           => array( __( 'Tools', '1platform-content-ai' ), 'list-view', true ),
+			'toc'            => array( __( 'Table of Contents', '1platform-content-ai' ), 'list-view', false ),
+			'internal-links' => array( __( 'Internal Links', '1platform-content-ai' ), 'admin-links', false ),
+			'search-console' => array( __( 'Search Console', '1platform-content-ai' ), 'cloud', false ),
+			'publisuites'    => array( __( 'Link Building', '1platform-content-ai' ), 'money-alt', false ),
+			'ads-manager'    => array( __( 'Ads Manager', '1platform-content-ai' ), 'megaphone', false ),
+			'analytics'      => array( __( 'Google Analytics', '1platform-content-ai' ), 'chart-area', false ),
 		);
+
+		$this->menu_items = array();
+		foreach ( $rows as $slug => list( $title, $icon, $home ) ) {
+			$this->menu_items[ $slug ] = array(
+				'title' => $title,
+				'icon'  => 'dashicons-' . $icon,
+				'home'  => $home,
+			);
+		}
 	}
 
 	public function render(): void {
