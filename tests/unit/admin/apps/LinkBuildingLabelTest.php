@@ -89,7 +89,7 @@ class LinkBuildingLabelTest extends TestCase
     public function test_section_page_title_is_link_building(): void
     {
         $layout = new \ContaiAppsLayout('publisuites');
-        $html   = $this->capture(static fn() => $layout->render_page_title(...\contai_apps_section_header('publisuites')));
+        $html   = $this->capture(static fn() => $layout->render_page_title(...\ContaiAppsSections::header('publisuites')));
 
         $this->assertShowsLinkBuildingNotTheVendor($html);
         $this->assertMatchesRegularExpression('/<h1 class="contai-page-title">.*?Link Building\s*<\/h1>/s', $html);
@@ -97,8 +97,8 @@ class LinkBuildingLabelTest extends TestCase
 
     public function test_unknown_section_falls_back_to_the_tools_header(): void
     {
-        $this->assertSame(\contai_apps_section_header('apps'), \contai_apps_section_header('nope'));
-        $this->assertSame('Tools', \contai_apps_section_header('nope')[0]);
+        $this->assertSame(\ContaiAppsSections::header('apps'), \ContaiAppsSections::header('nope'));
+        $this->assertSame('Tools', \ContaiAppsSections::header('nope')[0]);
     }
 
     public function test_every_routable_section_has_its_own_header(): void
@@ -106,13 +106,35 @@ class LinkBuildingLabelTest extends TestCase
         // The routable list, the headers and the panels must not drift apart:
         // a section routed but missing from the header switch would silently
         // show the Tools title.
-        $tools = \contai_apps_section_header('apps');
-        $sections = \contai_apps_valid_sections();
+        $tools = \ContaiAppsSections::header('apps');
+        $sections = \ContaiAppsSections::validSections();
 
         $this->assertContains('publisuites', $sections);
         foreach ($sections as $section) {
-            $this->assertNotSame($tools, \contai_apps_section_header($section), "section '{$section}' has no header");
+            $this->assertNotSame($tools, \ContaiAppsSections::header($section), "section '{$section}' has no header");
         }
+    }
+
+    public function test_every_routable_section_has_its_own_panel(): void
+    {
+        foreach (\ContaiAppsSections::validSections() as $section) {
+            $this->assertNotSame(\ContaiAppsPanel::class, \ContaiAppsSections::panelClass($section), "section '{$section}' has no panel");
+            $this->assertTrue(class_exists(\ContaiAppsSections::panelClass($section)));
+        }
+        $this->assertSame(\ContaiAppsPanel::class, \ContaiAppsSections::panelClass('nope'));
+    }
+
+    public function test_requested_section_resolves_or_falls_back_to_tools(): void
+    {
+        $this->assertSame('publisuites', \ContaiAppsSections::resolve('publisuites'));
+        $this->assertSame('apps', \ContaiAppsSections::resolve('apps'));
+        $this->assertSame('apps', \ContaiAppsSections::resolve('nope'));
+        $this->assertSame('apps', \ContaiAppsSections::resolve(''));
+    }
+
+    public function test_the_tools_overview_panel_is_created_for_an_unknown_section(): void
+    {
+        $this->assertInstanceOf(\ContaiAppsPanel::class, \ContaiAppsSections::createPanel('nope'));
     }
 
     public function test_logs_provider_filter_offers_link_building(): void
