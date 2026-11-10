@@ -101,6 +101,20 @@ class LinkBuildingLabelTest extends TestCase
         $this->assertSame('Tools', \contai_apps_section_header('nope')[0]);
     }
 
+    public function test_every_routable_section_has_its_own_header(): void
+    {
+        // The routable list, the headers and the panels must not drift apart:
+        // a section routed but missing from the header switch would silently
+        // show the Tools title.
+        $tools = \contai_apps_section_header('apps');
+        $sections = \contai_apps_valid_sections();
+
+        $this->assertContains('publisuites', $sections);
+        foreach ($sections as $section) {
+            $this->assertNotSame($tools, \contai_apps_section_header($section), "section '{$section}' has no header");
+        }
+    }
+
     public function test_logs_provider_filter_offers_link_building(): void
     {
         $panel = (new \ReflectionClass(\ContaiLogsPanel::class))->newInstanceWithoutConstructor();
