@@ -21,10 +21,17 @@ class LinkBuildingLabelTest extends TestCase
     private const LABEL = 'Link Building';
 
     /** Vendor names that must never reach a client-facing string. */
-    private const VENDOR_PATTERN = '/\b(publisuites|openai|anthropic|pixabay|pexels|valueserp|migo|tributax|stripe|resend|hetzner|nicho\.ai)\b/i';
+    private const VENDOR_PATTERN = '/\b(publisuites|openai|anthropic|pixabay|pexels|valueserp|migo|tributax|stripe|hetzner|nicho\.ai|(?-i:(?<=\w\s)Resend))\b/i';
 
-    /** Translation functions whose first argument is shown to the owner. */
-    private const I18N_LITERAL = '/\b(?:__|_e|_x|_n|esc_html__|esc_html_e|esc_attr__|esc_attr_e|esc_html_x|esc_attr_x)\(\s*([\'"])((?:\\\\.|(?!\1).)*)\1/s';
+    /**
+     * Translation functions whose first argument is shown to the owner. The
+     * vendor "Resend" only counts capitalised mid-sentence ("Sent with Resend"):
+     * "Resend code" and "resend the email" are the verb.
+     */
+    private const I18N_LITERAL = '/\b(?:__|_e|_x|_n|_nx|esc_html__|esc_html_e|esc_attr__|esc_attr_e|esc_html_x|esc_attr_x)\(\s*([\'"])((?:\\\\.|(?!\1).)*)\1/s';
+
+    /** The plural form of _n()/_nx(), which is shown as well. */
+    private const I18N_PLURAL = '/\b_nx?\(\s*([\'"])(?:\\\\.|(?!\1).)*\1\s*,\s*([\'"])((?:\\\\.|(?!\2).)*)\2/s';
 
     public function setUp(): void
     {
@@ -139,6 +146,31 @@ class LinkBuildingLabelTest extends TestCase
         }
     }
 
+    /** @return string[] translatable literals in $source that name a vendor */
+    private static function vendorLiteralsIn(string $source): array
+    {
+        preg_match_all(self::I18N_LITERAL, $source, $singular);
+        preg_match_all(self::I18N_PLURAL, $source, $plural);
+        return array_values(array_filter(
+            array_merge($singular[2], $plural[3]),
+            static fn(string $literal): bool => (bool) preg_match(self::VENDOR_PATTERN, $literal)
+        ));
+    }
+
+    public function test_the_scan_reads_plurals_and_tells_the_verb_from_the_vendor(): void
+    {
+        $source = <<<'PHP'
+            _n('One order', 'Publisuites orders', $n, 'd');
+            _nx('One post', 'Pexels posts', $n, 'ctx', 'd');
+            __('Resend code', 'd');
+            esc_html__('Didn\'t get it? resend the email', 'd');
+            __('Not here? Resend it', 'd');
+            __('Sent with Resend', 'd');
+            PHP;
+
+        $this->assertSame(['Sent with Resend', 'Publisuites orders', 'Pexels posts'], self::vendorLiteralsIn($source));
+    }
+
     public function test_no_translatable_string_names_a_vendor(): void
     {
         $root  = dirname(__DIR__, 4) . '/includes';
@@ -150,11 +182,8 @@ class LinkBuildingLabelTest extends TestCase
                 continue;
             }
             $scanned++;
-            preg_match_all(self::I18N_LITERAL, (string) file_get_contents($file->getPathname()), $matches);
-            foreach ($matches[2] as $literal) {
-                if (preg_match(self::VENDOR_PATTERN, $literal)) {
-                    $leaks[] = substr($file->getPathname(), strlen($root) + 1) . ": {$literal}";
-                }
+            foreach (self::vendorLiteralsIn((string) file_get_contents($file->getPathname())) as $literal) {
+                $leaks[] = substr($file->getPathname(), strlen($root) + 1) . ": {$literal}";
             }
         }
 
