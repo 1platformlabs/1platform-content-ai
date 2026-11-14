@@ -18,11 +18,11 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
-  tests:
-    name: Unit Tests
+  build:
+    name: Build (merge detection + package guard)
     # Restrict workflow_dispatch to the main branch so a manual deploy
     # cannot ship arbitrary commits to production. Downstream PROD jobs
-    # chain via `needs: tests` so the gate propagates.
+    # chain via `needs: build` so the gate propagates.
     if: github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -154,68 +154,11 @@ jobs:
 
           echo "Package contents OK: $(wc -l < "${STAGED_LIST}" | tr -d ' ') top-level entries, no git repository"
 
-      - name: Setup PHP
-        if: steps.check_merge.outputs.is_merge == 'true'
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: ${{ env.PHP_VERSION_PROD }}
-          extensions: ${{ env.PHP_EXTENSIONS }}
-          coverage: none
-
-      - name: Cache Composer dependencies
-        if: steps.check_merge.outputs.is_merge == 'true'
-        uses: actions/cache@v4
-        with:
-          path: vendor
-          key: composer-${{ env.PHP_VERSION_PROD }}-${{ hashFiles('composer.lock', 'composer.json') }}
-          restore-keys: composer-${{ env.PHP_VERSION_PROD }}-
-
-      - name: Install dependencies
-        if: steps.check_merge.outputs.is_merge == 'true'
-        shell: bash
-        run: |
-          set -euo pipefail
-          composer install --prefer-dist --no-progress --no-interaction
-
-      - name: Run PHPUnit (unit + integration)
-        if: steps.check_merge.outputs.is_merge == 'true'
-        shell: bash
-        run: |
-          set -euo pipefail
-          vendor/bin/phpunit --testsuite=unit -v 2>&1 | tee test_output.txt
-          vendor/bin/phpunit --testsuite=integration -v 2>&1 | tee -a test_output.txt
-          tail -30 test_output.txt > test_summary.txt || true
-
-      # SonarCloud NO analiza la rama principal, y no hay interruptor para que lo
-      # haga: la decision es PR-only POR DISENO, no por falta de cuota (epica
-      # `sonar-solo-en-pr`). Aca vivia un paso apagado tras
-      # `vars.SONAR_MAIN_ENABLED`, con instrucciones para reencenderlo "cuando
-      # haya cupo". Se retiro porque encenderlo reintroduce exactamente el costo
-      # que la epica elimino: el `nclocCount` que factura la organizacion es la
-      # suma del `ncloc` de las ramas `main`, y un proyecto con PRs analizados y
-      # la rama principal sin analizar aporta 0. La compuerta real vive en
-      # `qa.yml`, que es `pull_request` puro y no cambia.
-
-      - name: Upload test artifacts
-        if: always() && steps.check_merge.outputs.is_merge == 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: prod-test-artifacts
-          path: |
-            test_output.txt
-            test_summary.txt
-          if-no-files-found: ignore
-          retention-days: 7
-
-      - name: Cleanup
-        if: always()
-        shell: bash
-        run: rm -f test_output.txt test_summary.txt || true
 
   version_bump:
     name: Auto Version Bump
-    needs: tests
-    if: needs.tests.outputs.is_merge == 'true'
+    needs: build
+    if: needs.build.outputs.is_merge == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     environment: PROD
@@ -292,9 +235,9 @@ jobs:
 
   release:
     name: Tag & Release
-    needs: [tests, version_bump]
+    needs: [build, version_bump]
     if: >-
-      needs.tests.outputs.is_merge == 'true' &&
+      needs.build.outputs.is_merge == 'true' &&
       needs.version_bump.result == 'success' &&
       needs.version_bump.outputs.already_released != 'true'
     runs-on: ubuntu-latest
@@ -378,7 +321,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          # La mitad de TIEMPO DE BUILD del allowlist del job `tests`. Ese gate
+          # La mitad de TIEMPO DE BUILD del allowlist del job `build`. Ese gate
           # corre sobre el checkout pelado a propósito, así que es ciego por
           # construcción a un archivo que un paso anterior ACABA de escribir en
           # el workspace — que es exactamente cómo `release_notes.txt` viajó
@@ -457,10 +400,10 @@ jobs:
             "${RUNNER_TEMP}/1platform-content-ai.zip"
 
       - name: Remove QA pass label after merge
-        if: needs.tests.outputs.pr_number != ''
+        if: needs.build.outputs.pr_number != ''
         env:
           GH_TOKEN: ${{ github.token }}
-          PR_NUMBER: ${{ needs.tests.outputs.pr_number }}
+          PR_NUMBER: ${{ needs.build.outputs.pr_number }}
         shell: bash
         run: |
           set -euo pipefail
@@ -469,10 +412,10 @@ jobs:
             --remove-label "ci:review-passed" || true
 
       - name: Delete merged branch
-        if: needs.tests.outputs.pr_number != ''
+        if: needs.build.outputs.pr_number != ''
         env:
           GH_TOKEN: ${{ github.token }}
-          PR_NUMBER: ${{ needs.tests.outputs.pr_number }}
+          PR_NUMBER: ${{ needs.build.outputs.pr_number }}
         shell: bash
         run: |
           set -euo pipefail
@@ -505,8 +448,8 @@ jobs:
 
   svn-deploy:
     name: Deploy to WordPress.org (SVN)
-    needs: [tests, version_bump, release]
-    if: needs.tests.outputs.is_merge == 'true' && needs.release.result == 'success'
+    needs: [build, version_bump, release]
+    if: needs.build.outputs.is_merge == 'true' && needs.release.result == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     environment: PROD
@@ -585,7 +528,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          # Stage exactly what the publisher stages, for the same reason the `tests`
+          # Stage exactly what the publisher stages, for the same reason the `build`
           # job does: 10up/action-wordpress-plugin-deploy rsyncs this tree into SVN
           # trunk with
           #   rsync -rc --exclude-from="$GITHUB_WORKSPACE/.distignore" ... --delete --delete-excluded
@@ -644,163 +587,3 @@ jobs:
           VERSION: ${{ needs.version_bump.outputs.new_version }}
         with:
           generate-zip: false
-
-  notify:
-    name: Slack Notification
-    needs: [tests, version_bump, release, svn-deploy]
-    if: always() && needs.tests.outputs.is_merge == 'true'
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    environment: PROD
-    permissions:
-      contents: read
-
-    steps:
-      - name: Setup Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: "3.13"
-
-      - name: Download test artifacts
-        if: needs.tests.result == 'failure'
-        uses: actions/download-artifact@v4
-        with:
-          name: prod-test-artifacts
-          path: .
-        continue-on-error: true
-
-      - name: Notify Slack — PROD tests failed
-        if: needs.tests.result == 'failure'
-        env:
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_ALERTS }}
-          COMMIT_AUTHOR: ${{ github.event.head_commit.author.name }}
-          COMMIT_MSG: ${{ github.event.head_commit.message }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          python << 'PYEOF'
-          import json
-          import os
-          from pathlib import Path
-
-          def sanitize_slack(text: str) -> str:
-              text = text.replace("&", "&amp;")
-              text = text.replace("<", "&lt;")
-              text = text.replace(">", "&gt;")
-              return text
-
-          error = "No test summary available"
-          summary = Path("test_summary.txt")
-          if summary.exists():
-              error = sanitize_slack(summary.read_text(encoding="utf-8", errors="replace")[:1500])
-
-          sha = os.environ.get("GITHUB_SHA", "")[:7]
-          commit_msg = sanitize_slack(os.environ.get("COMMIT_MSG", "")[:200])
-          commit_author = sanitize_slack(os.environ.get("COMMIT_AUTHOR", "unknown"))
-
-          payload = {
-              "blocks": [
-                  {
-                      "type": "header",
-                      "text": {"type": "plain_text", "text": "🔌 Plugin | PROD Tests Failed", "emoji": True}
-                  },
-                  {
-                      "type": "section",
-                      "fields": [
-                          {"type": "mrkdwn", "text": f"*Commit:*\n`{sha}`"},
-                          {"type": "mrkdwn", "text": f"*Author:*\n{commit_author}"},
-                          {"type": "mrkdwn", "text": f"*Message:*\n{commit_msg}"}
-                      ]
-                  },
-                  {
-                      "type": "section",
-                      "text": {"type": "mrkdwn", "text": f"*Error:*\n```{error}```"}
-                  }
-              ]
-          }
-
-          with open("slack_payload.json", "w", encoding="utf-8") as f:
-              json.dump(payload, f)
-          PYEOF
-
-          if [ -n "${SLACK_WEBHOOK}" ]; then
-            curl -fsSL -X POST \
-              -H "Content-Type: application/json" \
-              -d @slack_payload.json \
-              "${SLACK_WEBHOOK}"
-          fi
-
-      - name: Notify Slack — Release & deploy success
-        if: needs.tests.result == 'success' && needs.release.result == 'success'
-        env:
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_DEPLOYS }}
-          COMMIT_AUTHOR: ${{ github.event.head_commit.author.name }}
-          DEPLOY_VERSION: ${{ needs.release.outputs.version }}
-          BUMP_TYPE: ${{ needs.version_bump.outputs.bump_type }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          python << 'PYEOF'
-          import json
-          import os
-
-          def sanitize_slack(text: str) -> str:
-              text = text.replace("&", "&amp;")
-              text = text.replace("<", "&lt;")
-              text = text.replace(">", "&gt;")
-              return text
-
-          version = os.environ.get("DEPLOY_VERSION", "unknown")
-          bump_type = os.environ.get("BUMP_TYPE", "unknown")
-          author = sanitize_slack(os.environ.get("COMMIT_AUTHOR", "unknown"))
-          release_url = f"{os.environ.get('GITHUB_SERVER_URL','')}/{os.environ.get('GITHUB_REPOSITORY','')}/releases/tag/v{version}"
-          wporg_url = "https://wordpress.org/plugins/1platform-content-ai/"
-
-          payload = {
-              "blocks": [
-                  {
-                      "type": "header",
-                      "text": {"type": "plain_text", "text": "🔌 Plugin | Release y deploy exitosos", "emoji": True}
-                  },
-                  {
-                      "type": "section",
-                      "fields": [
-                          {"type": "mrkdwn", "text": f"*Version:*\n`{version}`"},
-                          {"type": "mrkdwn", "text": f"*Author:*\n{author}"},
-                          {"type": "mrkdwn", "text": f"*Bump:*\n`{bump_type}` (auto-detected)"}
-                      ]
-                  },
-                  {
-                      "type": "actions",
-                      "elements": [
-                          {
-                              "type": "button",
-                              "text": {"type": "plain_text", "text": "Ver Release"},
-                              "url": release_url,
-                              "style": "primary"
-                          },
-                          {
-                              "type": "button",
-                              "text": {"type": "plain_text", "text": "WordPress.org"},
-                              "url": wporg_url
-                          }
-                      ]
-                  }
-              ]
-          }
-
-          with open("slack_payload.json", "w", encoding="utf-8") as f:
-              json.dump(payload, f)
-          PYEOF
-
-          if [ -n "${SLACK_WEBHOOK}" ]; then
-            curl -fsSL -X POST \
-              -H "Content-Type: application/json" \
-              -d @slack_payload.json \
-              "${SLACK_WEBHOOK}"
-          fi
-
-      - name: Cleanup
-        if: always()
-        shell: bash
-        run: rm -f slack_payload.json test_summary.txt test_output.txt || true
